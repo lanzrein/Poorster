@@ -1,0 +1,80 @@
+ <link id="stylesheet" rel="stylesheet" href="style.css">
+ <script src="jquery.js"></script>
+ <script src="handle.js"></script>
+
+
+<title>Peerster's web interface </title>
+
+<div class="chat">
+  <div class="messages" id="messages">
+
+  </div>
+
+  <div class="inputarea" >
+    <textarea style="width:100%" id="message"type="text" rows="8" cols="80"></textarea>
+    <button type="button" id="sendmsg" style="width:20%">Send message !</button>
+    <p>Node ID : <span id="nodeid"></span></p>
+
+
+  </div>
+
+</div>
+
+<div id= "hw2">
+  <form enctype="multipart/form-data" id="indexFile">
+   Select a file to index to the gossiper ! <br>
+    <input type="file" id="file">
+    <input type='button' id='upload_btn' value='Index'>
+  </form>
+
+  <form enctype="multipart/form-data" id="searchFile">
+    Search for a file with keywords and a budget !<br>
+    <input type="text" id="keywords">
+    <input type="number" id="budget" min="0"> <br>
+    <input type="button" id="search_btn" value="Search">
+
+  </form>
+  <div>
+    Found files :
+    <ul id="found_files">
+      <li id="file">f1</li>
+    </ul>
+  </div>
+
+
+
+  <!-- download a file -->
+  <p>Download a file </p>
+  <p>Filename:   <input type="text" id="filename"> </p>
+  <p>Destination :  <input type="text" id="destination"> </p>
+  <p>Request : <input type="text" id="request"></p>
+
+
+  <button id="downloadButton">Download ! </button>
+
+  <p>
+  Send a private message to a peer from below by double clicking on it ! </p>
+  <ul id="origin_list">
+  <li id="private">HI</li>
+  </ul>
+</div>
+
+<div class="NodeList">
+
+<ul id="node_list">
+</ul>
+<div class="addnodearea">
+  <input type="text" id="nodevalue" value="ip:port">
+  <button id="buttonNode" >Add new node ! </button>
+
+</div>
+</div>
+
+
+<div id="privatepopup">
+  <button type="button" id="cancelprivate">Cancel</button>
+  <p> Send message to : </p>
+  <p id="receiver">xxx</p>
+  <textarea style="width:100%;"id="privatecontent" rows="8" cols="80"></textarea>
+  <button type="button" id="sendprivate">Send message!</button>
+</div>
