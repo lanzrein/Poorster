@@ -1,5 +1,6 @@
 package gossiper
 
+//All the function for the confirmation protocol
 import (
 	"encoding/hex"
 	"go.dedis.ch/onet/log"
@@ -7,6 +8,7 @@ import (
 	"time"
 )
 
+//StartConfirmation start the confirmation for a transaction txp . can be done either for ex2 (ackAll) or ex3
 func (g *Gossiper) StartConfirmation(txp TxPublish) {
 
 	log.Lvl2("Starting confirmation for file ", txp.Name)
@@ -14,23 +16,22 @@ func (g *Gossiper) StartConfirmation(txp TxPublish) {
 	g.RunningConfirmation = true
 
 	hash := [32]byte{}
-	//copy(hash[:], g.PreviousHash)
 	block := BlockPublish{
 		PrevHash:    hash,
 		Transaction: txp,
 	}
 	id := g.counter
-	g.counter ++
+	g.counter++
 	sp := StatusPacket{g.PeerLogList()}
 	message := TLCMessage{
 		Origin:      g.Name,
 		ID:          id,
 		Confirmed:   -1,
 		TxBlock:     block,
-		VectorClock: &sp ,
+		VectorClock: &sp,
 		Fitness:     0,
 	}
-	if g.hw3ex3{
+	if g.hw3ex3 {
 		//set the vector clock
 		message.VectorClock = g.GetVectorClock()
 
@@ -39,7 +40,7 @@ func (g *Gossiper) StartConfirmation(txp TxPublish) {
 	fingerprint := g.Name + message.TxBlock.Transaction.Name + hex.EncodeToString(message.TxBlock.Transaction.MetafileHash)
 
 	g.TLCMessages[fingerprint] = &message
-	gp := GossipPacket{TLCMessage:&message}
+	gp := GossipPacket{TLCMessage: &message}
 	g.SendToRandom(gp)
 	for {
 		finish := false
@@ -59,14 +60,11 @@ func (g *Gossiper) StartConfirmation(txp TxPublish) {
 			}
 			g.SendToRandom(gp)
 
-
-		case  <-g.GiveUp:
+		case <-g.GiveUp:
 			//take one of the confirmed messages of this round and broadcast it
-			//then increment my_time
 			//not if we are running hw2ex2/ackAll this never gets called so its okay to have it.
 			log.Lvl2("Give up now...")
 			finish = true
-
 
 		}
 		if finish {
@@ -77,12 +75,9 @@ func (g *Gossiper) StartConfirmation(txp TxPublish) {
 	}
 
 	g.RunningConfirmation = false
-
-
-
-
 }
 
+//SendAck send an ack for the msg
 func (g *Gossiper) SendAck(msg *TLCMessage) {
 	log.Lvl2("Sending ack for : ", msg.Origin, " id ", msg.ID)
 
@@ -102,6 +97,7 @@ func (g *Gossiper) SendAck(msg *TLCMessage) {
 	}
 }
 
+//ReceiveAck receive an ack and handle it if necessary.
 func (g *Gossiper) ReceiveAck(ack *TLCAck) {
 	if ack.Destination != g.Name {
 		addr := g.FindPath(ack.Destination)
@@ -120,16 +116,17 @@ func (g *Gossiper) ReceiveAck(ack *TLCAck) {
 		if g.ackAll {
 			log.Lvl2("Got an ack ...")
 			g.Acknowledgements[ack.ID] = append(g.Acknowledgements[ack.ID], ack.Origin)
-		}else if g.hw3ex3{
+		} else if g.hw3ex3 {
 			log.Lvl2("Got an ack..")
 			g.Acknowledgements[ack.ID] = append(g.Acknowledgements[ack.ID], ack.Origin)
 		}
 	}
 }
 
+//SendAcknowledgedTLC - send a msg that is confirmed to a random host.
 func (g *Gossiper) SendAcknowledgedTLC(msg *TLCMessage) {
 	log.Lvl2("Sending acked tlc")
-	if msg.Confirmed <0 {
+	if msg.Confirmed < 0 {
 		log.Error("Trying to send an unacknowledge block. Aborting")
 		return
 	}
@@ -140,6 +137,7 @@ func (g *Gossiper) SendAcknowledgedTLC(msg *TLCMessage) {
 
 }
 
+//ReceiveTLCMessage receive and treat a TLCMessage.
 func (g *Gossiper) ReceiveTLCMessage(msg *TLCMessage) {
 	fingerprint := msg.TxBlock.Transaction.Name + hex.EncodeToString(msg.TxBlock.Transaction.MetafileHash)
 
@@ -148,10 +146,10 @@ func (g *Gossiper) ReceiveTLCMessage(msg *TLCMessage) {
 
 	if msg.Confirmed > 0 {
 		//its a confirmed message jsut store it
-		gp := GossipPacket{TLCMessage:msg}
+		gp := GossipPacket{TLCMessage: msg}
 
 		fresh := g.VerifyFreshness(gp)
-		if fresh{
+		if fresh {
 			log.Lvl3("Got a new confirmed tlc ")
 			g.PrintConfirmedGossip(*msg)
 			//this also update the log of mytimes of the other persons...
@@ -175,7 +173,7 @@ func (g *Gossiper) ReceiveTLCMessage(msg *TLCMessage) {
 			if g.hw3ex3 && len(g.ConfirmedMessages.values[currId]) >= (g.N+1)/2 {
 				//advance to next round.
 				// check 1)
-				if g.HasReceivedConfirmedOwn() || g.RunningConfirmation{
+				if g.HasReceivedConfirmedOwn() || g.RunningConfirmation {
 					g.AdvanceToNextRound()
 				}
 
@@ -187,19 +185,12 @@ func (g *Gossiper) ReceiveTLCMessage(msg *TLCMessage) {
 
 	log.Lvl2("Got unconfirmed tlc..")
 
-	//if g.Name == "A"{
-	//	//test if it works with malicious node...
-	//	log.Lvl2("Im a bad bad node ")
-	//	return
-	//}
-
 	if exists {
 		//already seen we dont store it and pass
-
 		//broadcast further because it has not yet been confirmed.
-		if reference.Confirmed < 0  {
+		if reference.Confirmed < 0 {
 			rand.Seed(time.Now().Unix())
-			if rand.Int() % 2 == 0 {
+			if rand.Int()%2 == 0 {
 				log.Lvl2("send it again..:")
 
 				gp := GossipPacket{TLCMessage: msg}
@@ -213,8 +204,7 @@ func (g *Gossiper) ReceiveTLCMessage(msg *TLCMessage) {
 	}
 	g.PrintUnconfirmedGossip(*msg)
 
-
-	if g.ackAll && !exists{
+	if g.ackAll && !exists {
 		//always accept
 		log.Lvl2("new one we store it and ack it..")
 
@@ -228,21 +218,19 @@ func (g *Gossiper) ReceiveTLCMessage(msg *TLCMessage) {
 		gp := GossipPacket{TLCMessage: msg}
 		g.SendToRandom(gp)
 
-	} else if g.hw3ex3 && !exists{
+	} else if g.hw3ex3 && !exists {
 		times := g.TimeMapping.times[msg.Origin]
-		timeOfMsg := indexOf(times,msg.ID)
+		timeOfMsg := indexOf(times, msg.ID)
 		if len(times) > 0 {
 			idOfLast := times[len(times)-1]
-			if idOfLast > currId{
+			if idOfLast > currId {
 				log.Lvl2("Message from past..ignoring it")
 				return
 			}
 		}
 
-
 		if timeOfMsg == g.my_time {
 			log.Lvl2("This msg is at my_time..")
-
 
 			log.Lvl2("Unseen message.")
 			g.TLCMessages[fingerprint] = msg
@@ -260,9 +248,9 @@ func (g *Gossiper) ReceiveTLCMessage(msg *TLCMessage) {
 
 }
 
-func indexOf(xs []uint32 , val uint32 )(uint32 ){
-	for i  , x := range xs {
-		if x == val{
+func indexOf(xs []uint32, val uint32) uint32 {
+	for i, x := range xs {
+		if x == val {
 			return uint32(i)
 		}
 	}
@@ -270,10 +258,11 @@ func indexOf(xs []uint32 , val uint32 )(uint32 ){
 	return uint32(len(xs))
 }
 
+//AdvanceToNextRound tries to advance to the next round.
 func (g *Gossiper) AdvanceToNextRound() {
 	log.Lvl2("Trying to advance to next round ! ")
 	witness := g.confirmationForRound()
-	if (len(witness)) >= (g.N+1)/2{
+	if (len(witness)) >= (g.N+1)/2 {
 		log.Lvl2("Can advance")
 		g.my_time++
 		g.PrintAdvanceToNextRound(witness)
@@ -283,13 +272,13 @@ func (g *Gossiper) AdvanceToNextRound() {
 
 }
 
-func (g *Gossiper) confirmationForRound()[]*TLCMessage {
+func (g *Gossiper) confirmationForRound() []*TLCMessage {
 	my_time := g.my_time
 	g.TimeMapping.Lock()
 	defer g.TimeMapping.Unlock()
 	var confirmations []*TLCMessage
-	for key , val := range g.TimeMapping.times{
-		if uint32(len(val)) == my_time+1{
+	for key, val := range g.TimeMapping.times {
+		if uint32(len(val)) == my_time+1 {
 			tlc := g.pl.logmap[key][val[my_time]-1].TLCMessage
 			confirmations = append(confirmations, tlc)
 		}
@@ -298,7 +287,7 @@ func (g *Gossiper) confirmationForRound()[]*TLCMessage {
 	return confirmations
 }
 
-
+//AddToStack add a transaction to the stack of pending transaction.
 func (g *Gossiper) AddToStack(file string, metahash []byte, size int64) {
 
 	log.Lvl2("adding to stack : ", file)
@@ -307,12 +296,13 @@ func (g *Gossiper) AddToStack(file string, metahash []byte, size int64) {
 		Size:         size,
 		MetafileHash: metahash,
 	}
-	g.StackConfirmation = append(g.StackConfirmation,&txp)
+	g.StackConfirmation = append(g.StackConfirmation, &txp)
 	g.PopStack()
 
 }
 
-func (g *Gossiper) PopStack(){
+//PopStack pop the stack of pending transactions.
+func (g *Gossiper) PopStack() {
 	log.Lvl2("Popping stack ! ")
 	if g.RunningConfirmation {
 		log.Lvl2("Have to wait..:( ")
@@ -330,6 +320,7 @@ func (g *Gossiper) PopStack(){
 	}
 }
 
-func (g *Gossiper) HasReceivedConfirmedOwn()bool{
+//HasReceivedConfirmedOwn has already confirmed his own round
+func (g *Gossiper) HasReceivedConfirmedOwn() bool {
 	return (len(g.TimeMapping.times[g.Name])) >= (g.N+1)/2
 }

@@ -35,7 +35,5 @@ func (g *Gossiper) StartupRouting() {
 	log.Lvl3(g.Name, "Startup routing")
 	errChan := make(chan error)
 	go g.RouteRumor(errChan)
-	//if err := <-errChan; err != nil {
-	//	log.Error("Error on startup routing : ", err)
-	//}
+
 }

@@ -2,8 +2,6 @@
 //These can include parsing, adding, modifiying parts of the gossiper or packets.
 package gossiper
 
-
-
 import (
 	"bytes"
 	"go.dedis.ch/onet/log"
@@ -11,7 +9,6 @@ import (
 	"sort"
 	"strings"
 )
-
 
 const DEBUGLEVEL = 1
 
@@ -47,15 +44,14 @@ func (g *Gossiper) VerifyFreshness(packet GossipPacket) bool {
 	rm := packet.Rumor
 	g.pl.mu.Lock()
 	defer g.pl.mu.Unlock()
-	if rm != nil{
-		id := uint32(len(g.pl.logmap[rm.Origin] ))
+	if rm != nil {
+		id := uint32(len(g.pl.logmap[rm.Origin]))
 		return id < rm.ID //if we are at len = 0 , and its the first message (1) its ok.. if len = 1 and first message not ok.
-	}else if packet.TLCMessage != nil{
+	} else if packet.TLCMessage != nil {
 		origin := packet.TLCMessage.Origin
-		id := uint32(len(g.pl.logmap[origin] ))
+		id := uint32(len(g.pl.logmap[origin]))
 		return id < packet.TLCMessage.ID
 	}
-
 
 	//we have not received this message.
 	return false
@@ -69,7 +65,7 @@ func (g *Gossiper) FindStatus(s string) PeerStatus {
 	defer g.pl.mu.Unlock()
 	ps := PeerStatus{
 		Identifier: s,
-		NextID:     uint32(len(g.pl.logmap[s]))+1,
+		NextID:     uint32(len(g.pl.logmap[s])) + 1,
 	}
 
 	return ps
@@ -85,9 +81,9 @@ func (g *Gossiper) UpdatePeerLog(packet GossipPacket) bool {
 
 	g.pl.mu.Lock()
 	defer g.pl.mu.Unlock()
-	if packet.Rumor != nil{
+	if packet.Rumor != nil {
 		return g.UpdatePeerLogRumor(packet)
-	}else if packet.TLCMessage != nil{
+	} else if packet.TLCMessage != nil {
 		log.Lvl2("Updateing peer log for a tlc message")
 		return g.UpdatePeerLogTLC(packet)
 	}
@@ -101,9 +97,9 @@ func (g *Gossiper) UpdatePeerLogTLC(packet GossipPacket) bool {
 	if tlc.Origin == g.Name {
 		//its from the client....
 
-		g.pl.logmap[g.Name] = append(g.pl.logmap[g.Name] , packet)
+		g.pl.logmap[g.Name] = append(g.pl.logmap[g.Name], packet)
 		g.TimeMapping.Lock()
-		g.TimeMapping.times[tlc.Origin] = append(g.TimeMapping.times[tlc.Origin] , tlc.ID)
+		g.TimeMapping.times[tlc.Origin] = append(g.TimeMapping.times[tlc.Origin], tlc.ID)
 		g.TimeMapping.Unlock()
 		return true
 	}
@@ -111,10 +107,10 @@ func (g *Gossiper) UpdatePeerLogTLC(packet GossipPacket) bool {
 	currId := len(g.pl.logmap[tlc.Origin])
 
 	//increment the counter for message.Origin == the id -> increment by one. else ignore it as we are still waiting for the next message.
-	if uint32(currId) + 1  == tlc.ID {
+	if uint32(currId)+1 == tlc.ID {
 		g.pl.logmap[tlc.Origin] = append(g.pl.logmap[tlc.Origin], packet)
 		g.TimeMapping.Lock()
-		g.TimeMapping.times[tlc.Origin] = append(g.TimeMapping.times[tlc.Origin] , tlc.ID)
+		g.TimeMapping.times[tlc.Origin] = append(g.TimeMapping.times[tlc.Origin], tlc.ID)
 		g.TimeMapping.Unlock()
 		return true
 	}
@@ -135,7 +131,7 @@ func (g *Gossiper) UpdatePeerLogRumor(packet GossipPacket) bool {
 	currId := len(g.pl.logmap[message.Origin])
 
 	//increment the counter for message.Origin == the id -> increment by one. else ignore it as we are still waiting for the next message.
-	if uint32(currId) + 1  == message.ID {
+	if uint32(currId)+1 == message.ID {
 		g.pl.logmap[message.Origin] = append(g.pl.logmap[message.Origin], packet)
 		return true
 	}
@@ -155,19 +151,19 @@ func (g *Gossiper) EvaluateStatus(packet StatusPacket) (string, int) {
 	g.pl.mu.Lock()
 	defer g.pl.mu.Unlock()
 
-	for key , list := range g.pl.logmap{
+	for key, list := range g.pl.logmap {
 		found := false
-		for _, want := range packet.Want{
+		for _, want := range packet.Want {
 			//first check if the name is the same
 			if want.Identifier == key {
 				//same name..
-				if want.NextID-1 < uint32(len(list)){
-					log.Lvl3("Based on : " ,want.Identifier, want.NextID)
-					log.Lvl3("Sending :" , key , want.NextID -1)
+				if want.NextID-1 < uint32(len(list)) {
+					log.Lvl3("Based on : ", want.Identifier, want.NextID)
+					log.Lvl3("Sending :", key, want.NextID-1)
 					return key, int(want.NextID)
-				}else if want.NextID -1> uint32(len(list)){
-					log.Lvl3("We want something from : ", key, "he has : ", want.NextID,"i have ", len(list))
-					return key , -1
+				} else if want.NextID-1 > uint32(len(list)) {
+					log.Lvl3("We want something from : ", key, "he has : ", want.NextID, "i have ", len(list))
+					return key, -1
 				}
 
 				found = true
@@ -176,17 +172,14 @@ func (g *Gossiper) EvaluateStatus(packet StatusPacket) (string, int) {
 		}
 		if !found && len(list) > 0 {
 			//this key is unknown to the sender..
-			log.Lvl3("Sending :" , key ,1)
+			log.Lvl3("Sending :", key, 1)
 			return key, 1
 		}
 	}
 
 	return "", 0
 
-
 }
-
-
 
 //PeerLogList Returns the peer list -> this allows to use it without having to use locks.
 func (g *Gossiper) PeerLogList() []PeerStatus {
@@ -197,7 +190,7 @@ func (g *Gossiper) PeerLogList() []PeerStatus {
 	for key, value := range g.pl.logmap {
 		val := PeerStatus{
 			Identifier: key,
-			NextID:     uint32(len(value))+1,
+			NextID:     uint32(len(value)) + 1,
 		}
 		xs[i] = val
 		i++
@@ -217,7 +210,7 @@ func (g *Gossiper) SelectGossipPacket(Wants []PeerStatus) (GossipPacket, bool) {
 	OriginsCommon := []string{}
 	for _, ps := range Wants {
 		packets := g.pl.logmap[ps.Identifier]
-		if uint32(len(packets)) >= ps.NextID{
+		if uint32(len(packets)) >= ps.NextID {
 			//there are more packets so tehre is one to send.
 			return packets[ps.NextID-1], true
 		}
@@ -225,16 +218,13 @@ func (g *Gossiper) SelectGossipPacket(Wants []PeerStatus) (GossipPacket, bool) {
 
 	}
 
-
-
 	//we send a packet from a host that the Wants has no knowledge about
 	//Select an element that is in set(g.rumorLogs) - set(OriginsCommon)
-	for key , val := range  g.pl.logmap{
+	for key, val := range g.pl.logmap {
 		if !Contains(OriginsCommon, key) {
 			return val[0], true
 		}
 	}
-
 
 	//if we get here it means that no message was found..
 	//we return an empty message..
@@ -300,7 +290,6 @@ func (g *Gossiper) AddToWaitingList(addr string, message RumorMessage) {
 	g.wl.list[addr] = message
 	g.wl.mu.Unlock()
 }
-
 
 //GetPeerLogKeys get the keys of the peer log.
 func (g *Gossiper) GetPeerLogKeys() []string {
@@ -389,7 +378,7 @@ func GenerateSlice(max int) []uint64 {
 	res := make([]uint64, max)
 	i := uint64(0)
 	for i < uint64(max) {
-		res[i] = i+1
+		res[i] = i + 1
 		i++
 	}
 	return res

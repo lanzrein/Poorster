@@ -46,7 +46,6 @@ func TestProto(t *testing.T) {
 		Keywords: &kw,
 	}
 
-
 	data, err := protobuf.Encode(&gm)
 	if err != nil {
 		log.Error("Error on encoding : ", err)

@@ -30,10 +30,10 @@ func main() {
 		} else if *request == "" && *dest == "" {
 			log.Lvl3("Indexing a file to the gossiper")
 			err = client.SendFileToIndex(file)
-		} else if *request != "" && *dest == ""{
+		} else if *request != "" && *dest == "" {
 			log.Lvl3("Downloading known file..")
-			err = client.RequestFile(file,nil,request)
-		}else{
+			err = client.RequestFile(file, nil, request)
+		} else {
 			fmt.Print("ERROR (Bad argument combination)")
 			os.Exit(1)
 		}
@@ -46,10 +46,9 @@ func main() {
 		//rumor message
 		log.Lvl3("rumor")
 		err = client.SendMsg(*msg)
-	} else if *keywords != ""{
+	} else if *keywords != "" {
 		//Start a file search
 		log.Lvl3("search")
-
 
 		client.SearchFile(keywords, budget)
 	} else {

@@ -7,6 +7,7 @@ import (
 	"go.dedis.ch/onet/log"
 	"os"
 )
+
 func main() {
 	//some parameters.
 	log.SetDebugVisible(gossiper.DEBUGLEVEL)
@@ -20,6 +21,7 @@ func main() {
 	GUIPort := flag.String("GUIPort", "8000", "port for the GUI default implementation expects default port")
 	rtimer := flag.Int("rtimer", 0, "Timeout in seconds to send route rumors. Default means disable sending route rumors")
 	//hw3 flags
+
 	//hw3ex2 := flag.Bool("hw3ex2",false, "run exercice 2 of homework 3")
 	N := flag.Int("N", -1, "Number of nodes in the network")
 	stubbornTimeout := flag.Uint64("stubbornTimeout", 5, "Resend the transaction every stubbornTimeout seconds")

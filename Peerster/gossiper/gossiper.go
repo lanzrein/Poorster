@@ -4,11 +4,11 @@ package gossiper
 import (
 	"bufio"
 	"bytes"
+	"github.com/JohanLanzrein/Peerster/ies"
 	"go.dedis.ch/onet/log"
 	"go.dedis.ch/protobuf"
 	"math/rand"
 	"net"
-	"strings"
 	"sync"
 	"time"
 )
@@ -58,7 +58,7 @@ func NewGossiper(Name string, UIPort string, gossipAddr string, gossipers string
 
 	buf := bytes.Buffer{}
 	Map1 := CurrentlyDownloading{mu: sync.Mutex{}, values: make(map[chan DataReply][]byte)}
-	wl := WaitingList{mu:sync.Mutex{},list: make(map[string]RumorMessage)}
+	wl := WaitingList{mu: sync.Mutex{}, list: make(map[string]RumorMessage)}
 	//Init stuff for hw3
 	RecentlySeen := RecentlySeenRequest{
 		Mutex:  sync.Mutex{},
@@ -72,8 +72,8 @@ func NewGossiper(Name string, UIPort string, gossipAddr string, gossipers string
 	Chunks := make(map[string][]byte)
 	TLCMessages := make(map[string]*TLCMessage)
 
-
-
+	//for project...
+	keys := make(map[string]ies.PublicKey)
 
 	gossiper := Gossiper{
 		Name:                 Name,
@@ -84,7 +84,7 @@ func NewGossiper(Name string, UIPort string, gossipAddr string, gossipers string
 		KnownGossipers:       kg,
 		antiEntropy:          time.Duration(antiEntropy) * time.Second,
 		SimpleMode:           simple,
-		wl:					  wl,
+		wl:                   wl,
 		pl:                   pl,
 		counter:              1,
 		buffer:               &buf,
@@ -105,12 +105,14 @@ func NewGossiper(Name string, UIPort string, gossipAddr string, gossipers string
 		TLCMessages:      TLCMessages,
 		Acknowledgements: make(map[uint32][]string),
 
-		hw3ex3:   hw3ex3,
-		HopLimit: hopLimit,
-		ConfirmedMessages: ConcTLCMessages{sync.Mutex{}, make(map[uint32][]*TLCMessage)},
-		FutureMessages: ConcTLCMessages{sync.Mutex{}, make(map[uint32][]*TLCMessage)},
+		hw3ex3:              hw3ex3,
+		HopLimit:            hopLimit,
+		ConfirmedMessages:   ConcTLCMessages{sync.Mutex{}, make(map[uint32][]*TLCMessage)},
+		FutureMessages:      ConcTLCMessages{sync.Mutex{}, make(map[uint32][]*TLCMessage)},
 		RunningConfirmation: false,
-		TimeMapping:TimeMapping{sync.Mutex{}, make(map[string][]uint32)},
+		TimeMapping:         TimeMapping{sync.Mutex{}, make(map[string][]uint32)},
+
+		Keys:keys ,
 	}
 
 	return gossiper, nil
@@ -182,15 +184,13 @@ func (g *Gossiper) Run() error {
 				log.Lvl4("Anti entropy sending to : ", addr, " i = ", i)
 				go g.SendStatusPacket(addr, errChan)
 
-
-				//todo here we can send a TLCConfirmed message withthe most up to date my_time.
 				//we may get a confirmed tlc in return because of the vector clock !
-				xs , _ := g.ConfirmedMessages.values[g.my_time]
+				xs, _ := g.ConfirmedMessages.values[g.my_time]
 				if len(xs) > 0 {
 					log.Lvl2("Sending a confirmed tlc message..")
 
 					tlc := xs[0]
-					gp := GossipPacket{TLCMessage:tlc}
+					gp := GossipPacket{TLCMessage: tlc}
 					go g.SendToRandom(gp)
 				}
 
@@ -265,7 +265,7 @@ func (g *Gossiper) ReadFromPort(errChan chan error, conn net.UDPConn, client boo
 					*msg.Budget = INITBUDGET
 					mulFactor = 2
 				}
-				log.Lvl2("Budgetz is : " , *msg.Budget)
+				log.Lvl2("Budgetz is : ", *msg.Budget)
 
 				log.Lvl3("Starting file search !")
 
@@ -287,65 +287,6 @@ func (g *Gossiper) ReadFromPort(errChan chan error, conn net.UDPConn, client boo
 		go g.Receive(packet, *sendingAddr, errChan, client)
 
 	}
-
-}
-
-//StartFileDownload start the file download for a file in the message.
-func (g *Gossiper) StartFileDownload(message Message) {
-	replies := make(chan DataReply)
-
-	go g.FileSharingReceiveProtocol(*message.Destination, *message.Request, replies, *message.File, nil)
-	return
-
-}
-
-//StartFileSearch starts a new file search from this gossiper
-func (g *Gossiper) StartFileSearch(keywords []string, budget uint64, mulFactor int) error {
-	stringKeywords := strings.Join(keywords, ",")
-	//initialize the SearchMatches
-	g.SearchMatches[stringKeywords] = 0
-
-
-	req := SearchRequest{
-		Origin:   g.Name,
-		Budget:   budget,
-		Keywords: keywords,
-	}
-	log.Lvl2("Filesearch for keywords : ", stringKeywords, "budget : ", budget, " mulfactor : " , mulFactor)
-
-	for budget <= MAXBUDGET || mulFactor == 1 {
-		//gp := GossipPacket{SearchRequest:&req}
-		log.Lvl3("Sending req with budget : ", budget)
-		specified := mulFactor == 1
-		err := g.ReceiveSearchRequest(&req,specified)
-		if err != nil {
-			log.Error("Could not start search request : ", err)
-			return err
-		}
-
-		<-time.After(time.Second)
-
-		log.Lvl2("WE HAVE : matches amt", g.SearchMatches[stringKeywords])
-		if g.SearchMatches[stringKeywords] >= MATCHTHRESHOLD {
-			//found all files !
-			g.PrintSearchFinish(true)
-			break
-		}
-		if budget == 32 || mulFactor < 2 {
-			g.PrintSearchFinish(false)
-			break
-		}
-
-
-
-		budget *= uint64(mulFactor)
-
-		req.Budget = budget
-
-	}
-
-
-	return nil
 
 }
 

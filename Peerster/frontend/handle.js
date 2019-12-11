@@ -46,7 +46,7 @@ $(document).ready(function(){
 
   //hw3
 
-  $("li[id=file]").click(searchedfiledownload);
+  $("li[id=file]").dblclick(searchedfiledownload);
   $("#search_btn").click(SearchFile);
   //request the node ID
   requestNodeId();
@@ -69,7 +69,7 @@ function SearchFile(){
 
   }else{
     //send the request
-    tosend = {"keywords" : keywords, "budget" : budget};
+    tosend = {"Keywords" : keywords, "Budget" : Number(budget)};
     $.post(host+"/searchfile",JSON.stringify(tosend)).done(function(data) {
       //update the peer list...
       console.log("OK for search");
@@ -268,7 +268,7 @@ function loop(){
       $("#found_files").append("<li id='file'>"+filename + ",h:"+metahash+"</li>");
     }
 
-    $("li[id=file]").click(searchedfiledownload);
+    $("li[id=file]").dblclick(searchedfiledownload);
   });
 
 }

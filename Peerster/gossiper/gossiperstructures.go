@@ -2,6 +2,7 @@ package gossiper
 
 import (
 	"bytes"
+	"github.com/JohanLanzrein/Peerster/ies"
 	"go.dedis.ch/onet/log"
 
 	//"encoding/hex"
@@ -32,12 +33,6 @@ type PeerLog struct {
 	logmap map[string][]GossipPacket
 }
 
-////RumorLogs keeps all the message that were received in order by the gossiper
-//type RumorLogs struct {
-//	mu     sync.Mutex
-//	values []GossipPacket
-//}
-
 //MetaLock holds value for all the metadata
 type MetaLock struct {
 	mu   sync.Mutex
@@ -56,6 +51,7 @@ type CurrentlyDownloading struct {
 	values map[chan DataReply][]byte
 }
 
+//RecentlySeenRequest contains the recently seen search requests.
 type RecentlySeenRequest struct {
 	sync.Mutex
 	values []SearchRequest
@@ -67,7 +63,7 @@ type WaitingList struct {
 	list map[string]RumorMessage
 }
 
-
+//FoundFiles a structure containing all the found files.
 type FoundFiles struct {
 	Filename     string
 	MetaHash     []byte
@@ -76,6 +72,7 @@ type FoundFiles struct {
 	Done         int
 }
 
+//CurrentlySearching a list of all the currently searching files.
 type CurrentlySearching struct {
 	sync.Mutex
 	values []FoundFiles
@@ -132,30 +129,37 @@ type Gossiper struct {
 	stubbornTimeout  uint64
 	PreviousHash     []byte
 
-	hw3ex3            bool
-	HopLimit          uint32
-	ConfirmedMessages ConcTLCMessages//map of TLC messages by their ID
-	FutureMessages    ConcTLCMessages //messages from the future that are stored for later uses.
-	GiveUp            chan bool
-	//BlockStatus PeerLog
-	RunningConfirmation bool
+	hw3ex3               bool
+	HopLimit             uint32
+	ConfirmedMessages    ConcTLCMessages //map of TLC messages by their ID
+	FutureMessages       ConcTLCMessages //messages from the future that are stored for later uses.
+	GiveUp               chan bool
+	RunningConfirmation  bool
 	FinishedConfirmation chan bool
-	StackConfirmation []*TxPublish
+	StackConfirmation    []*TxPublish
 
 	TimeMapping TimeMapping
+
+	//Stuff for project
+	Keypair *ies.KeyPair
+	Keys map[string]ies.PublicKey
+
+
 }
 
-
+//TimeMapping the mapping of the time <-> id for each known gossiper.
 type TimeMapping struct {
 	sync.Mutex
 	times map[string][]uint32 //origin -> time -> id in the peerlog
 }
 
+//ConcTLCMessage a map of the seen TLCMessages concurrent safe.
 type ConcTLCMessages struct {
 	sync.Mutex
 	values map[uint32][]*TLCMessage
 }
 
+//AlreadySeen true iff the request has been recently seen ( in the last 0.5 sec )
 func (g *Gossiper) AlreadySeen(request *SearchRequest) bool {
 	g.RecentlySeen.Lock()
 	defer g.RecentlySeen.Unlock()
@@ -179,6 +183,7 @@ func (g *Gossiper) AlreadySeen(request *SearchRequest) bool {
 	return false
 }
 
+//TimeoutSearchRequest add a request to the timeout - meaning it has been recently seen.
 func (g *Gossiper) TimeoutSearchRequest(request *SearchRequest) {
 	r := *request
 	g.RecentlySeen.Lock()
@@ -210,15 +215,16 @@ func (g *Gossiper) TimeoutSearchRequest(request *SearchRequest) {
 
 }
 
-func (g *Gossiper) DownloadFoundFile(request []byte , filename string) {
+//DownloadFoundFile downloads a file with an implicit destination
+func (g *Gossiper) DownloadFoundFile(request []byte, filename string) {
 	//check in found files all files that matches and download them.
-	log.Lvl2("found files :" , g.FoundFiles)
+	log.Lvl2("found files :", g.FoundFiles)
 	for _, elem := range g.FoundFiles {
 		//dl a found file
-		log.Lvl2("elem :" , elem.Filename)
-		if bytes.Equal(elem.MetaHash,request){
-			log.Lvl2("Found match :" , filename)
-			g.DownloadResult(*elem,filename)
+		log.Lvl2("elem :", elem.Filename)
+		if bytes.Equal(elem.MetaHash, request) {
+			log.Lvl2("Found match :", filename)
+			g.DownloadResult(*elem, filename)
 			break
 		}
 
@@ -226,22 +232,21 @@ func (g *Gossiper) DownloadFoundFile(request []byte , filename string) {
 
 }
 
-func (g *Gossiper) DownloadResult(files FoundFiles,filename string ) {
+//DownloadResult downloads a result from a file FoundFile undername filename
+func (g *Gossiper) DownloadResult(files FoundFiles, filename string) {
 	replies := make(chan DataReply)
 	log.Lvl2(files.OriginChunks[1])
 	go g.FileSharingReceiveProtocol(files.OriginChunks[1], files.MetaHash, replies, filename, &files)
 
 }
 
-
-
-func (g *Gossiper) GetConfirmedTLC(i int, identifier string ) *TLCMessage {
+func (g *Gossiper) GetConfirmedTLC(i int, identifier string) *TLCMessage {
 	g.ConfirmedMessages.Lock()
 
 	xs := g.ConfirmedMessages.values[uint32(i)]
 	g.ConfirmedMessages.Unlock()
-	for _,val := range xs{
-		if val.Origin == identifier{
+	for _, val := range xs {
+		if val.Origin == identifier {
 			return val
 		}
 	}

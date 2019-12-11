@@ -17,7 +17,6 @@ const pathShared = "./_SharedFiles/"
 const pathDownloads = "./_Downloads/"
 const block = 8192 //2 ^ 13
 
-
 //FileSharingReceiveProtocol Start a file sharing protocol on the receiver end with a destination
 func (g *Gossiper) FileSharingReceiveProtocol(destination string, MetaHash []byte, datareplies chan DataReply, filename string, reference *FoundFiles) {
 	log.Lvl3("Starting file download from destination : ", destination, "file with meta hash :", MetaHash)
@@ -56,7 +55,6 @@ func (g *Gossiper) FileSharingReceiveProtocol(destination string, MetaHash []byt
 	//we should get the Metadata
 	Metafile := make([]byte, len(reply.Data))
 	copy(Metafile, reply.Data)
-
 
 	log.Lvl3("Got metafile  : ", Metafile)
 	metadata := MetaData{
@@ -224,16 +222,15 @@ func (g *Gossiper) Index(filename string, entry string) error {
 	g.AddMetaData(&meta)
 
 	//now we ask to have it on the blockchain..
-	if g.ConfirmationRunning(){
-		go g.AddToStack(meta.Name,meta.MetaHash,meta.Length)
+	if g.ConfirmationRunning() {
+		go g.AddToStack(meta.Name, meta.MetaHash, meta.Length)
 
 	}
 
 	return nil
 }
 
-
-func (g *Gossiper) ConfirmationRunning() bool{
+func (g *Gossiper) ConfirmationRunning() bool {
 	return g.ackAll || g.hw3ex3
 }
 
@@ -243,6 +240,7 @@ func (g *Gossiper) AddMetaData(data *MetaData) {
 	g.metalock.mu.Lock()
 	defer g.metalock.mu.Unlock()
 	sha := hex.EncodeToString(data.MetaHash)
+
 
 	log.Lvl2("Adding file : ", data.Name, " with metahash : ", sha)
 
@@ -395,7 +393,6 @@ func (g *Gossiper) RemoveDataReplyChannel(ch chan DataReply, destination string)
 
 }
 
-
 //UpdateRequestList updates the hash expected on the channel ch
 func (g *Gossiper) UpdateRequestList(ch chan DataReply, hash []byte) {
 	g.CurrentlyDownloading.mu.Lock()
@@ -403,8 +400,7 @@ func (g *Gossiper) UpdateRequestList(ch chan DataReply, hash []byte) {
 	g.CurrentlyDownloading.values[ch] = hash
 }
 
-//small experience
-
+//GetChunk returns the correct chunk for the destination and hash
 func (g *Gossiper) GetChunk(destination string, hash []byte) {
 	//check if its a meta hash
 	addr := g.FindPath(destination)

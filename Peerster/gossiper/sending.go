@@ -128,13 +128,12 @@ func (g *Gossiper) AcknowledgeRumor(pckt GossipPacket, addr net.UDPAddr, errChan
 		//here while we were acking the message the timeout was reached and removed the rumor
 		return
 	}
-	log.Lvl3("id : ", id, " key :" , key )
+	log.Lvl3("id : ", id, " key :", key)
 	if id > 0 {
 		//the current *g* has some more rumor to send to addr.
 		//send a new packet packet to send is RumorLog[decision]
 		gp := g.pl.logmap[key][id-1]
 		g.SendToRandom(gp)
-
 
 	} else if id < -1 {
 		//the remote address has some unseen packet

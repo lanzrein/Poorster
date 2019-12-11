@@ -68,7 +68,6 @@ func (g *Gossiper) ReceiveSearchReply(reply SearchReply) error {
 				}
 			}
 
-
 			if !foundMatch {
 				log.Lvl2("New reply we add it and init it.")
 				//if no match we initilaize it
@@ -82,16 +81,14 @@ func (g *Gossiper) ReceiveSearchReply(reply SearchReply) error {
 					OriginChunks: origins,
 					ChunkCount:   result.ChunkCount,
 				}
-				if uint64(len(result.ChunkMap)) == ff.ChunkCount{
+				if uint64(len(result.ChunkMap)) == ff.ChunkCount {
 					ff.Done = 1
 				}
 
-
-					log.Lvl2("adding it to wait for further blocks..")
-					g.CurrentlySearching.Lock()
-					g.CurrentlySearching.values = append(g.CurrentlySearching.values, ff)
-					g.CurrentlySearching.Unlock()
-
+				log.Lvl2("adding it to wait for further blocks..")
+				g.CurrentlySearching.Lock()
+				g.CurrentlySearching.values = append(g.CurrentlySearching.values, ff)
+				g.CurrentlySearching.Unlock()
 
 			}
 		}
@@ -102,7 +99,7 @@ func (g *Gossiper) ReceiveSearchReply(reply SearchReply) error {
 }
 
 //RemoveFinishedSearches removes the finished searches from the currently downloading structure
-func (g *Gossiper) RemoveFinishedSearches(){
+func (g *Gossiper) RemoveFinishedSearches() {
 	//remove done searches.
 	log.Lvl2("removing the finished searches...")
 	var dones []FoundFiles
@@ -114,7 +111,7 @@ func (g *Gossiper) RemoveFinishedSearches(){
 
 			g.UpdateMatches(elem)
 			g.FoundFiles = append(g.FoundFiles, &elem)
-		}else{
+		} else {
 			dones = append(dones, elem)
 		}
 	}

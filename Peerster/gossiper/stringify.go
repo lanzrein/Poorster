@@ -158,13 +158,14 @@ func (g *Gossiper) PrintClientPrivateMessage(message PrivateMessage) {
 	g.WriteToBuffer(s)
 }
 
+//PrintMatch prints if there is a match for the search reply.
 func (g *Gossiper) PrintMatch(message SearchReply) {
 	for _, elem := range message.Results {
 		hexS := hex.EncodeToString(elem.MetafileHash)
 		chunks := ""
-		for i , x := range elem.ChunkMap{
+		for i, x := range elem.ChunkMap {
 			chunks += fmt.Sprint(x)
-			if i < len(elem.ChunkMap) - 1 {
+			if i < len(elem.ChunkMap)-1 {
 				chunks += fmt.Sprint(",")
 			}
 
@@ -175,6 +176,7 @@ func (g *Gossiper) PrintMatch(message SearchReply) {
 	}
 }
 
+//PrintSearchFinish print if the search is finished.
 func (g *Gossiper) PrintSearchFinish(fullMatch bool) {
 	s := ""
 	if !fullMatch {
@@ -204,6 +206,7 @@ func (g *Gossiper) PrintConfirmedGossip(msg TLCMessage) {
 	g.WriteToBuffer(s)
 }
 
+//PrintRebroadcast print in case the tlc waslocally finished and there is a rebroadcast.
 func (g *Gossiper) PrintRebroadcast(msg TLCMessage, witnesses []string) {
 	witnessesString := strings.Join(witnesses, ",")
 	s := fmt.Sprint("RE-BROADCAST ID ", msg.ID, " WITNESSES ", witnessesString, "\n")
@@ -211,19 +214,21 @@ func (g *Gossiper) PrintRebroadcast(msg TLCMessage, witnesses []string) {
 	g.WriteToBuffer(s)
 }
 
+//PrintSendAck print when sending an ack
 func (g *Gossiper) PrintSendAck(ack TLCAck) {
 	s := fmt.Sprint("SENDING ACK ", ack.Destination, " ID ", ack.ID, "\n")
 	fmt.Print(s)
 	g.WriteToBuffer(s)
 }
 
+//PrintAdvanceToNextRound
 func (g *Gossiper) PrintAdvanceToNextRound(witnesses []*TLCMessage) {
 	s := fmt.Sprint("ADVANCING TO round ", g.my_time, " BASED ON CONFIRMED MESSAGES ")
 
 	for i, w := range witnesses {
-		s += fmt.Sprint("origin",i+1," ", w.Origin, " ID", i+1, " ", w.ID, " ")
+		s += fmt.Sprint("origin", i+1, " ", w.Origin, " ID", i+1, " ", w.ID, " ")
 	}
-	s+=fmt.Sprint("\n")
+	s += fmt.Sprint("\n")
 	fmt.Print(s)
 	g.WriteToBuffer(s)
 }

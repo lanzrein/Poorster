@@ -130,9 +130,9 @@ func (c *Client) SearchFile(keywords *string, budget *int) {
 		Keywords: &res,
 	}
 	log.Lvl2("Budget : ", budget)
-	if *budget < 0{
+	if *budget < 0 {
 		m.Budget = nil
-	}else{
+	} else {
 		m.Budget = new(uint64)
 		*m.Budget = uint64(*budget)
 	}

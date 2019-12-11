@@ -73,7 +73,7 @@ func (g *Gossiper) Receive(pckt GossipPacket, addr net.UDPAddr, errChan chan err
 	} else if pckt.SearchRequest != nil {
 		log.Lvl2("Got search request")
 		go func() {
-			errChan <- g.ReceiveSearchRequest(pckt.SearchRequest,false)
+			errChan <- g.ReceiveSearchRequest(pckt.SearchRequest)
 		}()
 	} else if pckt.SearchReply != nil {
 		log.Lvl2("Got search reply")
@@ -117,9 +117,9 @@ func (g *Gossiper) ReceiveStatusMessage(pckt GossipPacket, addr net.UDPAddr, err
 		if status > 0 {
 			//start rumormongering with this address
 			//we have some packets for this addr.
-			gp , ok := g.SelectGossipPacket(pckt.Status.Want)
+			gp, ok := g.SelectGossipPacket(pckt.Status.Want)
 			if ok {
-				go g.SendTo(addr.String(), gp )
+				go g.SendTo(addr.String(), gp)
 			}
 		} else if status < 0 {
 
@@ -307,5 +307,3 @@ func (g *Gossiper) ReceiveDataRequest(request *DataRequest) {
 	//}
 
 }
-
-

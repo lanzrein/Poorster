@@ -8,7 +8,8 @@ import (
 	"time"
 )
 
-func (g *Gossiper) ReceiveSearchRequest(sr *SearchRequest,specified bool) error {
+//ReceiveSearchRequest handle a search request locally. the specified flag is if the budget was specified.
+func (g *Gossiper) ReceiveSearchRequest(sr *SearchRequest) error {
 	//check locally only if its not our own file request..
 
 	if sr.Origin != g.Name {
@@ -31,9 +32,8 @@ func (g *Gossiper) ReceiveSearchRequest(sr *SearchRequest,specified bool) error 
 		}
 	}
 	//if sr.Origin != g.Name || !specified{
-		sr.Budget -= 1
+	sr.Budget -= 1
 	//}
-
 
 	//Send if possible to other peers. :)
 	if sr.Budget > 0 {
@@ -82,6 +82,7 @@ func (g *Gossiper) ReceiveSearchRequest(sr *SearchRequest,specified bool) error 
 
 }
 
+//SendLocalResult send to the origin the result of the local search.
 func (g *Gossiper) SendLocalResults(origin string, results []*SearchResult) error {
 	reply := SearchReply{
 		Origin:      g.Name,
