@@ -2,6 +2,11 @@
 
 package gossiper
 
+import (
+	"github.com/JohanLanzrein/Peerster/clusters"
+	"github.com/JohanLanzrein/Peerster/ies"
+)
+
 //GossipPacket Main packet sent over the network
 type GossipPacket struct {
 	//HW1
@@ -18,9 +23,31 @@ type GossipPacket struct {
 
 	TLCMessage *TLCMessage
 	Ack        *TLCAck
+
+
+	Broadcast  *BroadcastMessage
+
+	JoinRequest *RequestMessage
+	RequestReply *RequestReply
 }
 
 /***********DIFFERENT TYPES OF MESSAGES -******************/
+type BroadcastMessage struct {
+	ClusterID uint64
+	Data []byte
+}
+
+type RequestMessage struct {
+	Origin string
+	PublicKey ies.PublicKey
+
+}
+
+type RequestReply struct{
+	Accepted bool
+	ClusterInformation clusters.Cluster
+}
+
 
 //SimpleMessage
 type SimpleMessage struct {

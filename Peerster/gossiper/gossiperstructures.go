@@ -2,6 +2,7 @@ package gossiper
 
 import (
 	"bytes"
+	"github.com/JohanLanzrein/Peerster/clusters"
 	"github.com/JohanLanzrein/Peerster/ies"
 	"go.dedis.ch/onet/log"
 
@@ -141,10 +142,9 @@ type Gossiper struct {
 	TimeMapping TimeMapping
 
 	//Stuff for project
-	Keypair *ies.KeyPair
-	Keys map[string]ies.PublicKey
-
-
+	Keypair   *ies.KeyPair
+	Cluster   clusters.Cluster
+	LeaveChan chan bool
 }
 
 //TimeMapping the mapping of the time <-> id for each known gossiper.

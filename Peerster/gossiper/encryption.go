@@ -16,7 +16,7 @@ func (g* Gossiper)GenerateKeys()(err error){
 }
 
 func (g* Gossiper)EncryptPacket(packet GossipPacket, receiver string)[]byte{
-	pubkey := g.Keys[receiver]
+	pubkey := g.Cluster.PublicKeys[receiver]
 	//sample a new key
 	kp, err := ies.GenerateKeyPair()
 	if err != nil{
