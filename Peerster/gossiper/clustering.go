@@ -1,9 +1,6 @@
 package gossiper
 
 import (
-	"bytes"
-	"crypto/rand"
-	"encoding/binary"
 	"github.com/JohanLanzrein/Peerster/clusters"
 	"github.com/JohanLanzrein/Peerster/ies"
 	"go.dedis.ch/onet/log"
@@ -12,7 +9,7 @@ import (
 )
 
 //InitCluster the current gossiper creates a cluster where he is the sole member
-func (g *Gossiper)InitCluster(){
+func (g *Gossiper) InitCluster() {
 	id := GenerateId()
 	members := []string{g.Name}
 	publickey := make(map[string]ies.PublicKey)
@@ -24,22 +21,7 @@ func (g *Gossiper)InitCluster(){
 }
 
 
-
-func GenerateId() *uint64 {
-	array := make([]byte, 8)
-	_, err := rand.Read(array)
-	if err != nil {
-		panic(err)
-	}
-	id := new(uint64)
-	err = binary.Read(bytes.NewBuffer(array), binary.LittleEndian, id)
-	if err != nil {
-		panic(err)
-	}
-	return id
-}
-
-func (g *Gossiper)RequestJoining(other string, clusterID uint64){
+func (g *Gossiper) RequestJoining(other string, clusterID uint64) {
 	//send a request packet to the other gossiper
 	addr := g.FindPath(other)
 	publickey := g.Keypair.PublicKey
@@ -48,40 +30,80 @@ func (g *Gossiper)RequestJoining(other string, clusterID uint64){
 		PublicKey: publickey,
 	}
 
-	gp := GossipPacket{JoinRequest:&req}
+	gp := GossipPacket{JoinRequest: &req}
 	go g.SendTo(addr, gp)
 	//then the "voting" system starts
-	//TODO here wait for the reply....
 
-	if *g.Cluster.ClusterID == clusterID{
-		//Requesting to join our current cluster == update
-
-		return
-	}
-	var reply RequestReply
-	//reply <- g.ReplyChan
-	if !reply.Accepted{
-		g.PrintDeniedJoining(clusterID)
-		return
-	}
-
-	g.PrintAcceptJoiningID(reply.ClusterInformation)
-
-	g.Cluster = reply.ClusterInformation
-	//Start the heartbeatloop immediately
-	go g.HeartbeatLoop()
 
 }
 
-func (g *Gossiper)HandleRequest(message RequestMessage){
+
+func (g *Gossiper) HeartbeatLoop() {
+	for {
+
+		select {
+		case <-time.After(120 * time.Second):
+			log.Lvl2("Sending heartbeat")
+			//Todo broadcast to cluster
+			go g.SendBroadcast("")
+
+		case <-g.LeaveChan:
+			log.Lvl2("Leaving cluster")
+			return
+		}
+	}
+}
+
+func (g *Gossiper) LeaveCluster() {
+	//Stop the heartbeat loop
+	g.LeaveChan <- true
+	g.Cluster = clusters.Cluster{}
+	return
+}
+
+func (g *Gossiper) SendBroadcast(text string) {
+	enc := ies.Encrypt(g.Cluster.MasterKey, []byte(text))
+	bm := BroadcastMessage{
+		ClusterID: *g.Cluster.ClusterID,
+		Data:      enc,
+	}
+	gp := GossipPacket{Broadcast: &bm}
+
+	//Send to all member of the cluster.
+	//This does not need to be anonymized as an attacker can in any case know who is in a cluster by joining it..
+	for _, m := range g.Cluster.Members {
+		addr := g.FindPath(m)
+		err := g.SendTo(addr, gp)
+		if err != nil {
+			log.Error("Error while sending to ", m, " : ", err)
+		}
+	}
+}
+
+func (g *Gossiper) ReceiveBroadcast(message BroadcastMessage) {
+	decrypted := ies.Decrypt(g.Cluster.MasterKey, message.Data)
+	rumor := RumorMessage{}
+	err := protobuf.Decode(decrypted, &rumor)
+	if err != nil {
+		log.Error("Error decoding packet : ", err)
+	}
+	if rumor.Text != "" {
+		//print the message
+		g.PrintBroadcast(rumor)
+
+	}
+	//in any case add it to the map..
+	g.Cluster.HeartBeats[rumor.Origin] = true
+
+}
+func (g *Gossiper) ReceiveJoinRequest(message RequestMessage) {
 	_, ok := g.Cluster.PublicKeys[message.Origin]
 	if ok {
 		//its an update message.
 		log.Lvl2("Update message")
-		g.Cluster.PublicKeys[message.Origin]=message.PublicKey
+		g.Cluster.PublicKeys[message.Origin] = message.PublicKey
 
 	}
-
 
 	//TODO start e-voting protocol to decide if accept...
 
@@ -92,141 +114,115 @@ func (g *Gossiper)HandleRequest(message RequestMessage){
 		ClusterInformation: g.Cluster,
 	}
 
-	gp := GossipPacket{RequestReply:&reply}
+	gp := GossipPacket{RequestReply: &reply}
 	err := g.SendTo(g.FindPath(message.Origin), gp)
-	if err != nil{
-		log.Error("Error while sending reply to ", message.Origin , " : ", err )
+	if err != nil {
+		log.Error("Error while sending reply to ", message.Origin, " : ", err)
 	}
-
-
 
 	return
 }
-
-func (g *Gossiper)HeartbeatLoop(){
-	for {
-
-		select {
-		case <-time.After(120 * time.Second):
-			log.Lvl2("Sending heartbeat")
-			//Todo broadcast to cluster
-			go g.SendBroadcast("")
-
-
-
-		case <-g.LeaveChan:
-			log.Lvl2("LEaving cluster")
-			return
-		}
+func (g *Gossiper) ReceiveRequestReply(message RequestReply){
+	var reply RequestReply
+	//reply <- g.ReplyChan
+	if !reply.Accepted {
+		g.PrintDeniedJoining(*message.ClusterInformation.ClusterID)
+		return
 	}
+
+	g.PrintAcceptJoiningID(reply.ClusterInformation)
+
+	g.Cluster = reply.ClusterInformation
+	//Start the heartbeatloop immediately
+	go g.HeartbeatLoop()
 }
 
-func (g *Gossiper)LeaveCluster(){
-	//Stop the heartbeat loop
-	g.LeaveChan <- true
-	g.Cluster = clusters.Cluster{}
-	return
-}
-
-
-
-func (g *Gossiper)SendBroadcast(text string){
-	enc := ies.Encrypt(g.Cluster.MasterKey, []byte(text))
-	bm := BroadcastMessage{
-		ClusterID: *g.Cluster.ClusterID,
-		Data:      enc,
-	}
-	gp := GossipPacket{Broadcast:&bm}
-
-	//Send to all member of the cluster.
-	//This does not need to be anonymized as an attacker can in any case know who is in a cluster by joining it..
-	for _ , m := range g.Cluster.Members{
-		addr := g.FindPath(m)
-		err := g.SendTo(addr, gp)
-		if err != nil{
-			log.Error("Error while sending to " , m, " : " , err )
-		}
-	}
-}
-func (g *Gossiper)ReceiveBroadcast(message BroadcastMessage){
-	decrypted := ies.Decrypt(g.Cluster.MasterKey, message.Data)
-	rumor := RumorMessage{}
-	err := protobuf.Decode(decrypted, &rumor)
-	if err != nil{
-		log.Error("Error decoding packet : ", err )
-	}
-	if rumor.Text != ""{
-		//print the message
-		g.PrintBroadcast(rumor)
-
-	}
-	//in any case add it to the map..
-	g.Cluster.HeartBeats[rumor.Origin] = true
-
-}
-
-func (g *Gossiper)MasterKeyGen()ies.PublicKey{
-	cl := g.Cluster
-	kp , err := ies.GenerateKeyPair()
-	if err != nil{
-		log.Error("Could not generate key pair :" , err)
-	}
-
-	//need to "announce" this is the new master key to the cluster.
-	err = cl.AnnounceNewMasterKey(g, &kp.PublicKey)
-	if err != nil{
-		log.Error("Could not announce new master key : ", err)
-	}
-
-	return kp.PublicKey
-}
 
 //Initiate the key rollout. Assume that the leader has been elected and he calls this method.
-func (g *Gossiper)KeyRollout(leader string){
+func (g *Gossiper) KeyRollout(leader string) {
 	//Send a new key pair to the "leader"
 	g.Cluster.PublicKeys = make(map[string]ies.PublicKey)
 	g.Cluster.HeartBeats = make(map[string]bool)
 
-	go func(){
+	go func() {
 		var err error
-		g.Keypair , err = ies.GenerateKeyPair()
-		if err != nil{
-			log.Error("Could not generate new keypair : " , err )
+		g.Keypair, err = ies.GenerateKeyPair()
+		if err != nil {
+			log.Error("Could not generate new keypair : ", err)
 		}
-		//Request to join
-		g.RequestJoining(leader, *g.Cluster.ClusterID)
+		if leader == g.Name {
+			//Request to join
+			go g.RequestJoining(leader, *g.Cluster.ClusterID)
+		}
+		g.Cluster.PublicKeys[g.Name] = g.Keypair.PublicKey
+
 	}()
 
 	//leader does the rest.
-	if leader == g.Name{
+	if leader == g.Name {
 
 		//Check who is still in the cluster.
 		var nextMembers []string
-		for _ , m := range g.Cluster.Members{
+		for _, m := range g.Cluster.Members {
 			flag, ok := g.Cluster.HeartBeats[m]
 			if !ok || !flag {
 				//he wants to be removed
-				log.Lvl3("Removing : ", m , " from cluster")
+				log.Lvl3("Removing : ", m, " from cluster")
 				delete(g.Cluster.PublicKeys, m)
-			}else{
-				nextMembers = append(nextMembers, m )
+			} else {
+				nextMembers = append(nextMembers, m)
 			}
 		}
-		log.Lvl3("New members for this key rollout : " , nextMembers)
+		log.Lvl3("New members for this key rollout : ", nextMembers)
 
 		//Check if received all the keys from them
-		for{
-			<- time.After(time.Second)
-			if len(g.Cluster.PublicKeys) == len(nextMembers){
+		for {
+			<-time.After(time.Second)
+			if len(g.Cluster.PublicKeys) == len(nextMembers) {
 				//we got all the maps we can generate the master key and return
 				g.Cluster.MasterKey = g.MasterKeyGen()
 				return
 			}
 		}
 
-
 	}
 
+}
 
 
+
+func (g *Gossiper) MasterKeyGen() ies.PublicKey {
+	kp, err := ies.GenerateKeyPair()
+	if err != nil {
+		log.Error("Could not generate key pair :", err)
+	}
+
+	//need to "announce" this is the new master key to the cluster.
+	err = AnnounceNewMasterKey(g, &kp.PublicKey)
+	if err != nil {
+		log.Error("Could not announce new master key : ", err)
+	}
+
+	return kp.PublicKey
+}
+func AnnounceNewMasterKey(g *Gossiper, public *ies.PublicKey) error {
+	cluster := g.Cluster
+	data := []byte(*public)
+
+	for _, member := range cluster.Members {
+		//send them the new master key using the previous master key
+		if member == g.Name {
+			continue
+		}
+		addr := g.FindPath(member)
+		cipher := ies.Encrypt(cluster.MasterKey, data)
+		bc := BroadcastMessage{
+			ClusterID: *cluster.ClusterID,
+			Data:      cipher,
+		}
+		gp := GossipPacket{Broadcast: &bc}
+		go g.SendTo(addr, gp)
+	}
+
+	return nil
 }

@@ -24,30 +24,27 @@ type GossipPacket struct {
 	TLCMessage *TLCMessage
 	Ack        *TLCAck
 
+	Broadcast *BroadcastMessage
 
-	Broadcast  *BroadcastMessage
-
-	JoinRequest *RequestMessage
+	JoinRequest  *RequestMessage
 	RequestReply *RequestReply
 }
 
 /***********DIFFERENT TYPES OF MESSAGES -******************/
 type BroadcastMessage struct {
 	ClusterID uint64
-	Data []byte
+	Data      []byte
 }
 
 type RequestMessage struct {
-	Origin string
+	Origin    string
 	PublicKey ies.PublicKey
-
 }
 
-type RequestReply struct{
-	Accepted bool
+type RequestReply struct {
+	Accepted           bool
 	ClusterInformation clusters.Cluster
 }
-
 
 //SimpleMessage
 type SimpleMessage struct {

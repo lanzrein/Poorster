@@ -145,6 +145,7 @@ type Gossiper struct {
 	Keypair   *ies.KeyPair
 	Cluster   clusters.Cluster
 	LeaveChan chan bool
+	Keys      map[string]ies.PublicKey
 }
 
 //TimeMapping the mapping of the time <-> id for each known gossiper.

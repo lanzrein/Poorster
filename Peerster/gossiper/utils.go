@@ -4,6 +4,8 @@ package gossiper
 
 import (
 	"bytes"
+	"crypto/rand"
+	"encoding/binary"
 	"go.dedis.ch/onet/log"
 	"net"
 	"sort"
@@ -382,4 +384,19 @@ func GenerateSlice(max int) []uint64 {
 		i++
 	}
 	return res
+}
+
+
+func GenerateId() *uint64 {
+	array := make([]byte, 8)
+	_, err := rand.Read(array)
+	if err != nil {
+		panic(err)
+	}
+	id := new(uint64)
+	err = binary.Read(bytes.NewBuffer(array), binary.LittleEndian, id)
+	if err != nil {
+		panic(err)
+	}
+	return id
 }

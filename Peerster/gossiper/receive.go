@@ -86,7 +86,17 @@ func (g *Gossiper) Receive(pckt GossipPacket, addr net.UDPAddr, errChan chan err
 	} else if pckt.Ack != nil {
 		log.Lvl2("Got an ack ")
 		g.ReceiveAck(pckt.Ack)
+	} else if pckt.JoinRequest != nil {
+		log.Lvl1("Got a join request")
+		g.ReceiveJoinRequest(*pckt.JoinRequest)
+	} else if pckt.RequestReply != nil {
+		log.Lvl1("Got a request reply !")
+		g.ReceiveRequestReply(*pckt.RequestReply)
+	} else if pckt.Broadcast != nil {
+		log.Lvl1("Got a broadcast reply !")
+		g.ReceiveBroadcast(*pckt.Broadcast)
 	} else {
+
 		//should not happen !
 		errChan <- errors.New("Empty packet.")
 		return

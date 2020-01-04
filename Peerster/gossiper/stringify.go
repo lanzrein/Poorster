@@ -234,18 +234,16 @@ func (g *Gossiper) PrintAdvanceToNextRound(witnesses []*TLCMessage) {
 	g.WriteToBuffer(s)
 }
 
-
-
-func (g *Gossiper)PrintDeniedJoining(clusterID uint64){
+func (g *Gossiper) PrintDeniedJoining(clusterID uint64) {
 	s := fmt.Sprintf("REQUEST TO JOIN %d DENIED\n", clusterID)
 	fmt.Print(s)
 	g.WriteToBuffer(s)
 }
 
-func (g *Gossiper)PrintAcceptJoiningID(cluster clusters.Cluster){
+func (g *Gossiper) PrintAcceptJoiningID(cluster clusters.Cluster) {
 	s := fmt.Sprintf("REQUEST TO JOIN %D ACCEPTED. CURRENT MEMBERS : ", cluster.ClusterID)
-	for i, member := range cluster.Members{
-		s+= fmt.Sprintf("%s", member)
+	for i, member := range cluster.Members {
+		s += fmt.Sprintf("%s", member)
 		if i < len(cluster.Members)-1 {
 			s += fmt.Sprint(",")
 		}
@@ -256,8 +254,7 @@ func (g *Gossiper)PrintAcceptJoiningID(cluster clusters.Cluster){
 	g.WriteToBuffer(s)
 }
 
-
-func (g *Gossiper)PrintBroadcast(message RumorMessage){
+func (g *Gossiper) PrintBroadcast(message RumorMessage) {
 	s := fmt.Sprint("Broadcast origin ", message.Origin, " contents ", message.Text, "\n")
 	g.WriteToBuffer(s)
 	fmt.Print(s)

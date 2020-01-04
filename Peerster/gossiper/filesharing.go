@@ -241,7 +241,6 @@ func (g *Gossiper) AddMetaData(data *MetaData) {
 	defer g.metalock.mu.Unlock()
 	sha := hex.EncodeToString(data.MetaHash)
 
-
 	log.Lvl2("Adding file : ", data.Name, " with metahash : ", sha)
 
 	for _, md := range g.metalock.data {

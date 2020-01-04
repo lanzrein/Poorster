@@ -112,10 +112,12 @@ func NewGossiper(Name string, UIPort string, gossipAddr string, gossipers string
 		RunningConfirmation: false,
 		TimeMapping:         TimeMapping{sync.Mutex{}, make(map[string][]uint32)},
 
-		Keys:keys ,
+		Keys: keys,
 	}
 
-	return gossiper, nil
+	err = gossiper.GenerateKeys()
+
+	return gossiper, err
 }
 
 //Run The main method of the gossiper. Call it to run the gossiper.
