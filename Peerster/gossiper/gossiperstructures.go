@@ -260,3 +260,4 @@ func (g *Gossiper) GetVectorClock() *StatusPacket {
 	sp.Want = g.PeerLogList()
 	return sp
 }
+

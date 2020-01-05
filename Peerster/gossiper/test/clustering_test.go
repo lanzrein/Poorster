@@ -6,6 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"go.dedis.ch/onet/log"
 	"testing"
+	"time"
 )
 
 func TestInitializedCluster(t *testing.T) {
@@ -30,18 +31,47 @@ func TestInitializedCluster(t *testing.T) {
 }
 
 func TestJoinCluster(t *testing.T) {
-	g1, err := gossiper.NewGossiper("A", "8080", "127.0.0.1:5000", "", false, 10, "8000", 10, 2, 5, false, 10, false)
+	g1, err := gossiper.NewGossiper("A", "8080", "127.0.0.1:5000", "127.0.0.1:5001", false, 10, "8000", 10, 2, 5, false, 10, false)
 	if err != nil {
 		t.Fatal(err)
 	}
 	//suppose an other gossiper g2
-	g2, err := gossiper.NewGossiper("B", "8081", "127.0.0.1:5001", "", false, 10, "8001", 10, 2, 5, false, 10, false)
+	g2, err := gossiper.NewGossiper("B", "8081", "127.0.0.1:5001", "127.0.0.1:5001", false, 10, "8001", 10, 2, 5, false, 10, false)
 	if err != nil {
 		t.Fatal(err)
+	}
+	go func() {
+		g1.Run()
+	}()
+	go func(){
+		g2.Run()
+	}()
+	for g1.FindPath(g2.Name) == ""{
+		log.Warn("Path not established yet. Waiting 5 more seconds")
+		<-time.After((5*time.Second))
 	}
 	//G1 joins a cluster...
 	g1.InitCluster()
 	//G2 asks to join it..
 	g2.RequestJoining(g1.Name, *g1.Cluster.ClusterID)
+	<- time.After(3*time.Second)
+	log.Lvl1("Checking if g2 joined the cluster.")
+
+	c2 := g2.Cluster
+	c1 := g1.Cluster
+	assert.Equal(t, c1.ClusterID, c2.ClusterID)
+	assert.Equal(t, c1.MasterKey, c2.MasterKey)
+	assert.Equal(t,c1.Members, c2.Members)
+	assert.Equal(t, c1.PublicKeys, c2.PublicKeys)
 
 }
+
+
+func TestBroadcastCluster(t *testing.T){
+	//Test the broadcasting in the cluster TODO
+}
+
+func TestLeavingCluster(t *testing.T){
+	//Test if member leave the cluster properly. TODO
+}
+

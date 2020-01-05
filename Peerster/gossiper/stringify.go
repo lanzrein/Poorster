@@ -241,7 +241,7 @@ func (g *Gossiper) PrintDeniedJoining(clusterID uint64) {
 }
 
 func (g *Gossiper) PrintAcceptJoiningID(cluster clusters.Cluster) {
-	s := fmt.Sprintf("REQUEST TO JOIN %D ACCEPTED. CURRENT MEMBERS : ", cluster.ClusterID)
+	s := fmt.Sprintf("REQUEST TO JOIN %d ACCEPTED. CURRENT MEMBERS : ", cluster.ClusterID)
 	for i, member := range cluster.Members {
 		s += fmt.Sprintf("%s", member)
 		if i < len(cluster.Members)-1 {

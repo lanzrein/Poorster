@@ -19,5 +19,6 @@ func NewCluster(id *uint64, members []string, masterkey ies.PublicKey, publickey
 		Members:    members,
 		MasterKey:  masterkey,
 		PublicKeys: publickey,
+		HeartBeats: make(map[string]bool),
 	}
 }

@@ -109,13 +109,22 @@ func (g *Gossiper) ReceiveJoinRequest(message RequestMessage) {
 
 	//Once the decision has been taken we have the result..
 	//For now we always accept.
+
+	g.UpdateCluster(message)
+
 	reply := RequestReply{
 		Accepted:           true,
 		ClusterInformation: g.Cluster,
 	}
+	//Update the cluster with the new member info.
+
 
 	gp := GossipPacket{RequestReply: &reply}
-	err := g.SendTo(g.FindPath(message.Origin), gp)
+	addr := g.FindPath(message.Origin)
+	if addr == ""{
+		log.Error("Could not find the address")
+	}
+	err := g.SendTo(addr, gp)
 	if err != nil {
 		log.Error("Error while sending reply to ", message.Origin, " : ", err)
 	}
@@ -123,16 +132,15 @@ func (g *Gossiper) ReceiveJoinRequest(message RequestMessage) {
 	return
 }
 func (g *Gossiper) ReceiveRequestReply(message RequestReply){
-	var reply RequestReply
 	//reply <- g.ReplyChan
-	if !reply.Accepted {
+	if !message.Accepted {
 		g.PrintDeniedJoining(*message.ClusterInformation.ClusterID)
 		return
 	}
 
-	g.PrintAcceptJoiningID(reply.ClusterInformation)
+	g.PrintAcceptJoiningID(message.ClusterInformation)
 
-	g.Cluster = reply.ClusterInformation
+	g.Cluster = message.ClusterInformation
 	//Start the heartbeatloop immediately
 	go g.HeartbeatLoop()
 }
@@ -225,4 +233,11 @@ func AnnounceNewMasterKey(g *Gossiper, public *ies.PublicKey) error {
 	}
 
 	return nil
+}
+
+
+func (g *Gossiper) UpdateCluster(message RequestMessage) {
+	g.Cluster.Members = append(g.Cluster.Members, message.Origin)
+	g.Cluster.PublicKeys[message.Origin] = message.PublicKey
+	g.Cluster.HeartBeats[message.Origin] = true
 }
