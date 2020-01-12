@@ -142,10 +142,12 @@ type Gossiper struct {
 	TimeMapping TimeMapping
 
 	//Stuff for project
-	Keypair   *ies.KeyPair
-	Cluster   clusters.Cluster
-	LeaveChan chan bool
-	Keys      map[string]ies.PublicKey
+	Keypair       *ies.KeyPair
+	Cluster       clusters.Cluster
+	LeaveChan     chan bool
+	Keys          map[string]ies.PublicKey
+	HearbeatTimer int
+	RolloutTimer int //timer in seconds ~~ usually 300
 }
 
 //TimeMapping the mapping of the time <-> id for each known gossiper.
@@ -260,4 +262,5 @@ func (g *Gossiper) GetVectorClock() *StatusPacket {
 	sp.Want = g.PeerLogList()
 	return sp
 }
+
 

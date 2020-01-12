@@ -93,7 +93,7 @@ func (g *Gossiper) Receive(pckt GossipPacket, addr net.UDPAddr, errChan chan err
 		log.Lvl1("Got a request reply !")
 		g.ReceiveRequestReply(*pckt.RequestReply)
 	} else if pckt.Broadcast != nil {
-		log.Lvl1("Got a broadcast reply !")
+		log.Lvl1("Got a broadcast !")
 		g.ReceiveBroadcast(*pckt.Broadcast)
 	} else {
 

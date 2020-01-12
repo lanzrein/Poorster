@@ -3,7 +3,6 @@
 package gossiper
 
 import (
-	"github.com/JohanLanzrein/Peerster/clusters"
 	"github.com/JohanLanzrein/Peerster/ies"
 )
 
@@ -33,17 +32,24 @@ type GossipPacket struct {
 /***********DIFFERENT TYPES OF MESSAGES -******************/
 type BroadcastMessage struct {
 	ClusterID uint64
+	HopLimit  uint32
+	Destination string
 	Data      []byte
+	Rollout   bool
 }
 
 type RequestMessage struct {
 	Origin    string
+	Recipient string
 	PublicKey ies.PublicKey
 }
 
 type RequestReply struct {
 	Accepted           bool
-	ClusterInformation clusters.Cluster
+	Recipient string
+	ClusterID uint64
+	EphemeralKey []byte
+	ClusterInformation []byte
 }
 
 //SimpleMessage
