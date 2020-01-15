@@ -260,10 +260,8 @@ func (g *Gossiper) PrintBroadcast(message RumorMessage) {
 	fmt.Print(s)
 }
 
-
-
 func (g *Gossiper) PrintLeaveCluster() {
-	s:= fmt.Sprintf("LEAVING cluster %d\n", g.Cluster.ClusterID)
+	s := fmt.Sprintf("LEAVING cluster %d\n", g.Cluster.ClusterID)
 	g.WriteToBuffer(s)
 	fmt.Print(s)
 }

@@ -112,9 +112,9 @@ func NewGossiper(Name string, UIPort string, gossipAddr string, gossipers string
 		RunningConfirmation: false,
 		TimeMapping:         TimeMapping{sync.Mutex{}, make(map[string][]uint32)},
 
-		Keys: keys,
-		RolloutTimer:DEFAULTROLLOUT,
-		HearbeatTimer:DEFAULTHEARTBEAT,
+		Keys:          keys,
+		RolloutTimer:  DEFAULTROLLOUT,
+		HearbeatTimer: DEFAULTHEARTBEAT,
 	}
 
 	err = gossiper.GenerateKeys()

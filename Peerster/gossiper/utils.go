@@ -386,7 +386,6 @@ func GenerateSlice(max int) []uint64 {
 	return res
 }
 
-
 func GenerateId() *uint64 {
 	array := make([]byte, 8)
 	_, err := rand.Read(array)
