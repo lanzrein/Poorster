@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/JohanLanzrein/Peerster/gossiper"
+	"github.com/JohanLanzrein/Peerster/ies"
 	"github.com/stretchr/testify/assert"
 	"go.dedis.ch/onet/log"
 	"testing"
@@ -113,7 +114,7 @@ func TestBroadcastCluster(t *testing.T) {
 	text := "Hello from g3!"
 	_, _ = g1.ReplyToClient()
 
-	g3.SendBroadcast(text)
+	g3.SendBroadcast(text, false )
 
 	<-time.After(3 * time.Second)
 	b1, err := g1.ReplyToClient()
@@ -161,7 +162,19 @@ func TestLeavingCluster(t *testing.T) {
 	assert.Equal(t, c1.Members, c2.Members)
 	assert.Equal(t, c1.PublicKeys, c2.PublicKeys)
 
+
 	g2.LeaveCluster()
+	<- time.After(6 * time.Second)
+	go func(){g1.KeyRollout(g1.Name)}()
+	<- time.After(4 * time.Second)
+	c1 = g1.Cluster
+	assert.Len(t, c1.Members, 1)
+	assert.Equal(t, c1.Members, []string{g1.Name})
+
+	//Check if g2.Cluster is clear..
+	c2 = g2.Cluster
+	assert.Nil(t, c2.ClusterID)
+
 	//todo
 }
 
@@ -198,11 +211,25 @@ func TestKeyRollout(t *testing.T) {
 	assert.Equal(t, c1.MasterKey, c2.MasterKey)
 	assert.Equal(t, c1.Members, c2.Members)
 	assert.Equal(t, c1.PublicKeys, c2.PublicKeys)
+	var old ies.PublicKey
+	copy(old, c1.MasterKey)
+	g2.SendBroadcast("Hello world", false )
 
-	<-time.After(10 * time.Second)
+	<-time.After(6 * time.Second)
 
 	go func() { g1.KeyRollout(g1.Name) }()
 	go func() { g2.KeyRollout(g1.Name) }()
+
+	<- time.After(3 * time.Second)
+	c1 = g1.Cluster
+	c2 = g2.Cluster
+	assert.Equal(t, c1.ClusterID, c2.ClusterID)
+	assert.Equal(t, c1.MasterKey, c2.MasterKey)
+	assert.Equal(t, c1.Members, c2.Members)
+	assert.Equal(t, c1.PublicKeys, c2.PublicKeys)
+	assert.NotEqual(t, old, c1.MasterKey)
+
+
 
 
 }

@@ -21,6 +21,7 @@ func (g *Gossiper) InitCluster() {
 	cluster := clusters.NewCluster(id, members, masterkey, publickey)
 
 	g.Cluster = cluster
+	go g.HeartbeatLoop()
 }
 
 func (g *Gossiper) RequestJoining(other string, clusterID uint64) {
@@ -45,14 +46,15 @@ func (g *Gossiper) HeartbeatLoop() {
 
 		select {
 		case <-time.After(time.Duration(g.HearbeatTimer) * time.Second):
-			log.Lvl1("Sending heartbeat")
-			go g.SendBroadcast("")
+			log.Lvl4(g.Name , "sending heartbeat")
+			g.Cluster.HeartBeats[g.Name] = true
+			go g.SendBroadcast("", false )
 
 		case <-g.LeaveChan:
-			log.Lvl2("Leaving cluster")
+			log.Lvl1("Leaving cluster")
 			return
 		case <-time.After(time.Duration(g.RolloutTimer) * time.Second):
-			log.Lvl2("Time for a rolllllllllout")
+			log.Lvl4("Time for a rolllllllllout")
 			g.KeyRollout(g.Cluster.Members[0]) //TODO for now its only the first member but in the future chose randomly
 
 		}
@@ -63,13 +65,15 @@ func (g *Gossiper) LeaveCluster() {
 	//Stop the heartbeat loop
 	g.PrintLeaveCluster()
 	g.LeaveChan <- true
+	g.RequestLeave()
+
 	g.Cluster = clusters.Cluster{}
 	//Send a message saying we want to leave.
 	log.Lvl2("Sending leave message..TODO")
 	return
 }
 
-func (g *Gossiper) SendBroadcast(text string) {
+func (g *Gossiper) SendBroadcast(text string, leave bool ) {
 	rumor := RumorMessage{
 		Origin: g.Name,
 		ID:     0,
@@ -87,6 +91,7 @@ func (g *Gossiper) SendBroadcast(text string) {
 		HopLimit:    g.HopLimit,
 		Destination: "",
 		Data:        enc,
+		LeaveRequest:leave,
 	}
 	gp := GossipPacket{Broadcast: &bm}
 
@@ -129,21 +134,35 @@ func (g *Gossiper) ReceiveBroadcast(message BroadcastMessage) {
 
 		if message.Rollout {
 			//Update for a rollout.
+			log.Lvl2(g.Name, " received message for rollout")
 			cluster := clusters.Cluster{}
 			data := ies.Decrypt(g.Cluster.MasterKey, message.Data)
 			err := protobuf.Decode(data, &cluster)
 			if err != nil {
-				log.Error("Could not decode rollout info ")
+				log.Error("Could not decode rollout info ", err )
 			}
 
 			g.UpdateFromRollout(cluster)
 
-		} else {
+		} else if message.LeaveRequest{
+			log.Lvl1("Got leave request")
 			decrypted := ies.Decrypt(g.Cluster.MasterKey, message.Data)
-			rumor := RumorMessage{}
+			var rumor RumorMessage
 			err := protobuf.Decode(decrypted, &rumor)
 			if err != nil {
-				log.Error(g.Name, "Error decoding packet : ", err)
+				log.Error(g.Name, "Error decoding packet : ", err, "This may be due to an ongoing rollout.")
+				return
+			}
+
+			g.Cluster.HeartBeats[rumor.Origin] = false
+			delete(g.Cluster.PublicKeys,rumor.Origin)
+		} else {
+			decrypted := ies.Decrypt(g.Cluster.MasterKey, message.Data)
+			var rumor RumorMessage
+			err := protobuf.Decode(decrypted, &rumor)
+			if err != nil {
+				log.Error(g.Name, "Error decoding packet : ", err, "This may be due to an ongoing rollout.")
+				return
 			}
 			if rumor.Text != "" && rumor.Origin != g.Name {
 				//print the message
@@ -174,11 +193,14 @@ func (g *Gossiper) ReceiveJoinRequest(message RequestMessage) {
 		return
 	}
 
-	_, ok := g.Cluster.PublicKeys[message.Origin]
+
+
+	_, ok := g.Cluster.HeartBeats[message.Origin]
 	if ok {
 		//its an update message.
-		log.Lvl2("Update message")
+		log.Lvl2(g.Name , " got an update message")
 		g.Cluster.PublicKeys[message.Origin] = message.PublicKey
+		return
 
 	}
 
@@ -259,6 +281,9 @@ func (g *Gossiper) KeyRollout(leader string) {
 
 	var err error
 	g.Keypair, err = ies.GenerateKeyPair()
+	g.Cluster.PublicKeys = make(map[string]ies.PublicKey)
+
+
 	if err != nil {
 		log.Error("Could not generate new keypair : ", err)
 	}
@@ -270,6 +295,8 @@ func (g *Gossiper) KeyRollout(leader string) {
 			<-time.After(time.Second)
 			go g.RequestJoining(leader, *g.Cluster.ClusterID)
 		}
+		g.Cluster.PublicKeys[g.Name] = g.Keypair.PublicKey
+
 
 	}()
 
@@ -282,25 +309,29 @@ func (g *Gossiper) KeyRollout(leader string) {
 			flag, ok := g.Cluster.HeartBeats[m]
 			if !ok || !flag {
 				//he wants to be removed
-				log.Lvl3("Removing : ", m, " from cluster")
+				log.Lvl1("Removing : ", m, " from cluster")
 				delete(g.Cluster.PublicKeys, m)
 			} else {
+				log.Lvl1("Staying in cluster ", m)
 				nextMembers = append(nextMembers, m)
 			}
 
-			g.Cluster.PublicKeys[g.Name] = g.Keypair.PublicKey
+
 
 		}
-
 		g.Cluster.Members = nextMembers
-		log.Lvl3("New members for this key rollout : ", nextMembers)
+		log.Lvl2("New members for this key rollout : ", nextMembers)
 
 		//Check if received all the keys from them
 		for {
 			<-time.After(time.Second)
 			if len(g.Cluster.PublicKeys) == len(nextMembers) {
 				//we got all the maps we can generate the master key and return
-				g.Cluster.MasterKey = g.MasterKeyGen()
+				log.Lvl2("Got all the members needed")
+				err := g.AnnounceNewMasterKey()
+				if err != nil{
+					log.Error("Could not announce master key : ", err )
+				}
 				return
 			}
 		}
@@ -315,24 +346,20 @@ func (g *Gossiper) MasterKeyGen() ies.PublicKey {
 		log.Error("Could not generate key pair :", err)
 	}
 
-	//need to "announce" this is the new master key to the cluster.
-
-	err = AnnounceNewMasterKey(g, &g.Cluster.MasterKey, &kp.PublicKey)
-	if err != nil {
-		log.Error("Could not announce new master key : ", err)
-	}
-
 	return kp.PublicKey
 }
 
-func AnnounceNewMasterKey(g *Gossiper, old *ies.PublicKey, new *ies.PublicKey) error {
-	g.Cluster.MasterKey = *new
+func (g *Gossiper) AnnounceNewMasterKey() error {
+	old := g.Cluster.MasterKey
+	g.Cluster.MasterKey = g.MasterKeyGen()
+
 	cluster := g.Cluster
 	data, err := protobuf.Encode(&cluster)
 	if err != nil {
 		log.Error("Could not encode cluster :", err)
 		return err
 	}
+	cipher := ies.Encrypt(old, data)
 
 	for _, member := range cluster.Members {
 		//send them the new master key using the previous master key
@@ -341,9 +368,9 @@ func AnnounceNewMasterKey(g *Gossiper, old *ies.PublicKey, new *ies.PublicKey) e
 		}
 		addr := g.FindPath(member)
 
-		cipher := ies.Encrypt(*old, data)
 		bc := BroadcastMessage{
 			ClusterID: *cluster.ClusterID,
+			Destination:member ,
 			HopLimit:  10,
 			Rollout:   true,
 			Data:      cipher,
@@ -362,9 +389,14 @@ func (g *Gossiper) UpdateCluster(message RequestMessage) {
 }
 
 func (g *Gossiper) UpdateFromRollout(cluster clusters.Cluster) {
-	log.Lvl1("Update information form a new cluster :O ")
+	log.Lvl3("Update information form a new cluster :O ")
 
 	g.Cluster = cluster
 	g.Cluster.HeartBeats = make(map[string]bool)
 
+}
+
+
+func (g *Gossiper) RequestLeave() {
+	g.SendBroadcast("", true)
 }

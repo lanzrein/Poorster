@@ -115,6 +115,7 @@ func NewGossiper(Name string, UIPort string, gossipAddr string, gossipers string
 		Keys:          keys,
 		RolloutTimer:  DEFAULTROLLOUT,
 		HearbeatTimer: DEFAULTHEARTBEAT,
+		LeaveChan:make(chan bool),
 	}
 
 	err = gossiper.GenerateKeys()

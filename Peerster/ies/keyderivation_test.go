@@ -65,15 +65,14 @@ func TestEncryptDecrypt(t *testing.T) {
 	elapsed = time.Since(now)
 	log.Lvl1("Shared keys are equal.\nCompared keys in :", elapsed)
 
-	msg := "Hello peerster ! "
-	cipher := Encrypt(shared1, []byte(msg))
+	data := []byte{10,1,66,16,0,26,0}
+	cipher := Encrypt(shared1, data)
 
 	log.Lvlf1("Cipher text : %x", cipher)
 	pt := Decrypt(shared2, cipher)
-	log.Lvl1("Resulting cleartext : ", string(pt))
-	log.Lvlf1("original : %x, pt : %x ", []byte(msg), pt)
-	//todo here it says that we do not have matching ciphers. but they are...
-	if subtle.ConstantTimeCompare(pt, []byte(msg)) != 1 {
+	log.Lvl1("Resulting cleartext : ", pt)
+	log.Lvlf1("original : %x, pt : %x ", data, pt)
+	if subtle.ConstantTimeCompare(pt, data) != 1 {
 		t.Fatal("Error resulting plaintext does not match ! ")
 	}
 }

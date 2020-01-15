@@ -18,6 +18,7 @@ type PublicKey []byte
 const IVLEN = 16
 
 func Encrypt(key []byte, msg []byte) []byte {
+	trZeros := TrailingZeros(msg)
 	blockcipher, err := aes.NewCipher(key)
 	if err != nil {
 		panic(err)
@@ -36,14 +37,27 @@ func Encrypt(key []byte, msg []byte) []byte {
 	cbc.CryptBlocks(ciphertext, pt)
 	var buf bytes.Buffer
 	buf.Write(iv)
+	buf.WriteByte(trZeros)
 	buf.Write(ciphertext)
 	return buf.Bytes()
 
 }
+//Computes trailing zeros of a message. max 255
+func TrailingZeros(msg []byte) byte{
+	cnt := byte(0)
+	for i := len(msg) - 1 ; i >= 0; i -- {
+		if msg[i] != 0 {
+			return cnt
+		}
+		cnt ++
+	}
+	return 255
+}
 
 func Decrypt(key []byte, msg []byte) []byte {
 	iv := msg[0:IVLEN]
-	ct := msg[IVLEN:]
+	trZeros := msg[IVLEN]
+	ct := msg[IVLEN+1:]
 	blockcipher, err := aes.NewCipher(key)
 	if err != nil {
 		panic(err)
@@ -52,6 +66,6 @@ func Decrypt(key []byte, msg []byte) []byte {
 	cbc := cipher.NewCBCDecrypter(blockcipher, iv)
 	cbc.CryptBlocks(pt, ct)
 	pt = bytes.TrimRight(pt, "\x00")
-
-	return pt
+	zeros := make([]byte, trZeros)
+	return append(pt, zeros...)
 }

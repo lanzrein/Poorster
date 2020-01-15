@@ -31,11 +31,12 @@ type GossipPacket struct {
 
 /***********DIFFERENT TYPES OF MESSAGES -******************/
 type BroadcastMessage struct {
-	ClusterID   uint64
-	HopLimit    uint32
-	Destination string
-	Data        []byte
-	Rollout     bool
+	ClusterID    uint64
+	HopLimit     uint32
+	Destination  string
+	Data         []byte
+	Rollout      bool
+	LeaveRequest bool
 }
 
 type RequestMessage struct {
