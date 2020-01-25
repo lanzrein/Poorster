@@ -6,8 +6,9 @@ import (
 	"bufio"
 	"encoding/hex"
 	"fmt"
-	"github.com/JohanLanzrein/Peerster/clusters"
 	"strings"
+
+	"github.com/JohanLanzrein/Peerster/clusters"
 )
 
 const test = false
@@ -126,6 +127,13 @@ func (g *Gossiper) DSDVPrint(peer string, addr string) {
 
 //PrintPrivateMessage prints a received private messages
 func (g *Gossiper) PrintPrivateMessage(message PrivateMessage) {
+	s := fmt.Sprint("PRIVATE origin ", message.Origin, " hop-limit ", message.HopLimit, " contents ", message.Text, "\n")
+	fmt.Print(s)
+	g.WriteToBuffer(s)
+}
+
+//PrintPrivateMessage prints a received private messages
+func (g *Gossiper) PrintAnonymousPrivateMessage(message PrivateMessage) {
 	s := fmt.Sprint("PRIVATE origin ", message.Origin, " hop-limit ", message.HopLimit, " contents ", message.Text, "\n")
 	fmt.Print(s)
 	g.WriteToBuffer(s)
@@ -266,7 +274,7 @@ func (g *Gossiper) PrintLeaveCluster() {
 	fmt.Print(s)
 }
 
-func (g *Gossiper) PrintInitCluster(){
+func (g *Gossiper) PrintInitCluster() {
 	s := fmt.Sprintf("INIT new cluster %d\n", g.Cluster.ClusterID)
 	g.WriteToBuffer(s)
 	fmt.Print(s)

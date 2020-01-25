@@ -3,11 +3,12 @@ package gossiper
 import (
 	"encoding/hex"
 	"encoding/json"
-	"go.dedis.ch/onet/log"
 	"io"
 	"net"
 	"net/http"
 	"strings"
+
+	"go.dedis.ch/onet/log"
 )
 
 //Some structures..
@@ -25,9 +26,9 @@ type PrivMessage struct {
 	Content     string
 }
 
-type ClusterMD struct{
+type ClusterMD struct {
 	Destination string
-	ClusterID uint64
+	ClusterID   uint64
 }
 
 // GetId /id entry point. returns the id of the gossiper.
@@ -62,7 +63,9 @@ func (g *Gossiper) GetMessages(w http.ResponseWriter, r *http.Request) {
 			Contents:      string(data),
 		}
 		errChan := make(chan error)
-		g.Receive(GossipPacket{Simple: &sm}, net.UDPAddr{}, errChan, true)
+		anonymous := false
+		anonLevel := 0.0
+		g.Receive(GossipPacket{Simple: &sm}, net.UDPAddr{}, errChan, true, anonymous, anonLevel)
 
 		tosend, err := g.ReplyToClient()
 		if err != nil {
@@ -272,7 +275,7 @@ func (g *Gossiper) FileSearchHandle(w http.ResponseWriter, r *http.Request) {
 }
 
 //FoundFileHandle download a previously found file.
-func (g *Gossiper)FoundFileHandle(w http.ResponseWriter, r *http.Request) {
+func (g *Gossiper) FoundFileHandle(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	if r.Method == "POST" {
 		log.Lvl3("Got a downloading request for found file")
@@ -299,8 +302,8 @@ func (g *Gossiper)FoundFileHandle(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func (g *Gossiper)InitClusterHandle(w http.ResponseWriter, r *http.Request){
-	log.Lvl3(g.Name , "Received init request...")
+func (g *Gossiper) InitClusterHandle(w http.ResponseWriter, r *http.Request) {
+	log.Lvl3(g.Name, "Received init request...")
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	if r.Method == "POST" {
 		data := make([]byte, r.ContentLength)
@@ -318,7 +321,7 @@ func (g *Gossiper)InitClusterHandle(w http.ResponseWriter, r *http.Request){
 	}
 }
 
-func (g *Gossiper)JoinClusterRequest(w http.ResponseWriter, r *http.Request){
+func (g *Gossiper) JoinClusterRequest(w http.ResponseWriter, r *http.Request) {
 	log.Lvl1(g.Name, "received join request.")
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	if r.Method == "POST" {
@@ -342,7 +345,7 @@ func (g *Gossiper)JoinClusterRequest(w http.ResponseWriter, r *http.Request){
 	}
 }
 
-func (g *Gossiper)LeaveClusterRequest(w http.ResponseWriter, r *http.Request){
+func (g *Gossiper) LeaveClusterRequest(w http.ResponseWriter, r *http.Request) {
 	log.Lvl1(g.Name, "leaving cluster!")
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	if r.Method == "POST" {
@@ -361,7 +364,7 @@ func (g *Gossiper)LeaveClusterRequest(w http.ResponseWriter, r *http.Request){
 	}
 }
 
-func (g *Gossiper)BroadcastMessageHandle(w http.ResponseWriter, r *http.Request){
+func (g *Gossiper) BroadcastMessageHandle(w http.ResponseWriter, r *http.Request) {
 	log.Lvl1("Broadcast message handle")
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	if r.Method == "POST" {
@@ -384,4 +387,3 @@ func (g *Gossiper)BroadcastMessageHandle(w http.ResponseWriter, r *http.Request)
 		g.SendBroadcast(message.Text, false)
 	}
 }
-

@@ -233,6 +233,8 @@ func (g *Gossiper) ReadFromPort(errChan chan error, conn net.UDPConn, client boo
 		packetBytes = packetBytes[:cnt]
 
 		packet := GossipPacket{}
+		anonymous := false
+		var anonLevel float64
 		//if its a client then decode the message and wrap it in gossip packet
 		if client {
 			log.Lvl3("Got message from client.")
@@ -284,14 +286,15 @@ func (g *Gossiper) ReadFromPort(errChan chan error, conn net.UDPConn, client boo
 					Contents:      msg.Text,
 				}}
 			}
-
+			anonymous = msg.Anonymous
+			anonLevel = msg.AnonimityLevel
 		} else {
 			log.Lvl3("Got message from ", sendingAddr.String())
 			_ = protobuf.Decode(packetBytes, &packet)
 		}
-		//give it to the receive routine
-		go g.Receive(packet, *sendingAddr, errChan, client)
 
+		//give it to the receive routine
+		go g.Receive(packet, *sendingAddr, errChan, client, anonymous, anonLevel)
 	}
 
 }
