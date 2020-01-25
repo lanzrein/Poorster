@@ -2,10 +2,11 @@
 package gossiper
 
 import (
-	"go.dedis.ch/onet/log"
-	"go.dedis.ch/protobuf"
 	"math/rand"
 	"net"
+
+	"go.dedis.ch/onet/log"
+	"go.dedis.ch/protobuf"
 
 	"time"
 )
@@ -179,7 +180,7 @@ func (g *Gossiper) SendToRandom(gp GossipPacket) {
 
 	err := g.SendTo(addr, gp)
 	if err != nil {
-		log.Errorf("Could not send packet to : ", addr, ", err : ", err)
+		log.Errorf("Could not send packet to : %s, err : %s\n", addr, err)
 
 	}
 	return

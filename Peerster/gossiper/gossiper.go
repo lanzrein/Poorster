@@ -4,13 +4,14 @@ package gossiper
 import (
 	"bufio"
 	"bytes"
-	"github.com/JohanLanzrein/Peerster/ies"
-	"go.dedis.ch/onet/log"
-	"go.dedis.ch/protobuf"
 	"math/rand"
 	"net"
 	"sync"
 	"time"
+
+	"github.com/JohanLanzrein/Peerster/ies"
+	"go.dedis.ch/onet/log"
+	"go.dedis.ch/protobuf"
 )
 
 //NewGossiper Create a new gossiper given the parameter.
@@ -115,7 +116,7 @@ func NewGossiper(Name string, UIPort string, gossipAddr string, gossipers string
 		Keys:          keys,
 		RolloutTimer:  DEFAULTROLLOUT,
 		HearbeatTimer: DEFAULTHEARTBEAT,
-		LeaveChan:make(chan bool),
+		LeaveChan:     make(chan bool),
 	}
 
 	err = gossiper.GenerateKeys()
@@ -138,8 +139,6 @@ func (g *Gossiper) Run() error {
 	go g.ReadFromPort(errChan, g.connClient, true)
 	//read from gossiper connection
 	go g.ReadFromPort(errChan, g.connNode, false)
-
-
 
 	if g.SimpleMode {
 		//just check for errors..

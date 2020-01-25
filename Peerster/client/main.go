@@ -18,21 +18,23 @@ func main() {
 	request := flag.String("request", "", "request a chunk or metafile of this hash")
 	keywords := flag.String("keywords", "", "Keywords for a file search")
 	budget := flag.Int("budget", -1, "Budget for a file search")
+	anonymous := flag.Bool("anonymous", false, "Indicates sending an anonymous message")
+	anonLevel := flag.Float64("anonLevel", 0.5, "Indicates probability of a peer relaying the message")
 	flag.Parse()
+
 	client := NewClient("127.0.0.1:" + *UIPort)
 	var err error
 	if *file != "" && *msg == "" {
 		if *request != "" && *dest != "" {
 			//file request
 			log.Lvl3("Downloading a file ")
-			err = client.RequestFile(file, dest, request)
-
+			err = client.RequestFile(file, dest, request, *anonymous, *anonLevel)
 		} else if *request == "" && *dest == "" {
 			log.Lvl3("Indexing a file to the gossiper")
 			err = client.SendFileToIndex(file)
 		} else if *request != "" && *dest == "" {
 			log.Lvl3("Downloading known file..")
-			err = client.RequestFile(file, nil, request)
+			err = client.RequestFile(file, nil, request, *anonymous, *anonLevel)
 		} else {
 			fmt.Print("ERROR (Bad argument combination)")
 			os.Exit(1)
@@ -41,7 +43,7 @@ func main() {
 
 		//send a private message
 		log.Lvl3("Sending private message ")
-		client.SendPrivateMsg(*msg, *dest)
+		client.SendPrivateMsg(*msg, *dest, *anonymous, *anonLevel)
 	} else if (*request == "" && *file == "") && *msg != "" {
 		//rumor message
 		log.Lvl3("rumor")

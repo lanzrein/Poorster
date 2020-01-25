@@ -27,6 +27,8 @@ type GossipPacket struct {
 
 	JoinRequest  *RequestMessage
 	RequestReply *RequestReply
+
+	AnonymousMsg *AnonymousMessage
 }
 
 /***********DIFFERENT TYPES OF MESSAGES -******************/
@@ -53,6 +55,18 @@ type RequestReply struct {
 	ClusterInformation []byte
 }
 
+/*AnonymousMessage
+		* EncryptedContent - GossipPacket encrypted with the receiver's public key
+		* Receiver - the name of the destination node
+		* AnonimityLevel - a number between 0 and 1, indicating the anonimity level of the message
+		*									 used for flipping a weighted coin by each relaying node
+*/
+type AnonymousMessage struct {
+	EncryptedContent 	[]byte
+	Receiver					string
+	AnonymityLevel		float64
+}
+
 //SimpleMessage
 type SimpleMessage struct {
 	OriginalName  string
@@ -69,6 +83,9 @@ type Message struct {
 	//Hw3 things
 	Budget   *uint64
 	Keywords *[]string
+	//Project - anonimity
+	Anonymous				bool
+	AnonimityLevel 	float64
 }
 
 //RumorMessage

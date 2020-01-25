@@ -33,13 +33,14 @@ func NewClient(str string) Client {
 
 //SendsMsg sends a txt message to the address of the client c
 //If an error arises it is returned by the function
-func (c *Client) SendMsg(txt string) error {
+func (c *Client) SendMsg(txt string, anonymous bool) error {
 
 	//encode message
 	log.Lvl3("Sending message : ", txt)
 	msg := gossiper.Message{
 		Text: txt,
 	}
+
 	packetBytes, err := protobuf.Encode(&msg)
 	if err != nil {
 		return err
@@ -54,8 +55,17 @@ func (c *Client) SendMsg(txt string) error {
 }
 
 //SendPrivateMsg sends a private message msg to the destination dest
-func (c *Client) SendPrivateMsg(msg string, dest string) {
-	toSend := gossiper.Message{Text: msg, Destination: &dest}
+func (c *Client) SendPrivateMsg(msg string, dest string, anonymous bool, anonLevel float64) {
+	toSend := gossiper.Message{
+		Text: msg,
+		Destination: &dest,
+		Anonymous: anonymous,
+	}
+
+	if anonymous {
+		toSend.AnonimityLevel = anonLevel
+	}
+
 	packetBytes, err := protobuf.Encode(&toSend)
 	if err != nil {
 		log.Error("Error could not encode message : ", err)
@@ -100,7 +110,7 @@ func (c *Client) SendFileToIndex(s *string) error {
 }
 
 //RequestFile request the file with name file from destination. the request is the MetaHash of the file.
-func (c *Client) RequestFile(file *string, destination *string, request *string) error {
+func (c *Client) RequestFile(file *string, destination *string, request *string, anonymous bool, anonLevel float64) error {
 	bytes, err := hex.DecodeString(*request)
 	if err != nil {
 		return errors.New("Unable to decode hex string")
@@ -111,7 +121,13 @@ func (c *Client) RequestFile(file *string, destination *string, request *string)
 		Destination: destination,
 		File:        file,
 		Request:     &bytes,
+		Anonymous:	 anonymous,
 	}
+
+	if anonymous {
+		tosend.AnonimityLevel = anonLevel
+	}
+
 	log.Lvl3("Sending to send : ", *tosend)
 	msg, err := protobuf.Encode(tosend)
 	if err != nil {
