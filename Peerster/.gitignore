@@ -1,0 +1,6 @@
+*.out
+_SharedFiles
+_Downloads
+*.exe
+Peerster
+client/client

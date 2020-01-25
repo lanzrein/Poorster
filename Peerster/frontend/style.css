@@ -1,0 +1,115 @@
+@font-face{
+    font-family: mono;
+    src: url(font/SourceCodePro-Medium.otf);
+}
+
+/* ::-webkit-scrollbar {
+    display: block;
+} */
+
+.chat{
+  padding: 10;
+  height: 100%;
+  width: 60%
+
+}
+
+.messages{
+  height: 70%;
+  width: 100%;
+  overflow-y: auto;
+}
+
+.private{
+  height: 100%;
+  width: 20%;
+
+}
+
+.inputarea{
+  /* width: 70%; */
+  height: 30%;
+  /* position: absolute; */
+  bottom: 0;
+  left: 0;
+}
+
+.NodeList{
+  flex: 20%;
+  padding: 10;
+}
+
+.addnodearea{
+  /* position: relative; */
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 20%;
+}
+
+body{
+  display: flex;
+  /* height : 100vh;
+  display : flex; */
+  /* justify-content: center;
+  align-items: center; */
+  height: 100%;
+  width: 100%;
+  padding : 0;
+  margin : 0;
+  font-family : mono;
+  /* hyphens: auto;
+  overflow-x: hidden;
+  overflow-y: hidden; */
+  background-color: 	#333333;
+  fill : white;
+  color: #ffffff;
+  border-color: #C0C0C0;
+}
+text {
+  fill : white
+}
+
+
+li{
+  border-style: double;
+}
+
+
+
+
+button{
+    font-family: mono;
+}
+button.selected{
+  border-radius: 2px;
+  border: dotted;
+}
+
+
+#privatepopup{
+  height: 60%;
+  width: 60%;
+  position: fixed;
+  top:0;
+  left:0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.4);
+  display: none;
+  margin:auto;
+}
+
+#clusterpopup{
+  height: 60%;
+  width: 60%;
+  position: fixed;
+  top:0;
+  left:0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.4);
+  display: none;
+  margin:auto;
+}
+
