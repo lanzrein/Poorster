@@ -21,6 +21,7 @@ func (g *Gossiper) InitCluster() {
 	cluster := clusters.NewCluster(id, members, masterkey, publickey)
 
 	g.Cluster = cluster
+	g.PrintInitCluster()
 	go g.HeartbeatLoop()
 }
 
@@ -395,7 +396,6 @@ func (g *Gossiper) UpdateFromRollout(cluster clusters.Cluster) {
 	g.Cluster.HeartBeats = make(map[string]bool)
 
 }
-
 
 func (g *Gossiper) RequestLeave() {
 	g.SendBroadcast("", true)

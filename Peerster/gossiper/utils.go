@@ -12,7 +12,7 @@ import (
 	"strings"
 )
 
-const DEBUGLEVEL = 1
+const DEBUGLEVEL = 4
 
 //Contains check if e is in xs
 func Contains(xs []string, e string) bool {

@@ -48,10 +48,21 @@ $(document).ready(function(){
 
   $("li[id=file]").dblclick(searchedfiledownload);
   $("#search_btn").click(SearchFile);
+
+
+  //project
+
+  $("#clusterbutton").click(showclusterpannel);
+  $("#closecluster").click(closeclusterpannel);
+
+  $("#initcluster").click(InitCluster);
   //request the node ID
   requestNodeId();
   // //loop and request data sometimes.
   loop();
+
+
+
 
 });
 
@@ -188,6 +199,14 @@ function showprivate(){
   $("#receiver").text(destination);
   $("#privatepopup").show();
 
+}
+
+function showclusterpannel(){
+  $("#clusterpopup").show();
+}
+
+function closeclusterpannel(){
+  $("#clusterpopup").hide();
 }
 
 /**

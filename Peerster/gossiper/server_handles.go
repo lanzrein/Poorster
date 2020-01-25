@@ -25,6 +25,11 @@ type PrivMessage struct {
 	Content     string
 }
 
+type ClusterMD struct{
+	Destination string
+	ClusterID uint64
+}
+
 // GetId /id entry point. returns the id of the gossiper.
 func (g *Gossiper) GetId(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
@@ -267,7 +272,7 @@ func (g *Gossiper) FileSearchHandle(w http.ResponseWriter, r *http.Request) {
 }
 
 //FoundFileHandle download a previously found file.
-func (g *Gossiper) FoundFileHandle(w http.ResponseWriter, r *http.Request) {
+func (g *Gossiper)FoundFileHandle(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	if r.Method == "POST" {
 		log.Lvl3("Got a downloading request for found file")
@@ -293,3 +298,90 @@ func (g *Gossiper) FoundFileHandle(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 }
+
+func (g *Gossiper)InitClusterHandle(w http.ResponseWriter, r *http.Request){
+	log.Lvl3(g.Name , "Received init request...")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	if r.Method == "POST" {
+		data := make([]byte, r.ContentLength)
+		cnt, err := r.Body.Read(data)
+		if cnt != len(data) {
+			log.Lvl3("Could not read all data")
+		}
+
+		log.Lvl3("Data is : ", string(data))
+		if err != nil && err != io.EOF {
+			log.Error("Error on reading data : ", err)
+		}
+		g.InitCluster()
+
+	}
+}
+
+func (g *Gossiper)JoinClusterRequest(w http.ResponseWriter, r *http.Request){
+	log.Lvl1(g.Name, "received join request.")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	if r.Method == "POST" {
+		data := make([]byte, r.ContentLength)
+		cnt, err := r.Body.Read(data)
+		if cnt != len(data) {
+			log.Lvl3("Could not read all data")
+		}
+
+		log.Lvl3("Data is : ", string(data))
+		if err != nil && err != io.EOF {
+			log.Error("Error on reading data : ", err)
+		}
+
+		clusterMD := new(ClusterMD)
+		err = json.Unmarshal(data, clusterMD)
+		if err != nil {
+			log.Error("Could not unmarshal message : ", err)
+		}
+		g.RequestJoining(clusterMD.Destination, clusterMD.ClusterID)
+	}
+}
+
+func (g *Gossiper)LeaveClusterRequest(w http.ResponseWriter, r *http.Request){
+	log.Lvl1(g.Name, "leaving cluster!")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	if r.Method == "POST" {
+		data := make([]byte, r.ContentLength)
+		cnt, err := r.Body.Read(data)
+		if cnt != len(data) {
+			log.Lvl3("Could not read all data")
+		}
+
+		log.Lvl3("Data is : ", string(data))
+		if err != nil && err != io.EOF {
+			log.Error("Error on reading data : ", err)
+		}
+
+		g.LeaveCluster()
+	}
+}
+
+func (g *Gossiper)BroadcastMessageHandle(w http.ResponseWriter, r *http.Request){
+	log.Lvl1("Broadcast message handle")
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	if r.Method == "POST" {
+		data := make([]byte, r.ContentLength)
+		cnt, err := r.Body.Read(data)
+		if cnt != len(data) {
+			log.Lvl3("Could not read all data")
+		}
+
+		log.Lvl3("Data is : ", string(data))
+		if err != nil && err != io.EOF {
+			log.Error("Error on reading data : ", err)
+		}
+
+		message := new(PrivateMessage)
+		err = json.Unmarshal(data, message)
+		if err != nil {
+			log.Error("Could not unmarshal message : ", err)
+		}
+		g.SendBroadcast(message.Text, false)
+	}
+}
+

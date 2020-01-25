@@ -23,6 +23,8 @@ func LoadServer(g *Gossiper) {
 	//Hw3 handlers
 	http.HandleFunc("/searchfile", g.FileSearchHandle)
 	http.HandleFunc("/downloadfoundfile", g.FoundFileHandle)
+	//project handlers
+	http.HandleFunc("/initcluster", g.InitClusterHandle)
 
 	http.Handle("/", http.FileServer(http.Dir("./frontend")))
 	for {

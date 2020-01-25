@@ -265,3 +265,9 @@ func (g *Gossiper) PrintLeaveCluster() {
 	g.WriteToBuffer(s)
 	fmt.Print(s)
 }
+
+func (g *Gossiper) PrintInitCluster(){
+	s := fmt.Sprintf("INIT new cluster %d\n", g.Cluster.ClusterID)
+	g.WriteToBuffer(s)
+	fmt.Print(s)
+}

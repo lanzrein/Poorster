@@ -1,6 +1,8 @@
  <link id="stylesheet" rel="stylesheet" href="style.css">
  <script src="jquery.js"></script>
+ <script src="cluster.js"></script>
  <script src="handle.js"></script>
+
 
 
 <title>Peerster's web interface </title>
@@ -13,7 +15,7 @@
   <div class="inputarea" >
     <textarea style="width:100%" id="message"type="text" rows="8" cols="80"></textarea>
     <button type="button" id="sendmsg" style="width:20%">Send message !</button>
-    <p>Node ID : <span id="nodeid"></span></p>
+    <p>Node ID : <span id="nodeid"></span>    <button type="button" id="clusterbutton">Cluster pannel</button> </p>
 
 
   </div>
@@ -78,3 +80,21 @@
   <textarea style="width:100%;"id="privatecontent" rows="8" cols="80"></textarea>
   <button type="button" id="sendprivate">Send message!</button>
 </div>
+
+
+<div id="clusterpopup">
+  <button type ="button" id="initcluster">Init new cluster</button>
+  <button type="button" id="leavecluster">Leave current cluster</button>
+  <button type="button" id="closecluster" style="position: absolute;top: 10px;right: 10px;"> Close </button>
+
+  <ul id="clustermembers">
+<!-- TODO here need to do the handler -->
+  </ul>
+
+  <textarea style="width:100%;" id="broadcastcontent" rows="8" cols="80"></textarea>
+  <button type="button" id="sendbroadcast">Send broadcast</button>
+
+
+</div>
+
+
