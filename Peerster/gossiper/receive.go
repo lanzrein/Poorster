@@ -227,6 +227,7 @@ func (g *Gossiper) ReceiveSimpleMessage(client bool, pckt GossipPacket, errChan 
 
 func (g *Gossiper) ReceiveAnonymousMessage(packet GossipPacket, errChan chan error) {
 	anon := *packet.AnonymousMsg
+
 	if strings.Compare(anon.Receiver, g.Name) == 0 {
 		// anonymous message is for us, decrypt it
 		decryptedPacket, err := g.DecryptBytes(anon.EncryptedContent)
@@ -236,10 +237,11 @@ func (g *Gossiper) ReceiveAnonymousMessage(packet GossipPacket, errChan chan err
 
 		if decryptedPacket.Private != nil {
 			// we received an anonymous private message
-			g.PrintPrivateMessage(*decryptedPacket.Private)
+			g.PrintAnonymousPrivateMessage(*decryptedPacket.Private)
 		}
-	} else {
-		// anonymous message is not for us - flip a weighted coin to relay or send to destination
+	} else if !anon.RouteToReceiver{
+		// anonymous message is not for us
+		// if we are still relaying the message, flip a weighted coin to relay or send to destination
 		seed := rand.NewSource(time.Now().UnixNano())
 		seededRand := rand.New(seed)
 		randFloat := seededRand.Float64()
@@ -247,15 +249,18 @@ func (g *Gossiper) ReceiveAnonymousMessage(packet GossipPacket, errChan chan err
 		if randFloat <= anon.AnonymityLevel {
 			// if the random float is less than the desired anonimity level,
 			//		pick a random neighbor and relay the message to them
-			g.SendToRandom(packet)
+			addr := g.SendToRandom(packet)
+			log.Lvl2("Relaying the message to : ", addr)
 		} else {
+			// if after flip we decided to route to destination or if the packet is already
+			//	being routed to the destination (e.g. a node before us flipped a coint to route it)
 			addr := g.FindPath(anon.Receiver)
 			if addr == "" {
 				//we do not know this peer we stop here
 				errChan <- nil
 				return
 			}
-			log.Lvl2("Forwarding a message to : ", addr)
+			log.Lvl2("Sending the anonymous message to it's destination: ", addr)
 			errChan <- g.SendTo(addr, packet)
 			return
 		}

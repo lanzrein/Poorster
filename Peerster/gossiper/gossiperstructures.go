@@ -144,6 +144,7 @@ type Gossiper struct {
 	//Stuff for project
 	Keypair       *ies.KeyPair
 	Cluster       clusters.Cluster
+	IsInCluster		bool
 	LeaveChan     chan bool
 	Keys          map[string]ies.PublicKey
 	HearbeatTimer int
@@ -262,4 +263,3 @@ func (g *Gossiper) GetVectorClock() *StatusPacket {
 	sp.Want = g.PeerLogList()
 	return sp
 }
-

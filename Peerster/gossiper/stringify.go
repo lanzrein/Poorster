@@ -134,7 +134,7 @@ func (g *Gossiper) PrintPrivateMessage(message PrivateMessage) {
 
 //PrintPrivateMessage prints a received private messages
 func (g *Gossiper) PrintAnonymousPrivateMessage(message PrivateMessage) {
-	s := fmt.Sprint("PRIVATE origin ", message.Origin, " hop-limit ", message.HopLimit, " contents ", message.Text, "\n")
+	s := fmt.Sprint("ANONYMOUS contents ", message.Text, "\n")
 	fmt.Print(s)
 	g.WriteToBuffer(s)
 }

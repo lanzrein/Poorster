@@ -21,6 +21,7 @@ func (g *Gossiper) InitCluster() {
 	cluster := clusters.NewCluster(id, members, masterkey, publickey)
 
 	g.Cluster = cluster
+	g.IsInCluster = true
 	g.PrintInitCluster()
 	go g.HeartbeatLoop()
 }

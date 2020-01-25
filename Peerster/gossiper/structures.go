@@ -60,11 +60,15 @@ type RequestReply struct {
 		* Receiver - the name of the destination node
 		* AnonimityLevel - a number between 0 and 1, indicating the anonimity level of the message
 		*									 used for flipping a weighted coin by each relaying node
+		* RouteToReceiver - initially false,
+		*										true if after coin flip the current node decides NOT to relay anymore and
+		*										routes the message to it's actual destination
 */
 type AnonymousMessage struct {
 	EncryptedContent 	[]byte
 	Receiver					string
 	AnonymityLevel		float64
+	RouteToReceiver		bool
 }
 
 //SimpleMessage

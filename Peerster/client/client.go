@@ -33,7 +33,7 @@ func NewClient(str string) Client {
 
 //SendsMsg sends a txt message to the address of the client c
 //If an error arises it is returned by the function
-func (c *Client) SendMsg(txt string, anonymous bool) error {
+func (c *Client) SendMsg(txt string) error {
 
 	//encode message
 	log.Lvl3("Sending message : ", txt)

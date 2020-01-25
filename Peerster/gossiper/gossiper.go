@@ -117,6 +117,7 @@ func NewGossiper(Name string, UIPort string, gossipAddr string, gossipers string
 		RolloutTimer:  DEFAULTROLLOUT,
 		HearbeatTimer: DEFAULTHEARTBEAT,
 		LeaveChan:     make(chan bool),
+		IsInCluster:   false,
 	}
 
 	err = gossiper.GenerateKeys()
@@ -132,7 +133,7 @@ func (g *Gossiper) Run() error {
 
 	//if it is not in simple mode *try* to load a server - if it fails ( i.e. if a server is already running then it will just return without saying anything ! )
 	if !g.SimpleMode {
-		go LoadServer(g)
+		//go LoadServer(g)
 	}
 
 	//read from client connection

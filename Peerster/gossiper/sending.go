@@ -169,19 +169,21 @@ func (g *Gossiper) AcknowledgeRumor(pckt GossipPacket, addr net.UDPAddr, errChan
 
 }
 
-func (g *Gossiper) SendToRandom(gp GossipPacket) {
+func (g *Gossiper) SendToRandom(gp GossipPacket) string {
 	if len(*g.KnownGossipers.values) == 0 {
-
-		return
+		return ""
 	}
 	rand.Seed(int64(time.Now().Nanosecond()))
 	i := rand.Intn(len(*g.KnownGossipers.values))
+
 	addr := (*g.KnownGossipers.values)[i]
+	if addr == "" {
+		return addr
+	}
 
 	err := g.SendTo(addr, gp)
 	if err != nil {
 		log.Errorf("Could not send packet to : %s, err : %s\n", addr, err)
-
 	}
-	return
+	return addr
 }
