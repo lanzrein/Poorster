@@ -2,6 +2,7 @@ package gossiper
 
 import (
 	"bytes"
+
 	"github.com/JohanLanzrein/Peerster/clusters"
 	"github.com/JohanLanzrein/Peerster/ies"
 	"go.dedis.ch/onet/log"
@@ -144,12 +145,18 @@ type Gossiper struct {
 	//Stuff for project
 	Keypair       *ies.KeyPair
 	Cluster       clusters.Cluster
-	IsInCluster		bool
+	IsInCluster   bool
 	LeaveChan     chan bool
 	Keys          map[string]ies.PublicKey
 	HearbeatTimer int
 	RolloutTimer  int //timer in seconds ~~ usually 300
-	IsInCall			bool
+	CallStatus    GossiperCallStatus
+}
+
+type GossiperCallStatus struct {
+	InCall            bool
+	OtherParticipant  string
+	ExpectingResponse bool
 }
 
 //TimeMapping the mapping of the time <-> id for each known gossiper.

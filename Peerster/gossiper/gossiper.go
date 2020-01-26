@@ -75,6 +75,10 @@ func NewGossiper(Name string, UIPort string, gossipAddr string, gossipers string
 
 	//for project...
 	keys := make(map[string]ies.PublicKey)
+	call := GossiperCallStatus{
+		InCall:            false,
+		ExpectingResponse: false,
+	}
 
 	gossiper := Gossiper{
 		Name:                 Name,
@@ -118,7 +122,7 @@ func NewGossiper(Name string, UIPort string, gossipAddr string, gossipers string
 		HearbeatTimer: DEFAULTHEARTBEAT,
 		LeaveChan:     make(chan bool),
 		IsInCluster:   false,
-		IsInCall:      false,
+		CallStatus:    call,
 	}
 
 	err = gossiper.GenerateKeys()

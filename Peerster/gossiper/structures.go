@@ -30,8 +30,10 @@ type GossipPacket struct {
 
 	AnonymousMsg *AnonymousMessage
 
-	CallReqeust  *CallRequest
+	CallRequest  *CallRequest
 	CallResponse *CallResponse
+
+	HangUpMsg *HangUp
 }
 
 /***********DIFFERENT TYPES OF MESSAGES -******************/
@@ -79,10 +81,10 @@ type CallRequest struct {
 	Destination string
 }
 
-type CallStatus int
+type CallResponseStatus int
 
 const (
-	Accept CallStatus = iota
+	Accept CallResponseStatus = iota
 	Decline
 	Busy
 )
@@ -90,7 +92,12 @@ const (
 type CallResponse struct {
 	Origin      string
 	Destination string
-	Status      CallStatus
+	Status      CallResponseStatus
+}
+
+type HangUp struct {
+	Origin      string
+	Destination string
 }
 
 type AudioMessage struct {
