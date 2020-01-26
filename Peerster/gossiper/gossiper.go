@@ -278,6 +278,24 @@ func (g *Gossiper) ReadFromPort(errChan chan error, conn net.UDPConn, client boo
 
 				go g.StartFileSearch(*msg.Keywords, *msg.Budget, mulFactor)
 				continue
+			} else if msg.Broadcast != nil && *msg.Broadcast && msg.Text != "" {
+				log.Lvl1("Broadcast message...")
+				go g.SendBroadcast(msg.Text, false)
+				continue
+			}else if msg.InitCluster != nil{
+				log.Lvl1("Message to init the cluster..")
+				g.InitCluster()
+				continue
+			} else if msg.JoinOther != nil && msg.JoinId != nil{
+				log.Lvl1("Message joining request.")
+				g.RequestJoining(*msg.JoinOther, *msg.JoinId)
+				continue
+			} else if msg.LeaveCluster != nil && *msg.LeaveCluster{
+				g.LeaveCluster()
+				continue
+			} else if msg.Anonymous != nil{
+				log.Lvl1("Message for anon messaging...")
+				//TODO some handler for anonymous messaging...
 			} else {
 				packet = GossipPacket{Simple: &SimpleMessage{
 					OriginalName:  "",

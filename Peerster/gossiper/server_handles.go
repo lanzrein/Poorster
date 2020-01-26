@@ -376,12 +376,22 @@ func (g *Gossiper)BroadcastMessageHandle(w http.ResponseWriter, r *http.Request)
 			log.Error("Error on reading data : ", err)
 		}
 
-		message := new(PrivateMessage)
+		message := new(PrivMessage)
 		err = json.Unmarshal(data, message)
 		if err != nil {
 			log.Error("Could not unmarshal message : ", err)
 		}
-		g.SendBroadcast(message.Text, false)
+		log.Lvl1("Data : ", message)
+		g.SendBroadcast(message.Content, false)
+
+
 	}
+
+	//Reply the memebrs..
+	origins := g.Cluster.Members
+	log.Lvl3("Members : ", origins)
+	tosend, _ := json.Marshal(origins)
+	log.Lvl3(tosend)
+	_, _ = w.Write(tosend)
 }
 

@@ -25,6 +25,7 @@ func LoadServer(g *Gossiper) {
 	http.HandleFunc("/downloadfoundfile", g.FoundFileHandle)
 	//project handlers
 	http.HandleFunc("/initcluster", g.InitClusterHandle)
+	http.HandleFunc("/broadcastmsg", g.BroadcastMessageHandle)
 
 	http.Handle("/", http.FileServer(http.Dir("./frontend")))
 	for {

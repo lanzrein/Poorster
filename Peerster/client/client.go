@@ -33,7 +33,7 @@ func NewClient(str string) Client {
 
 //SendsMsg sends a txt message to the address of the client c
 //If an error arises it is returned by the function
-func (c *Client) SendMsg(txt string) error {
+func (c *Client) SendMsg(txt string) error{
 
 	//encode message
 	log.Lvl3("Sending message : ", txt)
@@ -152,3 +152,75 @@ func (c *Client) SearchFile(keywords *string, budget *int) {
 	}
 
 }
+
+
+
+
+//Stuff for the project..
+
+func (c *Client)SendBroadcast(content string){
+	msg := gossiper.Message{
+		Text:        content,
+		Broadcast:new(bool),
+	}
+	*msg.Broadcast = true
+	data, err := protobuf.Encode(&msg)
+	if err != nil{
+		log.Error("Could nto encode packet : ", err)
+		return
+	}
+
+	err = c.SendBytes(data)
+	if err != nil{
+		log.Error("Could nto send data : ", err )
+	}
+
+}
+
+func (c *Client)InitCluster(){
+	msg := gossiper.Message{InitCluster:new(bool)}
+	*msg.InitCluster = true
+	data, err := protobuf.Encode(&msg)
+	if err != nil{
+		log.Error("Could nto encode packet : ", err)
+		return
+	}
+
+	err = c.SendBytes(data)
+	if err != nil{
+		log.Error("Could nto send data : ", err )
+	}
+}
+
+func (c *Client)JoinCluster(id *uint64, other *string){
+	msg := gossiper.Message{}
+	msg.JoinId = id
+	msg.JoinOther = other
+
+	data, err := protobuf.Encode(&msg)
+	if err != nil{
+		log.Error("Could nto encode packet : ", err)
+		return
+	}
+
+	err = c.SendBytes(data)
+	if err != nil{
+		log.Error("Could nto send data : ", err )
+	}
+}
+
+func (c *Client)LeaveCluster(){
+	msg := gossiper.Message{}
+	*msg.LeaveCluster = true
+	data, err := protobuf.Encode(&msg)
+	if err != nil{
+		log.Error("Could nto encode packet : ", err)
+		return
+	}
+
+	err = c.SendBytes(data)
+	if err != nil{
+		log.Error("Could nto send data : ", err )
+	}
+}
+

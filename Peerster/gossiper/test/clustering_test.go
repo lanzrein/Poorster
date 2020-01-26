@@ -175,7 +175,7 @@ func TestLeavingCluster(t *testing.T) {
 	c2 = g2.Cluster
 	assert.Nil(t, c2.ClusterID)
 
-	//todo
+
 }
 
 func TestKeyRollout(t *testing.T) {

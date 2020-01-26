@@ -66,11 +66,11 @@ func (g *Gossiper) LeaveCluster() {
 	//Stop the heartbeat loop
 	g.PrintLeaveCluster()
 	g.LeaveChan <- true
+	log.Lvl2("Sending leave message..")
 	g.RequestLeave()
 
 	g.Cluster = clusters.Cluster{}
 	//Send a message saying we want to leave.
-	log.Lvl2("Sending leave message..TODO")
 	return
 }
 
@@ -80,6 +80,10 @@ func (g *Gossiper) SendBroadcast(text string, leave bool ) {
 		ID:     0,
 		Text:   text,
 	}
+	if text != ""{
+		g.PrintBroadcast(rumor)
+	}
+
 	data, err := protobuf.Encode(&rumor)
 	if err != nil {
 		log.Error("Could not encode the packet.. ", err)

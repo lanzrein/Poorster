@@ -69,6 +69,14 @@ type Message struct {
 	//Hw3 things
 	Budget   *uint64
 	Keywords *[]string
+
+	//Project things...
+	Broadcast *bool
+	Anonymous *bool
+	InitCluster *bool
+	LeaveCluster *bool
+	JoinId *uint64
+	JoinOther *string
 }
 
 //RumorMessage

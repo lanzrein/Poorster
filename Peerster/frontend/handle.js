@@ -56,6 +56,8 @@ $(document).ready(function(){
   $("#closecluster").click(closeclusterpannel);
 
   $("#initcluster").click(InitCluster);
+  $("#sendbroadcast").click(SendBroadcast);
+
   //request the node ID
   requestNodeId();
   // //loop and request data sometimes.
