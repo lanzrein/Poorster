@@ -101,6 +101,12 @@ func (g *Gossiper) Receive(pckt GossipPacket, addr net.UDPAddr, errChan chan err
 	} else if pckt.Broadcast != nil {
 		log.Lvl2("Got a broadcast !")
 		g.ReceiveBroadcast(*pckt.Broadcast)
+	} else if pckt.AnonymousMsg != nil {
+		log.Lvl2("Got an anonymous message !")
+		g.ReceiveAnonymousMessage(pckt, errChan)
+	} else if pckt.CallReqeust != nil {
+		log.Lvl2("Got a call request !")
+		g.ReceiveCallRequest(pckt.CallRequest)
 	} else {
 
 		//should not happen !
@@ -225,6 +231,54 @@ func (g *Gossiper) ReceiveSimpleMessage(client bool, pckt GossipPacket, errChan 
 
 }
 
+func (g *Gossiper) ReceiveCallRequest(req CallRequest) {
+	if req.Destination == g.Name {
+		// call request is for us
+		g.PrintCallRequest(req)
+
+		addr := g.FindPath(req.Origin)
+		if addr == "" {
+			//we do not know this peer we stop here
+			log.Error("No routing information available to node ", req.Destination)
+			return
+		}
+		log.Lvl2("Forwarding a message to : ", addr)
+
+		callResp := CallResponse{Origin: g.Name, Destination: req.Origin}
+		if g.IsInCall {
+			// if gossiper is in another call, send a BUSY reponse
+			callResp.Status = Busy
+		} else {
+			// terminal prompt
+
+		}
+		// send response
+		packet := GossipPacket{CallResponse: &callResp}
+		err := g.SendTo(addr, packet)
+		if err != nil {
+			log.Error(err)
+		}
+		return
+
+	} else {
+
+		addr := g.FindPath(req.Destination)
+		if addr == "" {
+			//we do not know this peer we stop here
+			log.Error("No routing information available to node ", req.Destination)
+			return
+		}
+		log.Lvl2("Forwarding a message to : ", addr)
+		packet := GossipPacket{CallReqeust: &req}
+		err := g.SendTo(addr, packet)
+		if err != nil {
+			log.Error(err)
+		}
+		return
+	}
+
+}
+
 func (g *Gossiper) ReceiveAnonymousMessage(packet GossipPacket, errChan chan error) {
 	anon := *packet.AnonymousMsg
 
@@ -239,7 +293,7 @@ func (g *Gossiper) ReceiveAnonymousMessage(packet GossipPacket, errChan chan err
 			// we received an anonymous private message
 			g.PrintAnonymousPrivateMessage(*decryptedPacket.Private)
 		}
-	} else if !anon.RouteToReceiver{
+	} else if !anon.RouteToReceiver {
 		// anonymous message is not for us
 		// if we are still relaying the message, flip a weighted coin to relay or send to destination
 		seed := rand.NewSource(time.Now().UnixNano())

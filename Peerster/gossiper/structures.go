@@ -29,6 +29,9 @@ type GossipPacket struct {
 	RequestReply *RequestReply
 
 	AnonymousMsg *AnonymousMessage
+
+	CallReqeust  *CallRequest
+	CallResponse *CallResponse
 }
 
 /***********DIFFERENT TYPES OF MESSAGES -******************/
@@ -56,19 +59,47 @@ type RequestReply struct {
 }
 
 /*AnonymousMessage
-		* EncryptedContent - GossipPacket encrypted with the receiver's public key
-		* Receiver - the name of the destination node
-		* AnonimityLevel - a number between 0 and 1, indicating the anonimity level of the message
-		*									 used for flipping a weighted coin by each relaying node
-		* RouteToReceiver - initially false,
-		*										true if after coin flip the current node decides NOT to relay anymore and
-		*										routes the message to it's actual destination
-*/
+* EncryptedContent - GossipPacket encrypted with the receiver's public key
+* Receiver - the name of the destination node
+* AnonimityLevel - a number between 0 and 1, indicating the anonimity level of the message
+*									 used for flipping a weighted coin by each relaying node
+* RouteToReceiver - initially false,
+*										true if after coin flip the current node decides NOT to relay anymore and
+*										routes the message to it's actual destination
+ */
 type AnonymousMessage struct {
-	EncryptedContent 	[]byte
-	Receiver					string
-	AnonymityLevel		float64
-	RouteToReceiver		bool
+	EncryptedContent []byte
+	Receiver         string
+	AnonymityLevel   float64
+	RouteToReceiver  bool
+}
+
+type CallRequest struct {
+	Origin      string
+	Destination string
+}
+
+type CallStatus int
+
+const (
+	Accept CallStatus = iota
+	Decline
+	Busy
+)
+
+type CallResponse struct {
+	Origin      string
+	Destination string
+	Status      CallStatus
+}
+
+type AudioMessage struct {
+	Origin      string
+	Destination string
+	Content     AudioData
+}
+
+type AudioData struct {
 }
 
 //SimpleMessage
@@ -88,8 +119,8 @@ type Message struct {
 	Budget   *uint64
 	Keywords *[]string
 	//Project - anonimity
-	Anonymous				bool
-	AnonimityLevel 	float64
+	Anonymous      bool
+	AnonimityLevel float64
 }
 
 //RumorMessage

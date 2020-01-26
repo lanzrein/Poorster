@@ -167,6 +167,13 @@ func (g *Gossiper) PrintClientPrivateMessage(message PrivateMessage) {
 	g.WriteToBuffer(s)
 }
 
+//PrintCallRequest prints receiving a call request
+func (g *Gossiper) PrintCallRequest(message CallRequest) {
+	s := fmt.Sprint("CALL REQUEST from ", message.Origin, "\n")
+	fmt.Print(s)
+	g.WriteToBuffer(s)
+}
+
 //PrintMatch prints if there is a match for the search reply.
 func (g *Gossiper) PrintMatch(message SearchReply) {
 	for _, elem := range message.Results {

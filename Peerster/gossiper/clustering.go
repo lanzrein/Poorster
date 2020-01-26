@@ -1,11 +1,12 @@
 package gossiper
 
 import (
+	"time"
+
 	"github.com/JohanLanzrein/Peerster/clusters"
 	"github.com/JohanLanzrein/Peerster/ies"
 	"go.dedis.ch/onet/log"
 	"go.dedis.ch/protobuf"
-	"time"
 )
 
 const DEFAULTROLLOUT = 300
@@ -48,9 +49,9 @@ func (g *Gossiper) HeartbeatLoop() {
 
 		select {
 		case <-time.After(time.Duration(g.HearbeatTimer) * time.Second):
-			log.Lvl4(g.Name , "sending heartbeat")
+			log.Lvl4(g.Name, "sending heartbeat")
 			g.Cluster.HeartBeats[g.Name] = true
-			go g.SendBroadcast("", false )
+			go g.SendBroadcast("", false)
 
 		case <-g.LeaveChan:
 			log.Lvl1("Leaving cluster")
@@ -75,7 +76,7 @@ func (g *Gossiper) LeaveCluster() {
 	return
 }
 
-func (g *Gossiper) SendBroadcast(text string, leave bool ) {
+func (g *Gossiper) SendBroadcast(text string, leave bool) {
 	rumor := RumorMessage{
 		Origin: g.Name,
 		ID:     0,
@@ -89,11 +90,11 @@ func (g *Gossiper) SendBroadcast(text string, leave bool ) {
 
 	enc := ies.Encrypt(g.Cluster.MasterKey, data)
 	bm := BroadcastMessage{
-		ClusterID:   *g.Cluster.ClusterID,
-		HopLimit:    g.HopLimit,
-		Destination: "",
-		Data:        enc,
-		LeaveRequest:leave,
+		ClusterID:    *g.Cluster.ClusterID,
+		HopLimit:     g.HopLimit,
+		Destination:  "",
+		Data:         enc,
+		LeaveRequest: leave,
 	}
 	gp := GossipPacket{Broadcast: &bm}
 
@@ -141,12 +142,12 @@ func (g *Gossiper) ReceiveBroadcast(message BroadcastMessage) {
 			data := ies.Decrypt(g.Cluster.MasterKey, message.Data)
 			err := protobuf.Decode(data, &cluster)
 			if err != nil {
-				log.Error("Could not decode rollout info ", err )
+				log.Error("Could not decode rollout info ", err)
 			}
 
 			g.UpdateFromRollout(cluster)
 
-		} else if message.LeaveRequest{
+		} else if message.LeaveRequest {
 			log.Lvl1("Got leave request")
 			decrypted := ies.Decrypt(g.Cluster.MasterKey, message.Data)
 			var rumor RumorMessage
@@ -157,7 +158,7 @@ func (g *Gossiper) ReceiveBroadcast(message BroadcastMessage) {
 			}
 
 			g.Cluster.HeartBeats[rumor.Origin] = false
-			delete(g.Cluster.PublicKeys,rumor.Origin)
+			delete(g.Cluster.PublicKeys, rumor.Origin)
 		} else {
 			decrypted := ies.Decrypt(g.Cluster.MasterKey, message.Data)
 			var rumor RumorMessage
@@ -195,12 +196,10 @@ func (g *Gossiper) ReceiveJoinRequest(message RequestMessage) {
 		return
 	}
 
-
-
 	_, ok := g.Cluster.HeartBeats[message.Origin]
 	if ok {
 		//its an update message.
-		log.Lvl2(g.Name , " got an update message")
+		log.Lvl2(g.Name, " got an update message")
 		g.Cluster.PublicKeys[message.Origin] = message.PublicKey
 		return
 
@@ -285,7 +284,6 @@ func (g *Gossiper) KeyRollout(leader string) {
 	g.Keypair, err = ies.GenerateKeyPair()
 	g.Cluster.PublicKeys = make(map[string]ies.PublicKey)
 
-
 	if err != nil {
 		log.Error("Could not generate new keypair : ", err)
 	}
@@ -298,7 +296,6 @@ func (g *Gossiper) KeyRollout(leader string) {
 			go g.RequestJoining(leader, *g.Cluster.ClusterID)
 		}
 		g.Cluster.PublicKeys[g.Name] = g.Keypair.PublicKey
-
 
 	}()
 
@@ -318,8 +315,6 @@ func (g *Gossiper) KeyRollout(leader string) {
 				nextMembers = append(nextMembers, m)
 			}
 
-
-
 		}
 		g.Cluster.Members = nextMembers
 		log.Lvl2("New members for this key rollout : ", nextMembers)
@@ -331,8 +326,8 @@ func (g *Gossiper) KeyRollout(leader string) {
 				//we got all the maps we can generate the master key and return
 				log.Lvl2("Got all the members needed")
 				err := g.AnnounceNewMasterKey()
-				if err != nil{
-					log.Error("Could not announce master key : ", err )
+				if err != nil {
+					log.Error("Could not announce master key : ", err)
 				}
 				return
 			}
@@ -371,11 +366,11 @@ func (g *Gossiper) AnnounceNewMasterKey() error {
 		addr := g.FindPath(member)
 
 		bc := BroadcastMessage{
-			ClusterID: *cluster.ClusterID,
-			Destination:member ,
-			HopLimit:  10,
-			Rollout:   true,
-			Data:      cipher,
+			ClusterID:   *cluster.ClusterID,
+			Destination: member,
+			HopLimit:    10,
+			Rollout:     true,
+			Data:        cipher,
 		}
 		gp := GossipPacket{Broadcast: &bc}
 		go g.SendTo(addr, gp)

@@ -149,6 +149,7 @@ type Gossiper struct {
 	Keys          map[string]ies.PublicKey
 	HearbeatTimer int
 	RolloutTimer  int //timer in seconds ~~ usually 300
+	IsInCall			bool
 }
 
 //TimeMapping the mapping of the time <-> id for each known gossiper.

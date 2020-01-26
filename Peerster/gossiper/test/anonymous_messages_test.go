@@ -29,7 +29,7 @@ func TestAnonymousMessaging(t *testing.T) {
 		g1.Run()
 	}()
 	go func() {
-		g2.Run()
+		g2.Run()git
 	}()
 	go func() {
 		g3.Run()
