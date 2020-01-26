@@ -4,10 +4,8 @@ package gossiper
 
 import (
 	"fmt"
-	"math/rand"
 	"os"
 	"strings"
-	"time"
 
 	"github.com/eiannone/keyboard"
 	"github.com/gordonklaus/portaudio"
@@ -71,27 +69,17 @@ func RecordAudioFromMic() {
 	stream, waveWriter, buffer := setup()
 	go detectEscapeKeyInput(stream, waveWriter)
 
-	// recording in progress ticker. From good old DOS days.
-	ticker := []string{
-		"-",
-		"\\",
-		"/",
-		"|",
-	}
-	rand.Seed(time.Now().UnixNano())
-
 	// start reading from microphone
 	errCheck(stream.Start())
 	for {
 		errCheck(stream.Read())
 
-		fmt.Printf("\r Now recording. [%v]", ticker[rand.Intn(len(ticker)-1)])
+		fmt.Printf("\r Now recording.\n")
 
 		// write input bytes to file
 		_, err := waveWriter.Write([]byte(buffer)) // WriteSample16 for 16 bits
 		errCheck(err)
 	}
-	errCheck(stream.Stop())
 }
 
 // Detect when user presses Escape (used to stop recording)
@@ -106,6 +94,7 @@ func detectEscapeKeyInput(stream *portaudio.Stream, waveWriter *wave.Writer) {
 		fmt.Println("Clearing resources")
 		waveWriter.Close()
 		stream.Close()
+		errCheck(stream.Stop())
 		portaudio.Terminate()
 		os.Exit(0)
 	}

@@ -63,7 +63,7 @@ type RequestReply struct {
 /*AnonymousMessage
 * EncryptedContent - GossipPacket encrypted with the receiver's public key
 * Receiver - the name of the destination node
-* AnonimityLevel - a number between 0 and 1, indicating the anonimity level of the message
+* RelayRate - a number between 0 and 1, indicating the anonimity level of the message
 *									 used for flipping a weighted coin by each relaying node
 * RouteToReceiver - initially false,
 *										true if after coin flip the current node decides NOT to relay anymore and
@@ -126,8 +126,9 @@ type Message struct {
 	Budget   *uint64
 	Keywords *[]string
 	//Project - anonimity
-	Anonymous      bool
-	AnonimityLevel float64
+	Anonymous     bool
+	RelayRate     float64
+	FullAnonimity bool
 }
 
 //RumorMessage

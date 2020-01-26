@@ -11,6 +11,13 @@ import (
 
 //      CALL REQUEST      //
 // =========================
+func (g *Gossiper) ClientSendCallRequest(req CallRequest) {
+	g.CallStatus.ExpectingResponse = true
+	g.CallStatus.InCall = false
+	g.CallStatus.OtherParticipant = req.Destination
+	g.ReceiveCallRequest(req)
+}
+
 func (g *Gossiper) ReceiveCallRequest(req CallRequest) {
 	if req.Destination == g.Name {
 		// call request is for us
@@ -63,6 +70,25 @@ func (g *Gossiper) ReceiveCallRequest(req CallRequest) {
 
 //      CALL RESPONSE      //
 // =========================
+func (g *Gossiper) SendCallResponse(resp CallResponse) {
+	if resp.Status == Accept {
+		// if we accept a call request, update call status as follows
+		g.CallStatus.InCall = true
+		g.CallStatus.ExpectingResponse = false
+		g.CallStatus.OtherParticipant = resp.Destination
+	} else if resp.Status == Decline {
+		// if we decline a call request, update call status as follows ( we are NOT in another call)
+		g.CallStatus.InCall = false
+		g.CallStatus.ExpectingResponse = false
+		g.CallStatus.OtherParticipant = resp.Destination
+	}
+	// the last possibility is if respond with BUSY - meaning we are in another call,
+	//    so call status has been updated either when ACCEPTING someone's request, or
+	//    having our request ACCEPTED by someone else - e.g. UPDATE NOTHING
+
+	g.ReceiveCallResponse(resp)
+}
+
 func (g *Gossiper) ReceiveCallResponse(resp CallResponse) {
 	if strings.Compare(resp.Destination, g.Name) == 0 {
 		// we received a call response
@@ -92,6 +118,14 @@ func routeMessage(g *Gossiper, packet GossipPacket, dest string) {
 
 //      HANG UP MSG       //
 // =========================
+func (g *Gossiper) ClientSendHangUpMessage(hangUp HangUp) {
+	if g.CallStatus.InCall && strings.Compare(g.CallStatus.OtherParticipant, hangUp.Destination) == 0 {
+		g.CallStatus.InCall = false
+		g.CallStatus.OtherParticipant = ""
+		g.ReceiveHangUpMessage(hangUp)
+	}
+}
+
 func (g *Gossiper) ReceiveHangUpMessage(hangUp HangUp) {
 	if strings.Compare(hangUp.Destination, g.Name) == 0 {
 		// the other call participant wants to hangup on us

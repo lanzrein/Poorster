@@ -4,11 +4,12 @@ package main
 import (
 	"encoding/hex"
 	"errors"
+	"net"
+	"strings"
+
 	"github.com/JohanLanzrein/Peerster/gossiper"
 	"go.dedis.ch/onet/log"
 	"go.dedis.ch/protobuf"
-	"net"
-	"strings"
 )
 
 //Client has one address
@@ -55,15 +56,16 @@ func (c *Client) SendMsg(txt string) error {
 }
 
 //SendPrivateMsg sends a private message msg to the destination dest
-func (c *Client) SendPrivateMsg(msg string, dest string, anonymous bool, anonLevel float64) {
+func (c *Client) SendPrivateMsg(msg string, dest string, anonymous bool, relayRate float64, fullAnonimity bool) {
 	toSend := gossiper.Message{
-		Text: msg,
-		Destination: &dest,
-		Anonymous: anonymous,
+		Text:          msg,
+		Destination:   &dest,
+		Anonymous:     anonymous,
+		FullAnonimity: fullAnonimity,
 	}
 
 	if anonymous {
-		toSend.AnonimityLevel = anonLevel
+		toSend.RelayRate = relayRate
 	}
 
 	packetBytes, err := protobuf.Encode(&toSend)
@@ -110,7 +112,7 @@ func (c *Client) SendFileToIndex(s *string) error {
 }
 
 //RequestFile request the file with name file from destination. the request is the MetaHash of the file.
-func (c *Client) RequestFile(file *string, destination *string, request *string, anonymous bool, anonLevel float64) error {
+func (c *Client) RequestFile(file *string, destination *string, request *string, anonymous bool, relayRate float64) error {
 	bytes, err := hex.DecodeString(*request)
 	if err != nil {
 		return errors.New("Unable to decode hex string")
@@ -121,11 +123,11 @@ func (c *Client) RequestFile(file *string, destination *string, request *string,
 		Destination: destination,
 		File:        file,
 		Request:     &bytes,
-		Anonymous:	 anonymous,
+		Anonymous:   anonymous,
 	}
 
 	if anonymous {
-		tosend.AnonimityLevel = anonLevel
+		tosend.RelayRate = relayRate
 	}
 
 	log.Lvl3("Sending to send : ", *tosend)

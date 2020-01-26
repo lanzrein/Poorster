@@ -3,9 +3,10 @@ package main
 import (
 	"flag"
 	"fmt"
+	"os"
+
 	"github.com/JohanLanzrein/Peerster/gossiper"
 	"go.dedis.ch/onet/log"
-	"os"
 )
 
 func main() {
@@ -19,7 +20,9 @@ func main() {
 	keywords := flag.String("keywords", "", "Keywords for a file search")
 	budget := flag.Int("budget", -1, "Budget for a file search")
 	anonymous := flag.Bool("anonymous", false, "Indicates sending an anonymous message")
-	anonLevel := flag.Float64("anonLevel", 0.5, "Indicates probability of a peer relaying the message")
+	relayRate := flag.Float64("relayRate", 0.5, "Indicates probability of a peer relaying the message")
+	fullAnonimity := flag.Bool("fullAnonimity", false, "If true, do not add Origin information in the encrypted packet")
+
 	flag.Parse()
 
 	client := NewClient("127.0.0.1:" + *UIPort)
@@ -28,13 +31,13 @@ func main() {
 		if *request != "" && *dest != "" {
 			//file request
 			log.Lvl3("Downloading a file ")
-			err = client.RequestFile(file, dest, request, *anonymous, *anonLevel)
+			err = client.RequestFile(file, dest, request, *anonymous, *relayRate)
 		} else if *request == "" && *dest == "" {
 			log.Lvl3("Indexing a file to the gossiper")
 			err = client.SendFileToIndex(file)
 		} else if *request != "" && *dest == "" {
 			log.Lvl3("Downloading known file..")
-			err = client.RequestFile(file, nil, request, *anonymous, *anonLevel)
+			err = client.RequestFile(file, nil, request, *anonymous, *relayRate)
 		} else {
 			fmt.Print("ERROR (Bad argument combination)")
 			os.Exit(1)
@@ -43,7 +46,7 @@ func main() {
 
 		//send a private message
 		log.Lvl3("Sending private message ")
-		client.SendPrivateMsg(*msg, *dest, *anonymous, *anonLevel)
+		client.SendPrivateMsg(*msg, *dest, *anonymous, *relayRate, *fullAnonimity)
 	} else if (*request == "" && *file == "") && *msg != "" {
 		//rumor message
 		log.Lvl3("rumor")
