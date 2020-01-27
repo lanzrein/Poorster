@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-const DEFAULTROLLOUT = 300
+const DEFAULTROLLOUT = 10
 const DEFAULTHEARTBEAT = 5
 
 //InitCluster the current gossiper creates a cluster where he is the sole member
@@ -43,6 +43,9 @@ func (g *Gossiper) RequestJoining(other string, clusterID uint64) {
 }
 
 func (g *Gossiper) HeartbeatLoop() {
+	dur := time.Duration(g.RolloutTimer)*time.Second
+	timer := time.NewTimer(dur)
+
 	for {
 
 		select {
@@ -54,10 +57,10 @@ func (g *Gossiper) HeartbeatLoop() {
 		case <-g.LeaveChan:
 			log.Lvl1("Leaving cluster")
 			return
-		case <-time.After(time.Duration(g.RolloutTimer) * time.Second):
+		case <-timer.C:
 			log.Lvl4("Time for a rolllllllllout")
 			g.KeyRollout(g.Cluster.Members[0]) //TODO for now its only the first member but in the future chose randomly
-
+			timer.Reset(dur)
 		}
 	}
 }

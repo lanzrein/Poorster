@@ -38,6 +38,33 @@ function SendBroadcast(){
 
 }
 
-function showanonymous(){
-    console.log("showing anonymous pannel..."); 
+
+let anonmessage = false;
+function anonmessage(){
+    dst = $(this).parent().text();
+    if (dst.length > 5) {
+        dst = dst.substring(0,dst.length-5);
+    }
+    console.log("anon message ! "+ dst ) ;
+    $("#receiver").text(dst);
+    $("#privatepopup").show()
+    anonmessage = true ;
+}
+
+let dst;
+function anoncall(){
+    dst = $(this).parent().text() ;
+    if (dst.length > 5) {
+        dst = dst.substring(0,dst.length-5);
+    }
+    console.log("anon call to : " + dst   );
+    tosend = {"destination":dst, "content":content};
+    $.post(host+"/anoncall",JSON.stringify(tosend)).done(function(data){
+        //update the peer list...
+        console.log("Anonymous call got response : " + data)
+
+    });
+
+
+
 }

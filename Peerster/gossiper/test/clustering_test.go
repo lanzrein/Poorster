@@ -10,7 +10,6 @@ import (
 	"testing"
 	"time"
 )
-
 func TestInitializedCluster(t *testing.T) {
 	g1, err := gossiper.NewGossiper("A", "8080", "127.0.0.1:5000", "", false, 10, "8000", 10, 2, 5, false, 10, false)
 	if err != nil {
@@ -128,7 +127,7 @@ func TestBroadcastCluster(t *testing.T) {
 }
 
 func TestLeavingCluster(t *testing.T) {
-	//Test if member leave the cluster properly. TODO
+	//Test if member leave the cluster properly.
 	g1, err := gossiper.NewGossiper("A", "8080", "127.0.0.1:5000", "127.0.0.1:5001", false, 10, "8000", 10, 2, 5, false, 10, false)
 	if err != nil {
 		t.Fatal(err)

@@ -71,7 +71,7 @@ text {
 }
 
 
-li{
+li#private{
   border-style: double;
 }
 
@@ -113,3 +113,14 @@ button.selected{
   margin:auto;
 }
 
+
+
+span.anoncall{
+  border-color: aquamarine;
+  border-style: dotted;
+}
+
+span.anonmessage{
+  border-color: darkolivegreen;
+  border-style:dotted;
+}
