@@ -172,6 +172,8 @@ func (g *Gossiper) ReceiveBroadcast(message BroadcastMessage) {
 				log.Error(g.Name, "Error decoding packet : ", err, "This may be due to an ongoing rollout.")
 				return
 			}
+			log.Lvl1(g.Name, "got a broadcast..from ", rumor.Origin)
+
 			if rumor.Text != "" && rumor.Origin != g.Name {
 				//print the message
 				g.PrintBroadcast(rumor)
@@ -179,6 +181,9 @@ func (g *Gossiper) ReceiveBroadcast(message BroadcastMessage) {
 			}
 			//in any case add it to the map..
 			g.Cluster.HeartBeats[rumor.Origin] = true
+			if !Contains(g.Cluster.Members, rumor.Origin){
+				g.Cluster.Members = append(g.Cluster.Members, rumor.Origin)
+			}
 		}
 
 	}
