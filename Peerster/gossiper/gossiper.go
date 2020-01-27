@@ -240,6 +240,8 @@ func (g *Gossiper) ReadFromPort(errChan chan error, conn net.UDPConn, client boo
 
 		packet := GossipPacket{}
 		anonymous := false
+		call := false
+		hangup := false
 		//if its a client then decode the message and wrap it in gossip packet
 		if client {
 			log.Lvl3("Got message from client.")
@@ -262,14 +264,24 @@ func (g *Gossiper) ReadFromPort(errChan chan error, conn net.UDPConn, client boo
 				//its a request to index a file.
 				go g.Index(*msg.File, pathShared)
 				continue
-			} else if msg.Destination != nil && (msg.Anonymous == nil || !(*msg.Anonymous)) {
-				packet = GossipPacket{Private: &PrivateMessage{
-					Origin:      g.Name,
-					ID:          0,
-					Text:        msg.Text,
-					Destination: *msg.Destination,
-					HopLimit:    g.HopLimit,
-				}}
+			} else if msg.Destination != nil && (msg.Anonymous == nil || !(*msg.Anonymous) || !(*msg.CallRequest)) {
+				if msg.Anonymous != nil && *msg.Anonymous {
+					log.Lvl1("Message to send anon messaging...")
+					anonymous = true
+					g.ClientSendAnonymousMessage(*msg.Destination, msg.Text, *msg.RelayRate, *msg.FullAnonimity)
+				} else if *msg.CallRequest {
+					log.Lvl1("Message to call someone...")
+					call = true
+					g.ClientSendCallRequest(*msg.Destination)
+				} else {
+					packet = GossipPacket{Private: &PrivateMessage{
+						Origin:      g.Name,
+						ID:          0,
+						Text:        msg.Text,
+						Destination: *msg.Destination,
+						HopLimit:    g.HopLimit,
+					}}
+				}
 			} else if msg.Keywords != nil {
 				mulFactor := 1
 				if msg.Budget == nil {
@@ -298,10 +310,10 @@ func (g *Gossiper) ReadFromPort(errChan chan error, conn net.UDPConn, client boo
 			} else if msg.LeaveCluster != nil && *msg.LeaveCluster {
 				g.LeaveCluster()
 				continue
-			} else if msg.Anonymous != nil && *msg.Anonymous {
-				log.Lvl1("Message for anon messaging...")
-				anonymous = true
-				g.ClientSendAnonymousMessage(*msg.Destination, msg.Text, *msg.RelayRate, *msg.FullAnonimity)
+			} else if *msg.HangUp {
+				log.Lvl1("Message to hang up...")
+				hangup = true
+				g.ClientSendHangUpMessage()
 			} else {
 				packet = GossipPacket{Simple: &SimpleMessage{
 					OriginalName:  "",
@@ -315,7 +327,7 @@ func (g *Gossiper) ReadFromPort(errChan chan error, conn net.UDPConn, client boo
 		}
 
 		//give it to the receive routine
-		if !anonymous {
+		if !anonymous && !call && !hangup {
 			go g.Receive(packet, *sendingAddr, errChan, client)
 		}
 	}

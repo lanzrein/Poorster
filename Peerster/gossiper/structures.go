@@ -125,10 +125,6 @@ type Message struct {
 	//Hw3 things
 	Budget   *uint64
 	Keywords *[]string
-	//Project - anonimity
-	Anonymous     *bool
-	RelayRate     *float64
-	FullAnonimity *bool
 
 	//Project things...
 	Broadcast    *bool
@@ -136,6 +132,15 @@ type Message struct {
 	LeaveCluster *bool
 	JoinId       *uint64
 	JoinOther    *string
+
+	//Project - anonimity
+	Anonymous     *bool
+	RelayRate     *float64
+	FullAnonimity *bool
+
+	//Project - calls
+	CallRequest *bool
+	HangUp      *bool
 }
 
 //RumorMessage

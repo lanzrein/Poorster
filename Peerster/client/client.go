@@ -238,3 +238,33 @@ func (c *Client) LeaveCluster() {
 		log.Error("Could nto send data : ", err)
 	}
 }
+
+//		CALLS			//
+//================
+func (c *Client) Call(callee *string) {
+	msg := gossiper.Message{CallRequest: new(bool)}
+	msg.Destination = callee
+	*msg.CallRequest = true
+	c.encodeAndSendBytes(msg)
+}
+
+func (c *Client) HangUp() {
+	msg := gossiper.Message{HangUp: new(bool)}
+	*msg.HangUp = true
+	c.encodeAndSendBytes(msg)
+}
+
+//		HELPER		//
+//================
+func (c *Client) encodeAndSendBytes(msg gossiper.Message) {
+	data, err := protobuf.Encode(&msg)
+	if err != nil {
+		log.Error("Could not encode packet : ", err)
+		return
+	}
+
+	err = c.SendBytes(data)
+	if err != nil {
+		log.Error("Could not send data : ", err)
+	}
+}

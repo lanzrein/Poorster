@@ -26,9 +26,14 @@ func main() {
 	joinOther := flag.String("joinOther", "", "Name of the peer that is the entry point to the cluster")
 	leavecluster := flag.Bool("leavecluster", false, "Leave the current cluster")
 
+	// anonymous messaging
 	anonymous := flag.Bool("anonymous", false, "Indicates sending an anonymous message")
 	relayRate := flag.Float64("relayRate", 0.5, "Indicates probability of a peer relaying the message")
 	fullAnonimity := flag.Bool("fullAnonimity", false, "If true, do not add Origin information in the encrypted packet")
+
+	// audio communication
+	call := flag.Bool("call", false, "Indicates sending a call request to a destination node")
+	hangUp := flag.Bool("hangup", false, "Indicates hanging up the current call")
 
 	flag.Parse()
 
@@ -50,10 +55,15 @@ func main() {
 			os.Exit(1)
 		}
 	} else if (*dest != "") && (*request == "" || *file == "") {
-
-		//send a private message
-		log.Lvl3("Sending private message ")
-		client.SendPrivateMsg(*msg, *dest, anonymous, relayRate, fullAnonimity)
+		if *call {
+			// sending a call request
+			log.Lvl3("Sending a call request")
+			client.Call(dest)
+		} else {
+			//send a private message
+			log.Lvl3("Sending private message ")
+			client.SendPrivateMsg(*msg, *dest, anonymous, relayRate, fullAnonimity)
+		}
 	} else if (*request == "" && *file == "") && *msg != "" && !*broadcast {
 		//rumor message
 		log.Lvl3("rumor")
@@ -72,6 +82,9 @@ func main() {
 		client.JoinCluster(joinId, joinOther)
 	} else if *leavecluster {
 		client.LeaveCluster()
+	} else if *hangUp {
+		log.Lvl3("Hanging up")
+		client.HangUp()
 	} else {
 		fmt.Print("ERROR (Bad argument combination)")
 		os.Exit(1)
