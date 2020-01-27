@@ -98,7 +98,7 @@ func (g *Gossiper) Receive(pckt GossipPacket, addr net.UDPAddr, errChan chan err
 		g.ReceiveBroadcast(*pckt.Broadcast)
 	} else if pckt.AnonymousMsg != nil {
 		log.Lvl2("Got an anonymous message !")
-		g.ReceiveAnonymousMessage(pckt.AnonymousMsg, errChan)
+		g.ReceiveAnonymousMessage(pckt.AnonymousMsg)
 	} else if pckt.CallRequest != nil {
 		log.Lvl2("Got a call request !")
 		g.ReceiveCallRequest(*pckt.CallRequest)

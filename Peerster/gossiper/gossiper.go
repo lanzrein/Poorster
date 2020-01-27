@@ -239,12 +239,12 @@ func (g *Gossiper) ReadFromPort(errChan chan error, conn net.UDPConn, client boo
 		packetBytes = packetBytes[:cnt]
 
 		packet := GossipPacket{}
+		anonymous := false
 		//if its a client then decode the message and wrap it in gossip packet
 		if client {
 			log.Lvl3("Got message from client.")
 			msg := Message{}
 			err = protobuf.Decode(packetBytes, &msg)
-
 			if err != nil {
 				log.Error("error on decoding client message : ", err)
 				continue
@@ -262,7 +262,7 @@ func (g *Gossiper) ReadFromPort(errChan chan error, conn net.UDPConn, client boo
 				//its a request to index a file.
 				go g.Index(*msg.File, pathShared)
 				continue
-			} else if msg.Destination != nil {
+			} else if msg.Destination != nil && (msg.Anonymous == nil || !(*msg.Anonymous)) {
 				packet = GossipPacket{Private: &PrivateMessage{
 					Origin:      g.Name,
 					ID:          0,
@@ -300,6 +300,7 @@ func (g *Gossiper) ReadFromPort(errChan chan error, conn net.UDPConn, client boo
 				continue
 			} else if msg.Anonymous != nil && *msg.Anonymous {
 				log.Lvl1("Message for anon messaging...")
+				anonymous = true
 				g.ClientSendAnonymousMessage(*msg.Destination, msg.Text, *msg.RelayRate, *msg.FullAnonimity)
 			} else {
 				packet = GossipPacket{Simple: &SimpleMessage{
@@ -314,7 +315,9 @@ func (g *Gossiper) ReadFromPort(errChan chan error, conn net.UDPConn, client boo
 		}
 
 		//give it to the receive routine
-		go g.Receive(packet, *sendingAddr, errChan, client)
+		if !anonymous {
+			go g.Receive(packet, *sendingAddr, errChan, client)
+		}
 	}
 
 }

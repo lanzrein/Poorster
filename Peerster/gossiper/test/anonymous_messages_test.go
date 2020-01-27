@@ -10,7 +10,7 @@ import (
 )
 
 func TestAnonymousMessaging(t *testing.T) {
-	// log.SetDebugVisible(4)
+	log.SetDebugVisible(2)
 	//Test the anonymous messaging within a cluster
 	g1, err := gossiper.NewGossiper("A", "8080", "127.0.0.1:5000", "127.0.0.1:5001", false, 10, "8000", 10, 3, 5, false, 10, false)
 	if err != nil {
@@ -70,4 +70,16 @@ func TestAnonymousMessaging(t *testing.T) {
 	assert.Equal(t, c1.Members, c2.Members)
 	assert.Equal(t, c1.PublicKeys, c2.PublicKeys)
 
+	// anonText := "Anonymous Message"
+	// g1.ClientSendAnonymousMessage(g3.Name, anonText, 0.5, false)
+	// _, _ = g3.ReplyToClient()
+
+	// <-time.After(3 * time.Second)
+	// b1, err := g3.ReplyToClient()
+	// if err != nil {
+	// 	log.ErrFatal(err, "Could not get the buffer")
+	// }
+	//
+	// exp := fmt.Sprint("ANONYMOUS contents ", anonText, "\n")
+	// assert.Equal(t, string(b1), exp)
 }

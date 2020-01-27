@@ -63,7 +63,7 @@ func (c *Client) SendPrivateMsg(msg string, dest string, anonymous *bool, relayR
 		Anonymous:   anonymous,
 	}
 
-	if anonymous {
+	if *anonymous {
 		toSend.RelayRate = relayRate
 		toSend.FullAnonimity = fullAnonimity
 	}
@@ -123,11 +123,11 @@ func (c *Client) RequestFile(file *string, destination *string, request *string,
 		Destination: destination,
 		File:        file,
 		Request:     &bytes,
-		Anonymous:   anonymous,
+		Anonymous:   &anonymous,
 	}
 
 	if anonymous {
-		tosend.RelayRate = relayRate
+		tosend.RelayRate = &relayRate
 	}
 
 	log.Lvl3("Sending to send : ", *tosend)

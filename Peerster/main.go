@@ -3,14 +3,15 @@ package main
 
 import (
 	"flag"
+	"os"
+
 	"github.com/JohanLanzrein/Peerster/gossiper"
 	"go.dedis.ch/onet/log"
-	"os"
 )
 
 func main() {
 	//some parameters.
-	log.SetDebugVisible(gossiper.DEBUGLEVEL)
+	// log.SetDebugVisible(gossiper.DEBUGLEVEL)
 	UIPort := flag.String("UIPort", "8080", "port for the UI client ")
 	gossipAddr := flag.String("gossipAddr", "127.0.0.1:5000", "ip:port for the gossiper")
 
