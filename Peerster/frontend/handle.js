@@ -56,6 +56,11 @@ $(document).ready(function(){
   $("#closecluster").click(closeclusterpannel);
 
   $("#initcluster").click(InitCluster);
+  $("#sendbroadcast").click(SendBroadcast);
+
+  $("li span[class=anoncall]").click(anoncall);
+  $("li span[class=anonmessage]").click(anonmessage);
+
   //request the node ID
   requestNodeId();
   // //loop and request data sometimes.
@@ -168,26 +173,49 @@ function sendprivatemsg(){
   let content = $("#privatecontent").val();
   console.log("Sent " + content + " to : " + destination);
   tosend = {"destination" : destination, "content" : content}
-  $.post(host+"/privatemsg",JSON.stringify(tosend)).done(function(data){
-    //update the peer list...
-    console.log("Private Message got response : " + data)
-    $("#origin_list").empty();
-    res = JSON.parse(data);
 
-    for(let i = 0 ; i < res.length ; i ++){
+  if (!anonmessage) {
+    //Private message.
+    $.post(host+"/privatemsg",JSON.stringify(tosend)).done(function(data){
+      //update the peer list...
+      console.log("Private Message got response : " + data)
+      $("#origin_list").empty();
+      res = JSON.parse(data);
 
-      $("#origin_list").append("<li id='private'>"+res[i]+"</li>");
+      for(let i = 0 ; i < res.length ; i ++){
 
-    }
-    $("li[id=private]").click(showprivate);
+        $("#origin_list").append("<li id='private'>"+res[i]+"</li>");
+
+      }
+      $("li[id=private]").click(showprivate);
 
 
-  });
+    });
+  }else{
+    $.post(host+"/anonmessage",JSON.stringify(tosend)).done(function(data){
+      //update the peer list...
+      console.log("Anonymous Message got response : " + data)
+      $("#clustermembers").empty();
+      res = JSON.parse(data);
+
+      for(let i = 0 ; i < res.length ; i ++){
+        $("#clustermembers").append("<li id='member'>"+res[i]+"<span class=\"anonmessage\">✉️</span><span class=\"anoncall\">📞</span></li>");
+
+      }
+
+      $("li span[class=anoncall]").click(anoncall);
+      $("li span[class=anonmessage]").click(anonmessage);
+
+
+    });
+  }
+
   //closing
   $("#privatecontent").val(" ");
   $("#receiver").text('');
 
   $("#privatepopup").hide();
+  anonmessage = false;
 }
 
 /**

@@ -380,11 +380,44 @@ func (g *Gossiper) BroadcastMessageHandle(w http.ResponseWriter, r *http.Request
 			log.Error("Error on reading data : ", err)
 		}
 
-		message := new(PrivateMessage)
+		message := new(PrivMessage)
 		err = json.Unmarshal(data, message)
 		if err != nil {
 			log.Error("Could not unmarshal message : ", err)
 		}
-		g.SendBroadcast(message.Text, false)
+		log.Lvl1("Data : ", message)
+		g.SendBroadcast(message.Content, false)
+
 	}
+
+	replyClusterMembers(g, w)
+}
+
+func replyClusterMembers(g *Gossiper, w http.ResponseWriter) {
+	//Reply the memebrs..
+	origins := g.Cluster.Members
+	log.Lvl3("Members : ", origins)
+	tosend, _ := json.Marshal(origins)
+	log.Lvl3(tosend)
+	_, _ = w.Write(tosend)
+}
+
+func (g *Gossiper) UpdateClusterMembersHandle(w http.ResponseWriter, r *http.Request) {
+
+}
+func (g *Gossiper) AnonymousMessageHandle(w http.ResponseWriter, r *http.Request) {
+	//Todo
+	//Data sent is a PrivMessage struct with a destination and a content field
+	//var msg := new(PrivMessage)
+	//msg.Content // the content
+	//msg.Destination // the destination
+
+	//at the end update with the current cluster members.
+	replyClusterMembers(g, w)
+}
+
+func (g *Gossiper) AnonymousCallHandle(w http.ResponseWriter, r *http.Request) {
+	//Todo
+	//data sent is a privmessage like for anonymouse message but only with a destination
+
 }

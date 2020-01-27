@@ -129,6 +129,14 @@ type Message struct {
 	Anonymous     bool
 	RelayRate     float64
 	FullAnonimity bool
+
+	//Project things...
+	Broadcast    *bool
+	Anonymous    *bool
+	InitCluster  *bool
+	LeaveCluster *bool
+	JoinId       *uint64
+	JoinOther    *string
 }
 
 //RumorMessage
