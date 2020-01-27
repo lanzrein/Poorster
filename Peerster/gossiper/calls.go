@@ -35,31 +35,41 @@ func (g *Gossiper) ReceiveCallRequest(req CallRequest) {
 		if g.CallStatus.InCall || g.CallStatus.ExpectingResponse {
 			// if gossiper is in another call or waiting for a response, send a BUSY
 			callResp.Status = Busy
+			// send BUSY response
+			packet := GossipPacket{CallResponse: &callResp}
+			err := g.SendTo(addr, packet)
+			if err != nil {
+				log.Error(err)
+			}
 		} else {
 			// terminal prompt
 			reader := bufio.NewReader(os.Stdin)
-			for {
-				fmt.Printf("Received a call request from node %s: accept/decline [y/n]?\n", req.Origin)
-				text, err := reader.ReadString('\n')
+			// TODO: Would this work? (e.g. need a loop until user puts Y or N, but
+			//		do not want to block, want to still keep processing incoming messages)
+			go func() {
+				for {
+					fmt.Printf("Received a call request from node %s: accept/decline [y/n]?\n", req.Origin)
+					text, err := reader.ReadString('\n')
+					if err != nil {
+						log.Error("Error reading user input: ", err)
+					}
+					if strings.Compare(text, "y") != 0 {
+						callResp.Status = Accept
+						g.CallStatus.InCall = true
+						g.CallStatus.OtherParticipant = req.Origin
+						break
+					} else if strings.Compare(text, "n") != 0 {
+						callResp.Status = Decline
+						break
+					}
+				}
+				// send ACCEPT or DECLINE response
+				packet := GossipPacket{CallResponse: &callResp}
+				err := g.SendTo(addr, packet)
 				if err != nil {
-					log.Error("Error reading user input: ", err)
+					log.Error(err)
 				}
-				if strings.Compare(text, "y") != 0 {
-					callResp.Status = Accept
-					g.CallStatus.InCall = true
-					g.CallStatus.OtherParticipant = req.Origin
-					break
-				} else if strings.Compare(text, "n") != 0 {
-					callResp.Status = Decline
-					break
-				}
-			}
-		}
-		// send response
-		packet := GossipPacket{CallResponse: &callResp}
-		err := g.SendTo(addr, packet)
-		if err != nil {
-			log.Error(err)
+			}()
 		}
 	} else {
 		packet := GossipPacket{CallRequest: &req}

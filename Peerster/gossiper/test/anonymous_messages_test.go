@@ -29,7 +29,7 @@ func TestAnonymousMessaging(t *testing.T) {
 		g1.Run()
 	}()
 	go func() {
-		g2.Run()git
+		g2.Run()
 	}()
 	go func() {
 		g3.Run()
@@ -56,30 +56,17 @@ func TestAnonymousMessaging(t *testing.T) {
 	<-time.After(1 * time.Second)
 	g2.RequestJoining(g1.Name, *g1.Cluster.ClusterID)
 	g3.RequestJoining(g1.Name, *g1.Cluster.ClusterID)
-	<-time.After(10 * time.Second)
+	<-time.After(15 * time.Second)
 	c3 := g3.Cluster
 	c2 := g2.Cluster
 	c1 := g1.Cluster
-	assert.Equal(t, c1.ClusterID, c3.ClusterID)
 	assert.Equal(t, c1.ClusterID, c2.ClusterID)
-	assert.Equal(t, c1.MasterKey, c3.MasterKey)
+	assert.Equal(t, c1.ClusterID, c3.ClusterID)
 	assert.Equal(t, c1.MasterKey, c2.MasterKey)
+	assert.Equal(t, c1.MasterKey, c3.MasterKey)
 	assert.Equal(t, c1.Members, c3.Members)
-	assert.Equal(t, c1.Members, c2.Members)
 	assert.Equal(t, c1.PublicKeys, c3.PublicKeys)
+	assert.Equal(t, c1.Members, c2.Members)
 	assert.Equal(t, c1.PublicKeys, c2.PublicKeys)
-	// text := "Hello from g3!"
-	// _, _ = g1.ReplyToClient()
-	//
-	// g3.SendBroadcast(text, false)
-	//
-	// <-time.After(3 * time.Second)
-	// b1, err := g1.ReplyToClient()
-	// if err != nil {
-	// 	log.ErrFatal(err, "Could not get the buffer")
-	// }
-	//
-	// exp := fmt.Sprint("Broadcast origin ", g3.Name, " contents ", text, "\n")
-	// assert.Equal(t, string(b1), exp)
 
 }

@@ -54,7 +54,7 @@ func (g *Gossiper) ClientSendAnonymousMessage(gp GossipPacket, relayRate float64
 
 // ReceiveAnonymousMessage - handles receiving a gossip packet with an anonymous message
 func (g *Gossiper) ReceiveAnonymousMessage(anon *AnonymousMessage, errChan chan error) {
-
+	routeBecauseOfCoinFlip := false
 	if strings.Compare(anon.Receiver, g.Name) == 0 {
 		// anonymous message is for us, decrypt it
 		decryptedPacket, err := g.DecryptBytes(anon.EncryptedContent)
@@ -80,8 +80,12 @@ func (g *Gossiper) ReceiveAnonymousMessage(anon *AnonymousMessage, errChan chan 
 			addr := g.SendToRandom(packet)
 			log.Lvl2("Relaying the message to : ", addr)
 		} else {
-			// if after flip we decided to route to destination or if the packet is already
-			//	being routed to the destination (e.g. a node before us flipped a coint to route it)
+			routeBecauseOfCoinFlip = true
+		}
+
+		// if after flip we decided to route to destination or if the packet is already
+		//	being routed to the destination (e.g. a node before us flipped a coint to route it)
+		if routeBecauseOfCoinFlip || anon.RouteToReceiver {
 			addr := g.FindPath(anon.Receiver)
 			if addr == "" {
 				//we do not know this peer we stop here

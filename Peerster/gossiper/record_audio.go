@@ -1,28 +1,40 @@
 package gossiper
 
-// https://blog.golang.org/c-go-cgo
-
 import (
 	"fmt"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/eiannone/keyboard"
 	"github.com/gordonklaus/portaudio"
 	wave "github.com/zenwerk/go-wave"
 	"go.dedis.ch/onet/log"
+
+	"github.com/briandowns/spinner"
 )
 
-func errCheck(err error) {
+func RecordAudioFromMic() {
 
-	if err != nil {
-		log.Error(err)
-		panic(err)
+	stream, waveWriter, buffer := setup()
+	s := spinner.New(spinner.CharSets[43], 100*time.Millisecond)
+	// start reading from microphone
+	errCheck(stream.Start())
+	fmt.Printf("\r Now recording.\n")
+	s.Start()
+
+	go detectEscapeKeyInput(stream, waveWriter, s)
+	for {
+		errCheck(stream.Read())
+
+		// write input bytes to file
+		_, err := waveWriter.Write([]byte(buffer)) // WriteSample16 for 16 bits
+		errCheck(err)
 	}
 }
 
-const escape = '\x00'
-
+// 			HELPERS 			//
+// =====================
 func setup() (*portaudio.Stream, *wave.Writer, []byte) {
 	if len(os.Args) != 2 {
 		fmt.Printf("Usage : %s <audiofilename.wav>\n", os.Args[0])
@@ -64,38 +76,34 @@ func setup() (*portaudio.Stream, *wave.Writer, []byte) {
 	return stream, waveWriter, buffer
 }
 
-func RecordAudioFromMic() {
-
-	stream, waveWriter, buffer := setup()
-	go detectEscapeKeyInput(stream, waveWriter)
-
-	// start reading from microphone
-	errCheck(stream.Start())
-	for {
-		errCheck(stream.Read())
-
-		fmt.Printf("\r Now recording.\n")
-
-		// write input bytes to file
-		_, err := waveWriter.Write([]byte(buffer)) // WriteSample16 for 16 bits
-		errCheck(err)
-	}
-}
-
 // Detect when user presses Escape (used to stop recording)
 // https://github.com/eiannone/keyboard
-func detectEscapeKeyInput(stream *portaudio.Stream, waveWriter *wave.Writer) {
-	key, _, err := keyboard.GetSingleKey()
-	if err != nil {
-		panic(err)
-	}
-	if key == escape {
-		// On escape key-press, stop recording and close wave writer and stream, terminate portaudio
-		fmt.Println("Clearing resources")
-		waveWriter.Close()
-		stream.Close()
-		errCheck(stream.Stop())
-		portaudio.Terminate()
-		os.Exit(0)
+func detectEscapeKeyInput(stream *portaudio.Stream, waveWriter *wave.Writer, s *spinner.Spinner) {
+	for {
+		_, key, err := keyboard.GetSingleKey()
+		if err != nil {
+			panic(err)
+		}
+		if key == keyboard.KeyEsc {
+			// On escape key-press, stop recording and close wave writer and stream, terminate portaudio
+			s.Stop()
+			fmt.Println("\n Finish recording. Clearing resources")
+			waveWriter.Close()
+			errCheck(stream.Stop())
+			stream.Close()
+			portaudio.Terminate()
+			os.Exit(0)
+		}
 	}
 }
+
+func errCheck(err error) {
+	if err != nil {
+		log.Error(err)
+		panic(err)
+	}
+}
+
+// https://github.com/gordonklaus/portaudio/blob/master/examples/record.go
+// https://socketloop.com/tutorials/golang-record-voice-audio-from-microphone-to-wav-file
+// https://medium.com/@valentijnnieman_79984/how-to-build-an-audio-streaming-server-in-go-part-1-1676eed93021
