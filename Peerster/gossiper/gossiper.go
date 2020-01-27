@@ -269,7 +269,7 @@ func (g *Gossiper) ReadFromPort(errChan chan error, conn net.UDPConn, client boo
 					log.Lvl1("Message to send anon messaging...")
 					anonymous = true
 					g.ClientSendAnonymousMessage(*msg.Destination, msg.Text, *msg.RelayRate, *msg.FullAnonimity)
-				} else if *msg.CallRequest {
+				} else if msg.CallRequest != nil && *msg.CallRequest {
 					log.Lvl1("Message to call someone...")
 					call = true
 					g.ClientSendCallRequest(*msg.Destination)
@@ -310,7 +310,7 @@ func (g *Gossiper) ReadFromPort(errChan chan error, conn net.UDPConn, client boo
 			} else if msg.LeaveCluster != nil && *msg.LeaveCluster {
 				g.LeaveCluster()
 				continue
-			} else if *msg.HangUp {
+			} else if msg.HangUp != nil && *msg.HangUp {
 				log.Lvl1("Message to hang up...")
 				hangup = true
 				g.ClientSendHangUpMessage()
