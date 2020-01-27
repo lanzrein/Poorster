@@ -10,40 +10,38 @@ import (
 )
 
 //ClientSendAnonymousMessage - handles anonymous message sending
-func (g *Gossiper) ClientSendAnonymousMessage(gp GossipPacket, relayRate float64, fullAnonimity bool) error {
+func (g *Gossiper) ClientSendAnonymousMessage(destination string, text string, relayRate float64, fullAnonimity bool) error {
 
 	errChan := make(chan error)
 
+	// Both sending and receiving node need to be in the same cluster
+	// Sending node needs to have information about the destination's public key
 	if !g.IsInCluster {
 		log.Error("Cannot send anonymous message - current node does not belong to any cluster.")
 		return <-errChan
 	}
-
-	var receiver string
-	// sending an anonymous private message
-	if gp.Private != nil {
-		receiver = gp.Private.Destination
-
-		if !isNodeInCluster(g.Cluster, receiver) {
-			log.Error("Cannot send anonymous message, node ", receiver, " is not in the cluster.")
-			return <-errChan
-		}
-
-		if _, ok := g.Cluster.PublicKeys[receiver]; !ok {
-			log.Error("Cannot send anonymous message, public key of node ", receiver, " is not available.")
-			return <-errChan
-		}
-
-		// anonymize the origin
-		if fullAnonimity {
-			gp.Private.Origin = ""
-		}
+	if !isNodeInCluster(g.Cluster, destination) {
+		log.Error("Cannot send anonymous message, node ", destination, " is not in the cluster.")
+		return <-errChan
 	}
 
-	encryptedBytes := g.EncryptPacket(gp, receiver)
+	if _, ok := g.Cluster.PublicKeys[destination]; !ok {
+		log.Error("Cannot send anonymous message, public key of node ", destination, " is not available.")
+		return <-errChan
+	}
+
+	anonPrivate := PrivateMessage{Origin: g.Name, Text: text, Destination: destination}
+	// anonymize the origin
+	if fullAnonimity {
+		anonPrivate.Origin = ""
+	}
+	gp := GossipPacket{Private: &anonPrivate}
+
+	// sending an anonymous private message
+	encryptedBytes := g.EncryptPacket(gp, destination)
 	anonMsg := AnonymousMessage{
 		EncryptedContent: encryptedBytes,
-		Receiver:         receiver,
+		Receiver:         destination,
 		AnonymityLevel:   relayRate,
 		RouteToReceiver:  false,
 	}

@@ -137,15 +137,9 @@ func (g *Gossiper) Run() error {
 	errChan := make(chan error)
 
 	//if it is not in simple mode *try* to load a server - if it fails ( i.e. if a server is already running then it will just return without saying anything ! )
-<<<<<<< HEAD
-	if !g.SimpleMode {
-		//go LoadServer(g)
-	}
-=======
 	//if !g.SimpleMode{
 	//	go LoadServer(g)
 	//}
->>>>>>> johan
 
 	//read from client connection
 	go g.ReadFromPort(errChan, g.connClient, true)
@@ -245,9 +239,6 @@ func (g *Gossiper) ReadFromPort(errChan chan error, conn net.UDPConn, client boo
 		packetBytes = packetBytes[:cnt]
 
 		packet := GossipPacket{}
-		anonymous := false
-		fullAnonimity := false
-		var relayRate float64
 		//if its a client then decode the message and wrap it in gossip packet
 		if client {
 			log.Lvl3("Got message from client.")
@@ -296,20 +287,20 @@ func (g *Gossiper) ReadFromPort(errChan chan error, conn net.UDPConn, client boo
 				log.Lvl1("Broadcast message...")
 				go g.SendBroadcast(msg.Text, false)
 				continue
-			}else if msg.InitCluster != nil{
+			} else if msg.InitCluster != nil {
 				log.Lvl1("Message to init the cluster..")
 				g.InitCluster()
 				continue
-			} else if msg.JoinOther != nil && msg.JoinId != nil{
+			} else if msg.JoinOther != nil && msg.JoinId != nil {
 				log.Lvl1("Message joining request.")
 				g.RequestJoining(*msg.JoinOther, *msg.JoinId)
 				continue
-			} else if msg.LeaveCluster != nil && *msg.LeaveCluster{
+			} else if msg.LeaveCluster != nil && *msg.LeaveCluster {
 				g.LeaveCluster()
 				continue
-			} else if msg.Anonymous != nil{
+			} else if msg.Anonymous != nil && *msg.Anonymous {
 				log.Lvl1("Message for anon messaging...")
-				//TODO some handler for anonymous messaging...
+				g.ClientSendAnonymousMessage(*msg.Destination, msg.Text, *msg.RelayRate, *msg.FullAnonimity)
 			} else {
 				packet = GossipPacket{Simple: &SimpleMessage{
 					OriginalName:  "",
@@ -317,16 +308,13 @@ func (g *Gossiper) ReadFromPort(errChan chan error, conn net.UDPConn, client boo
 					Contents:      msg.Text,
 				}}
 			}
-			anonymous = msg.Anonymous
-			relayRate = msg.RelayRate
-			fullAnonimity = msg.FullAnonimity
 		} else {
 			log.Lvl3("Got message from ", sendingAddr.String())
 			_ = protobuf.Decode(packetBytes, &packet)
 		}
 
 		//give it to the receive routine
-		go g.Receive(packet, *sendingAddr, errChan, client, anonymous, relayRate, fullAnonimity)
+		go g.Receive(packet, *sendingAddr, errChan, client)
 	}
 
 }

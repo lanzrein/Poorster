@@ -10,6 +10,7 @@ import (
 )
 
 func TestAnonymousMessaging(t *testing.T) {
+	// log.SetDebugVisible(4)
 	//Test the anonymous messaging within a cluster
 	g1, err := gossiper.NewGossiper("A", "8080", "127.0.0.1:5000", "127.0.0.1:5001", false, 10, "8000", 10, 3, 5, false, 10, false)
 	if err != nil {

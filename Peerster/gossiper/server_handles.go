@@ -63,10 +63,7 @@ func (g *Gossiper) GetMessages(w http.ResponseWriter, r *http.Request) {
 			Contents:      string(data),
 		}
 		errChan := make(chan error)
-		anonymous := false
-		relayRate := 0.0
-		fullAnonimity := false
-		g.Receive(GossipPacket{Simple: &sm}, net.UDPAddr{}, errChan, true, anonymous, relayRate, fullAnonimity)
+		g.Receive(GossipPacket{Simple: &sm}, net.UDPAddr{}, errChan, true)
 
 		tosend, err := g.ReplyToClient()
 		if err != nil {

@@ -9,7 +9,7 @@ import (
 )
 
 //Receive a new gossippacket from addr, and treat it accordingly.
-func (g *Gossiper) Receive(pckt GossipPacket, addr net.UDPAddr, errChan chan error, client bool, anonymous bool, relayRate float64, fullAnonimity bool) {
+func (g *Gossiper) Receive(pckt GossipPacket, addr net.UDPAddr, errChan chan error, client bool) {
 	//packet has already been received.
 	if client {
 		//if the message comes from the client it is necessarly a new rumor message.
@@ -19,9 +19,7 @@ func (g *Gossiper) Receive(pckt GossipPacket, addr net.UDPAddr, errChan chan err
 
 		} else {
 			//build a rumor message
-			if anonymous {
-				errChan <- g.ClientSendAnonymousMessage(pckt, relayRate, fullAnonimity)
-			} else if pckt.Private != nil {
+			if pckt.Private != nil {
 				//private message
 				errChan <- g.SendPrivateMessage(*pckt.Private)
 			} else {

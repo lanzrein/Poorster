@@ -19,15 +19,16 @@ func main() {
 	request := flag.String("request", "", "request a chunk or metafile of this hash")
 	keywords := flag.String("keywords", "", "Keywords for a file search")
 	budget := flag.Int("budget", -1, "Budget for a file search")
-	anonymous := flag.Bool("anonymous", false, "Indicates sending an anonymous message")
-	relayRate := flag.Float64("relayRate", 0.5, "Indicates probability of a peer relaying the message")
-	fullAnonimity := flag.Bool("fullAnonimity", false, "If true, do not add Origin information in the encrypted packet")
 	//Stuff for project...
 	broadcast := flag.Bool("broadcast", false, "Broadcast flag")
 	initcluster := flag.Bool("initcluster", false, "Initialize a new cluster at this node")
 	joinId := flag.Uint64("joinID", 0, "ID of the cluster the node wants to join")
 	joinOther := flag.String("joinOther", "", "Name of the peer that is the entry point to the cluster")
 	leavecluster := flag.Bool("leavecluster", false, "Leave the current cluster")
+
+	anonymous := flag.Bool("anonymous", false, "Indicates sending an anonymous message")
+	relayRate := flag.Float64("relayRate", 0.5, "Indicates probability of a peer relaying the message")
+	fullAnonimity := flag.Bool("fullAnonimity", false, "If true, do not add Origin information in the encrypted packet")
 
 	flag.Parse()
 
@@ -52,7 +53,7 @@ func main() {
 
 		//send a private message
 		log.Lvl3("Sending private message ")
-		client.SendPrivateMsg(*msg, *dest)
+		client.SendPrivateMsg(*msg, *dest, anonymous, relayRate, fullAnonimity)
 	} else if (*request == "" && *file == "") && *msg != "" && !*broadcast {
 		//rumor message
 		log.Lvl3("rumor")

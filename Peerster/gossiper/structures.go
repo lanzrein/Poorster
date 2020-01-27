@@ -126,13 +126,12 @@ type Message struct {
 	Budget   *uint64
 	Keywords *[]string
 	//Project - anonimity
-	Anonymous     bool
-	RelayRate     float64
-	FullAnonimity bool
+	Anonymous     *bool
+	RelayRate     *float64
+	FullAnonimity *bool
 
 	//Project things...
 	Broadcast    *bool
-	Anonymous    *bool
 	InitCluster  *bool
 	LeaveCluster *bool
 	JoinId       *uint64
