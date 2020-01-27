@@ -1,7 +1,6 @@
 package gossiper
 
 import (
-	"fmt"
 	"math/rand"
 	"strings"
 	"time"
@@ -26,9 +25,6 @@ func (g *Gossiper) ClientSendAnonymousMessage(destination string, text string, r
 
 	if _, ok := g.Cluster.PublicKeys[destination]; !ok {
 		log.Error("Cannot send anonymous message, public key of node ", destination, " is not available.")
-		for n, pk := range g.Cluster.PublicKeys {
-			fmt.Println("Node = ", n, " :: PK = ", pk)
-		}
 		return
 	}
 

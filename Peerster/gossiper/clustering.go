@@ -45,7 +45,7 @@ func (g *Gossiper) RequestJoining(other string, clusterID uint64) {
 }
 
 func (g *Gossiper) HeartbeatLoop() {
-	dur := time.Duration(g.RolloutTimer)*time.Second
+	dur := time.Duration(g.RolloutTimer) * time.Second
 	timer := time.NewTimer(dur)
 
 	for {
@@ -75,6 +75,7 @@ func (g *Gossiper) LeaveCluster() {
 	g.RequestLeave()
 
 	g.Cluster = clusters.Cluster{}
+	g.IsInCluster = false
 	//Send a message saying we want to leave.
 	return
 }
@@ -85,7 +86,7 @@ func (g *Gossiper) SendBroadcast(text string, leave bool) {
 		ID:     0,
 		Text:   text,
 	}
-	if text != ""{
+	if text != "" {
 		g.PrintBroadcast(rumor)
 	}
 
@@ -279,6 +280,7 @@ func (g *Gossiper) ReceiveRequestReply(message RequestReply) {
 	g.PrintAcceptJoiningID(cluster)
 
 	g.Cluster = cluster
+	g.IsInCluster = true
 	//Start the heartbeatloop immediately
 	go g.HeartbeatLoop()
 }
@@ -396,6 +398,7 @@ func (g *Gossiper) UpdateFromRollout(cluster clusters.Cluster) {
 	log.Lvl3("Update information form a new cluster :O ")
 
 	g.Cluster = cluster
+	g.IsInCluster = true
 	g.Cluster.HeartBeats = make(map[string]bool)
 
 }
