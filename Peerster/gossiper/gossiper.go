@@ -137,7 +137,11 @@ func (g *Gossiper) Run() error {
 	errChan := make(chan error)
 
 	//if it is not in simple mode *try* to load a server - if it fails ( i.e. if a server is already running then it will just return without saying anything ! )
+<<<<<<< HEAD
 	if !g.SimpleMode {
+=======
+	if !g.SimpleMode{
+>>>>>>> johan
 		go LoadServer(g)
 	}
 

@@ -39,16 +39,20 @@ function SendBroadcast(){
 }
 
 
-let anonmessage = false;
+let anonFlag = false;
+
 function anonmessage(){
     dst = $(this).parent().text();
     if (dst.length > 5) {
         dst = dst.substring(0,dst.length-5);
     }
     console.log("anon message ! "+ dst ) ;
+
     $("#receiver").text(dst);
-    $("#privatepopup").show()
-    anonmessage = true ;
+    $("#privatepopup").show();
+    $("#clusterpopup").hide();
+    $("#anonparams").show();
+    anonFlag = true ;
 }
 
 let dst;
@@ -64,7 +68,5 @@ function anoncall(){
         console.log("Anonymous call got response : " + data)
 
     });
-
-
 
 }

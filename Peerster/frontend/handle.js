@@ -160,6 +160,12 @@ function DownloadFile(){
  * Cancel sending a private message
  */
 function cancelprivate(){
+  if (anonFlag){
+    anonFlag = false;
+    $("#clusterpopup").show();
+    $("#anonparams").hide();
+
+  }
   $("#receiver").text('');
   $("#privatecontent").val('');
   $("#privatepopup").hide();
@@ -174,7 +180,7 @@ function sendprivatemsg(){
   console.log("Sent " + content + " to : " + destination);
   tosend = {"destination" : destination, "content" : content}
 
-  if (!anonmessage) {
+  if (!anonFlag) {
     //Private message.
     $.post(host+"/privatemsg",JSON.stringify(tosend)).done(function(data){
       //update the peer list...
@@ -192,6 +198,12 @@ function sendprivatemsg(){
 
     });
   }else{
+    fullAnon = $("#fullAnon").is(':checked') ? true : false ;
+    relayRate = $("#relayrate").val();
+    console.log("Fullanon"+fullAnon);
+    console.log("relay rate :" + relayRate);
+    tosend = {"destination" : destination, "content" : content, "RelayRate" : Number(relayRate), "fullAnon":fullAnon}
+    console.log("To send : " + JSON.stringify(tosend))
     $.post(host+"/anonmessage",JSON.stringify(tosend)).done(function(data){
       //update the peer list...
       console.log("Anonymous Message got response : " + data)
@@ -208,6 +220,9 @@ function sendprivatemsg(){
 
 
     });
+    $("#clusterpopup").show();
+    $("#anonparams").hide();
+
   }
 
   //closing
@@ -215,7 +230,7 @@ function sendprivatemsg(){
   $("#receiver").text('');
 
   $("#privatepopup").hide();
-  anonmessage = false;
+  anonFlag = false;
 }
 
 /**

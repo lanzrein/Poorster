@@ -114,6 +114,9 @@ button.selected{
 }
 
 
+#anonparams{
+    display: none;
+}
 
 span.anoncall{
   border-color: aquamarine;
