@@ -223,12 +223,36 @@ const bufferFragmentSize = 1920
 const bitRate = 32000
 const numChanels = 1
 
-func (g *Gossiper) ClientRecordAndSendAudio() {
+func (g *Gossiper) ClientStartRecording() {
 	// only process recording and sending audio if we are in a call with someone
 	if g.CallStatus.InCall && strings.Compare(g.CallStatus.OtherParticipant, "") != 0 {
 		// start recording and sending audio
+		fmt.Println("RECORDING AUDIO DATA")
+
+		g.AudioChan = make(chan struct{})
+		go func() {
+			for {
+				audio := AudioMessage{Origin: g.Name, Destination: g.CallStatus.OtherParticipant}
+				g.ReceiveAudio(audio)
+				time.Sleep(2 * time.Second)
+				select {
+				case <-g.AudioChan:
+					fmt.Println("\n Finish recording.")
+					return
+				default:
+				}
+			}
+		}()
+	} else {
+		log.Error("Current node is not in a call - cannot send audio")
 	}
 	return
+}
+
+func (g *Gossiper) ClientStopRecording() {
+	if g.AudioChan != nil {
+		close(g.AudioChan)
+	}
 }
 
 func (g *Gossiper) ReceiveAudio(audio AudioMessage) {
@@ -237,7 +261,7 @@ func (g *Gossiper) ReceiveAudio(audio AudioMessage) {
 			strings.Compare(audio.Origin, g.CallStatus.OtherParticipant) == 0 {
 			// if we are in a call with the sender of this audio and it was intended for us
 			//		listen to it
-
+			fmt.Println("LISTENING TO AUDIO DATA from ", audio.Origin)
 		} else if strings.Compare(audio.Destination, g.CallStatus.OtherParticipant) == 0 {
 			// otherwise, it must be us sending the audio message out
 			canSend := g.NodeCanSendAnonymousPacket(audio.Destination)
@@ -261,7 +285,7 @@ func (g *Gossiper) ReceiveAudio(audio AudioMessage) {
 
 //      HELPERS      //
 // ====================
-func recordAudio() {
+func record() {
 	// Opus Encoder
 	enc, err := opus.NewEncoder(sampleRate, numChanels, opus.AppVoIP)
 	if err != nil {

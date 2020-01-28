@@ -151,6 +151,7 @@ type Gossiper struct {
 	HearbeatTimer int
 	RolloutTimer  int //timer in seconds ~~ usually 300
 	CallStatus    GossiperCallStatus
+	AudioChan     chan struct{}
 }
 
 type GossiperCallStatus struct {

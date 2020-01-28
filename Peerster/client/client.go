@@ -254,9 +254,15 @@ func (c *Client) HangUp() {
 	c.encodeAndSendBytes(msg)
 }
 
-func (c *Client) SendAudio() {
-	msg := gossiper.Message{Audio: new(bool)}
-	*msg.Audio = true
+func (c *Client) StartRecording() {
+	msg := gossiper.Message{StartRecording: new(bool)}
+	*msg.StartRecording = true
+	c.encodeAndSendBytes(msg)
+}
+
+func (c *Client) StopRecording() {
+	msg := gossiper.Message{StopRecording: new(bool)}
+	*msg.StopRecording = true
 	c.encodeAndSendBytes(msg)
 }
 

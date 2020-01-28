@@ -139,9 +139,10 @@ type Message struct {
 	FullAnonimity *bool
 
 	//Project - calls
-	CallRequest *bool
-	HangUp      *bool
-	Audio       *bool
+	CallRequest    *bool
+	HangUp         *bool
+	StartRecording *bool
+	StopRecording  *bool
 }
 
 //RumorMessage

@@ -240,8 +240,6 @@ func (g *Gossiper) ReadFromPort(errChan chan error, conn net.UDPConn, client boo
 
 		packet := GossipPacket{}
 		anonymous := false
-		call := false
-		hangup := false
 		audio := false
 		//if its a client then decode the message and wrap it in gossip packet
 		if client {
@@ -272,7 +270,7 @@ func (g *Gossiper) ReadFromPort(errChan chan error, conn net.UDPConn, client boo
 					g.ClientSendAnonymousMessage(*msg.Destination, msg.Text, *msg.RelayRate, *msg.FullAnonimity)
 				} else if msg.CallRequest != nil && *msg.CallRequest {
 					log.Lvl1("Message to call someone...")
-					call = true
+					audio = true
 					g.ClientSendCallRequest(*msg.Destination)
 				} else {
 					packet = GossipPacket{Private: &PrivateMessage{
@@ -313,12 +311,16 @@ func (g *Gossiper) ReadFromPort(errChan chan error, conn net.UDPConn, client boo
 				continue
 			} else if msg.HangUp != nil && *msg.HangUp {
 				log.Lvl1("Message to hang up...")
-				hangup = true
+				audio = true
 				g.ClientSendHangUpMessage()
-			} else if msg.Audio != nil && *msg.Audio {
+			} else if msg.StartRecording != nil && *msg.StartRecording {
 				log.Lvl1("Message to record and send audio ...")
 				audio = true
-				g.ClientRecordAndSendAudio()
+				g.ClientStartRecording()
+			} else if msg.StopRecording != nil && *msg.StopRecording {
+				log.Lvl1("Message to record and send audio ...")
+				audio = true
+				g.ClientStopRecording()
 			} else {
 				packet = GossipPacket{Simple: &SimpleMessage{
 					OriginalName:  "",
@@ -332,7 +334,7 @@ func (g *Gossiper) ReadFromPort(errChan chan error, conn net.UDPConn, client boo
 		}
 
 		//give it to the receive routine
-		if !anonymous && !call && !hangup && !audio {
+		if !anonymous && !audio {
 			go g.Receive(packet, *sendingAddr, errChan, client)
 		}
 	}

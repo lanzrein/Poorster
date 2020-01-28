@@ -9,7 +9,7 @@ import (
 	"go.dedis.ch/protobuf"
 )
 
-const DEFAULTROLLOUT = 20
+const DEFAULTROLLOUT = 30
 const DEFAULTHEARTBEAT = 5
 
 //InitCluster the current gossiper creates a cluster where he is the sole member
@@ -184,7 +184,7 @@ func (g *Gossiper) ReceiveBroadcast(message BroadcastMessage) {
 			}
 			//in any case add it to the map..
 			g.Cluster.HeartBeats[rumor.Origin] = true
-			if !Contains(g.Cluster.Members, rumor.Origin){
+			if !Contains(g.Cluster.Members, rumor.Origin) {
 				g.Cluster.Members = append(g.Cluster.Members, rumor.Origin)
 			}
 		}
