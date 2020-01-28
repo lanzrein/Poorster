@@ -58,16 +58,30 @@ func TestAnonymousMessaging(t *testing.T) {
 	g2.RequestJoining(g1.Name, *g1.Cluster.ClusterID)
 	g3.RequestJoining(g1.Name, *g1.Cluster.ClusterID)
 	<-time.After(15 * time.Second)
-	c3 := g3.Cluster
-	c2 := g2.Cluster
-	c1 := g1.Cluster
-	assert.Equal(t, c1.ClusterID, c2.ClusterID)
-	assert.Equal(t, c1.ClusterID, c3.ClusterID)
-	assert.Equal(t, c1.MasterKey, c2.MasterKey)
-	assert.Equal(t, c1.MasterKey, c3.MasterKey)
-	assert.Equal(t, c1.Members, c3.Members)
-	assert.Equal(t, c1.PublicKeys, c3.PublicKeys)
-	assert.Equal(t, c1.Members, c2.Members)
-	assert.Equal(t, c1.PublicKeys, c2.PublicKeys)
+	//c3 := g3.Cluster
+	//c2 := g2.Cluster
+	//c1 := g1.Cluster
+	//assert.Equal(t, c1.ClusterID, c2.ClusterID)
+	//assert.Equal(t, c1.ClusterID, c3.ClusterID)
+	//assert.Equal(t, c1.MasterKey, c2.MasterKey)
+	//assert.Equal(t, c1.MasterKey, c3.MasterKey)
+	//assert.Equal(t, c1.Members, c3.Members)
+	//assert.Equal(t, c1.PublicKeys, c3.PublicKeys)
+	//assert.Equal(t, c1.Members, c2.Members)
+	//assert.Equal(t, c1.PublicKeys, c2.PublicKeys)
+
+
+	//Check if counter etc are ok
+	for i := 0 ; i < 30 ; i ++{
+		assert.Equal(t, g1.Cluster.Counter , g2.Cluster.Counter)
+		assert.Equal(t, g2.Cluster.Counter, g3.Cluster.Counter)
+		cl1 := g1.Cluster.Clock()
+		cl2 := g2.Cluster.Clock()
+		cl3 := g3.Cluster.Clock()
+		assert.Equal(t, cl1, cl2)
+		assert.Equal(t, cl2, cl3)
+	}
+
+
 
 }

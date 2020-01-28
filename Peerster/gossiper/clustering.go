@@ -5,22 +5,24 @@ import (
 	"github.com/JohanLanzrein/Peerster/ies"
 	"go.dedis.ch/onet/log"
 	"go.dedis.ch/protobuf"
+	"math/rand"
 	"time"
 )
 
-const DEFAULTROLLOUT = 10
+const DEFAULTROLLOUT = 300
 const DEFAULTHEARTBEAT = 5
 
-//InitCluster the current gossiper creates a cluster where he is the sole member
+//InitCounter the current gossiper creates a cluster where he is the sole member
 func (g *Gossiper) InitCluster() {
 	id := GenerateId()
+	seed := rand.Int63()
 	members := []string{g.Name}
 	publickey := make(map[string]ies.PublicKey)
 	publickey[g.Name] = g.Keypair.PublicKey
 	masterkey := g.MasterKeyGen()
-	cluster := clusters.NewCluster(id, members, masterkey, publickey)
+	cluster := clusters.NewCluster(id, members, masterkey, publickey, uint64(seed) )
 
-	g.Cluster = cluster
+	g.Cluster = &cluster
 	g.PrintInitCluster()
 	go g.HeartbeatLoop()
 }
@@ -59,7 +61,10 @@ func (g *Gossiper) HeartbeatLoop() {
 			return
 		case <-timer.C:
 			log.Lvl4("Time for a rolllllllllout")
-			g.KeyRollout(g.Cluster.Members[0]) //TODO for now its only the first member but in the future chose randomly
+			idx := g.Cluster.Clock()
+			log.Lvl1(g.Name, "My idx is :", idx)
+
+			g.KeyRollout(g.Cluster.Members[idx])
 			timer.Reset(dur)
 		}
 	}
@@ -72,7 +77,7 @@ func (g *Gossiper) LeaveCluster() {
 	log.Lvl2("Sending leave message..")
 	g.RequestLeave()
 
-	g.Cluster = clusters.Cluster{}
+	g.Cluster = new(clusters.Cluster)
 	//Send a message saying we want to leave.
 	return
 }
@@ -102,6 +107,7 @@ func (g *Gossiper) SendBroadcast(text string, leave bool ) {
 		LeaveRequest:leave,
 	}
 	gp := GossipPacket{Broadcast: &bm}
+	g.Cluster.HeartBeats[g.Name] = true
 
 	//Send to all member of the cluster.
 	//This does not need to be anonymized as an attacker can in any case know who is in a cluster by joining it..
@@ -215,6 +221,8 @@ func (g *Gossiper) ReceiveJoinRequest(message RequestMessage) {
 		g.Cluster.PublicKeys[message.Origin] = message.PublicKey
 		return
 
+	}else{
+		log.Lvl4(g.Name, "got new request from : ", message.Origin)
 	}
 
 	//TODO start e-voting protocol to decide if accept...
@@ -223,7 +231,7 @@ func (g *Gossiper) ReceiveJoinRequest(message RequestMessage) {
 	//For now we always accept.
 
 	g.UpdateCluster(message)
-	data, err := protobuf.Encode(&g.Cluster)
+	data, err := protobuf.Encode(g.Cluster)
 	//encrypt it ...
 
 	ek := g.Keypair.KeyDerivation(&message.PublicKey)
@@ -279,11 +287,13 @@ func (g *Gossiper) ReceiveRequestReply(message RequestReply) {
 	data := ies.Decrypt(g.Keypair.KeyDerivation(&pk), message.ClusterInformation)
 	err := protobuf.Decode(data, &cluster)
 	if err != nil {
-		log.Error("Could not decode cluster information :", err)
+		log.ErrFatal(err, "Could not decode cluster information ")
 	}
 	g.PrintAcceptJoiningID(cluster)
 
-	g.Cluster = cluster
+	g.Cluster = &cluster
+	clusters.InitCounter(g.Cluster)
+	log.Lvl1(g.Name, "Cluster initialized. ")
 	//Start the heartbeatloop immediately
 	go g.HeartbeatLoop()
 }
@@ -302,6 +312,7 @@ func (g *Gossiper) KeyRollout(leader string) {
 	}
 
 	go func() {
+		log.Lvl1(g.Name, "sending a rollout update to ", leader )
 
 		if leader != g.Name {
 			//Request to join
@@ -311,11 +322,12 @@ func (g *Gossiper) KeyRollout(leader string) {
 		g.Cluster.PublicKeys[g.Name] = g.Keypair.PublicKey
 
 
+
 	}()
 
 	//leader does the rest.
 	if leader == g.Name {
-
+		g.Cluster.HeartBeats[g.Name] = true
 		//Check who is still in the cluster.
 		var nextMembers []string
 		for _, m := range g.Cluster.Members {
@@ -347,6 +359,8 @@ func (g *Gossiper) KeyRollout(leader string) {
 				}
 				return
 			}
+			log.Lvl3("Missing some members ( have ", len(g.Cluster.PublicKeys), "need ", len(nextMembers),")")
+			log.Lvl3(g.Cluster.PublicKeys)
 		}
 
 	}
@@ -367,7 +381,7 @@ func (g *Gossiper) AnnounceNewMasterKey() error {
 	g.Cluster.MasterKey = g.MasterKeyGen()
 
 	cluster := g.Cluster
-	data, err := protobuf.Encode(&cluster)
+	data, err := protobuf.Encode(cluster)
 	if err != nil {
 		log.Error("Could not encode cluster :", err)
 		return err
@@ -404,7 +418,8 @@ func (g *Gossiper) UpdateCluster(message RequestMessage) {
 func (g *Gossiper) UpdateFromRollout(cluster clusters.Cluster) {
 	log.Lvl3("Update information form a new cluster :O ")
 
-	g.Cluster = cluster
+	g.Cluster = &cluster
+	clusters.InitCounter(g.Cluster)
 	g.Cluster.HeartBeats = make(map[string]bool)
 
 }

@@ -1,6 +1,8 @@
 package ies
 
 import (
+	"crypto/aes"
+	"crypto/rand"
 	"crypto/subtle"
 	"go.dedis.ch/onet/log"
 	"testing"
@@ -49,12 +51,12 @@ func TestEncryptDecrypt(t *testing.T) {
 		t.Fatal(err)
 	}
 	elapsed := time.Since(now)
-	log.Lvl1("Two key pair generated in :", elapsed.Microseconds(), "us")
+	log.Lvl1("Two key pair generated in :", elapsed.Nanoseconds(), "us")
 	now = time.Now()
 	shared1 := kp1.KeyDerivation(&kp2.PublicKey)
 	shared2 := kp2.KeyDerivation(&kp1.PublicKey)
 	elapsed = time.Since(now)
-	log.Lvl1("Two shared key derived in : ", elapsed.Microseconds(), "us")
+	log.Lvl1("Two shared key derived in : ", elapsed.Nanoseconds(), "us")
 
 	log.Lvl1("Comparing shared keys...")
 	now = time.Now()
@@ -63,16 +65,24 @@ func TestEncryptDecrypt(t *testing.T) {
 	}
 
 	elapsed = time.Since(now)
-	log.Lvl1("Shared keys are equal.\nCompared keys in :", elapsed)
-
-	data := []byte{10,1,66,16,0,26,0}
-	cipher := Encrypt(shared1, data)
-
-	log.Lvlf1("Cipher text : %x", cipher)
-	pt := Decrypt(shared2, cipher)
-	log.Lvl1("Resulting cleartext : ", pt)
-	log.Lvlf1("original : %x, pt : %x ", data, pt)
-	if subtle.ConstantTimeCompare(pt, data) != 1 {
-		t.Fatal("Error resulting plaintext does not match ! ")
+	log.Lvl1("Shared keys are equal. \nCompared keys in :", elapsed.Nanoseconds())
+	for i := 0 ; i < 10 ; i ++{
+		data := make([]byte, aes.BlockSize*(i+1)*100000)
+		rand.Read(data)
+		now = time.Now()
+		cipher := Encrypt(shared1, data)
+		encTime := time.Since(now)
+		now = time.Now()
+		log.Lvlf3("Cipher text : %x", cipher)
+		pt := Decrypt(shared2, cipher)
+		decTime := time.Since(now)
+		log.Lvl1("For data len : ", len(data), "Enc time : ", encTime.String(),  ";Dec time : ", decTime.String())
+		log.Lvl3("Resulting cleartext : ", pt)
+		log.Lvlf3("original : %x, pt : %x ", data, pt)
+		if subtle.ConstantTimeCompare(pt, data) != 1 {
+			t.Fatal("Error resulting plaintext does not match ! ")
+		}
 	}
+
+
 }
