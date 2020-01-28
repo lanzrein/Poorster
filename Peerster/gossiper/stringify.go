@@ -174,6 +174,30 @@ func (g *Gossiper) PrintCallRequest(message CallRequest) {
 	g.WriteToBuffer(s)
 }
 
+func (g *Gossiper) PrintCallAccepted(callee string) {
+	s := fmt.Sprint("CALL ACCEPTED by ", callee, "\n")
+	fmt.Print(s)
+	g.WriteToBuffer(s)
+}
+
+func (g *Gossiper) PrintCallDeclined(callee string) {
+	s := fmt.Sprint("CALL DECLINED by ", callee, "\n")
+	fmt.Print(s)
+	g.WriteToBuffer(s)
+}
+
+func (g *Gossiper) PrintCallBusy(callee string) {
+	s := fmt.Sprint("CALL BUSY by ", callee, "\n")
+	fmt.Print(s)
+	g.WriteToBuffer(s)
+}
+
+func (g *Gossiper) PrintHangUp(callee string) {
+	s := fmt.Sprint("HANG UP by ", callee, "\n")
+	fmt.Print(s)
+	g.WriteToBuffer(s)
+}
+
 //PrintMatch prints if there is a match for the search reply.
 func (g *Gossiper) PrintMatch(message SearchReply) {
 	for _, elem := range message.Results {

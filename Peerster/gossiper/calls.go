@@ -133,13 +133,16 @@ func (g *Gossiper) ReceiveCallResponse(resp CallResponse) {
 		g.CallStatus.ExpectingResponse = false
 		if resp.Status == Accept {
 			log.Lvl2("Node ", resp.Origin, " picked up")
+			g.PrintCallAccepted(resp.Origin)
 			g.CallStatus.InCall = true
 			g.CallStatus.OtherParticipant = resp.Origin
 		} else {
 			if resp.Status == Decline {
 				log.Lvl2("Node ", resp.Origin, " declined our call")
+				g.PrintCallDeclined(resp.Origin)
 			} else if resp.Status == Busy {
 				log.Lvl2("Node ", resp.Origin, " is in another call")
+				g.PrintCallBusy(resp.Origin)
 			}
 			g.CallStatus.InCall = false
 			g.CallStatus.OtherParticipant = ""
@@ -184,7 +187,8 @@ func (g *Gossiper) ReceiveHangUpMessage(hangUp HangUp) {
 	if strings.Compare(hangUp.Destination, g.Name) == 0 {
 		// the other call participant wants to hangup on us
 		if g.CallStatus.InCall || strings.Compare(hangUp.Origin, g.CallStatus.OtherParticipant) == 0 {
-			log.Lvl2("Node ", g.CallStatus.OtherParticipant, " hung up on us")
+			log.Lvl2("Node ", hangUp.Origin, " hung up on us")
+			g.PrintHangUp(hangUp.Origin)
 			g.CallStatus.InCall = false
 			g.CallStatus.ExpectingResponse = false
 			g.CallStatus.OtherParticipant = ""
