@@ -228,7 +228,6 @@ func (g *Gossiper) ClientStartRecording() {
 	// only process recording and sending audio if we are in a call with someone
 	if g.CallStatus.InCall && strings.Compare(g.CallStatus.OtherParticipant, "") != 0 {
 		// start recording and sending audio
-		fmt.Println("RECORDING AUDIO DATA")
 		enc, err := opus.NewEncoder(sampleRate, numChanels, opus.AppVoIP)
 		if err != nil {
 			log.Panic(err)
@@ -258,9 +257,6 @@ func (g *Gossiper) ClientStartRecording() {
 
 				bufRec.Read(frame)
 				nEnc, err := enc.Encode(frame, data)
-				for _, v := range frame {
-					fmt.Println(v)
-				}
 				if err != nil {
 					log.Panic(err)
 				}
@@ -339,9 +335,6 @@ func (g *Gossiper) ReceiveAudio(audio AudioMessage) {
 						log.Panic(err)
 					}
 					bufPlay.Write(frame[:nDec])
-					for _, v := range frame[:nDec] {
-						fmt.Println(v)
-					}
 					bufPlay.Read(p)
 				},
 				pulse.PlaybackMono,
