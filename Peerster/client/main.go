@@ -34,6 +34,7 @@ func main() {
 	// audio communication
 	call := flag.Bool("call", false, "Indicates sending a call request to a destination node")
 	hangUp := flag.Bool("hangup", false, "Indicates hanging up the current call")
+	sendAudio := flag.Bool("sendAudio", false, "Indicates beginning of audio recording")
 
 	flag.Parse()
 
@@ -71,7 +72,6 @@ func main() {
 	} else if *keywords != "" {
 		//Start a file search
 		log.Lvl3("search")
-
 		client.SearchFile(keywords, budget)
 	} else if *broadcast && *msg != "" {
 		log.Lvl3("Brodacst..")
@@ -85,6 +85,9 @@ func main() {
 	} else if *hangUp {
 		log.Lvl3("Hanging up")
 		client.HangUp()
+	} else if *sendAudio {
+		log.Lvl3("Sending audio data")
+		client.SendAudio()
 	} else {
 		fmt.Print("ERROR (Bad argument combination)")
 		os.Exit(1)

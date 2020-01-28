@@ -32,8 +32,8 @@ type GossipPacket struct {
 
 	CallRequest  *CallRequest
 	CallResponse *CallResponse
-
-	HangUpMsg *HangUp
+	HangUpMsg    *HangUp
+	AudioMsg     *AudioMessage
 }
 
 /***********DIFFERENT TYPES OF MESSAGES -******************/
@@ -141,6 +141,7 @@ type Message struct {
 	//Project - calls
 	CallRequest *bool
 	HangUp      *bool
+	Audio       *bool
 }
 
 //RumorMessage

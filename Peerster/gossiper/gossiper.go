@@ -137,9 +137,9 @@ func (g *Gossiper) Run() error {
 	errChan := make(chan error)
 
 	//if it is not in simple mode *try* to load a server - if it fails ( i.e. if a server is already running then it will just return without saying anything ! )
-	//if !g.SimpleMode{
-	//	go LoadServer(g)
-	//}
+	if !g.SimpleMode {
+		go LoadServer(g)
+	}
 
 	//read from client connection
 	go g.ReadFromPort(errChan, g.connClient, true)
@@ -242,6 +242,7 @@ func (g *Gossiper) ReadFromPort(errChan chan error, conn net.UDPConn, client boo
 		anonymous := false
 		call := false
 		hangup := false
+		audio := false
 		//if its a client then decode the message and wrap it in gossip packet
 		if client {
 			log.Lvl3("Got message from client.")
@@ -314,6 +315,10 @@ func (g *Gossiper) ReadFromPort(errChan chan error, conn net.UDPConn, client boo
 				log.Lvl1("Message to hang up...")
 				hangup = true
 				g.ClientSendHangUpMessage()
+			} else if msg.Audio != nil && *msg.Audio {
+				log.Lvl1("Message to record and send audio ...")
+				audio = true
+				g.ClientRecordAndSendAudio()
 			} else {
 				packet = GossipPacket{Simple: &SimpleMessage{
 					OriginalName:  "",
@@ -327,7 +332,7 @@ func (g *Gossiper) ReadFromPort(errChan chan error, conn net.UDPConn, client boo
 		}
 
 		//give it to the receive routine
-		if !anonymous && !call && !hangup {
+		if !anonymous && !call && !hangup && !audio {
 			go g.Receive(packet, *sendingAddr, errChan, client)
 		}
 	}

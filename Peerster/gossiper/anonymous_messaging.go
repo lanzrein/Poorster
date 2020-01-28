@@ -73,16 +73,24 @@ func (g *Gossiper) ReceiveAnonymousMessage(anon *AnonymousMessage) {
 
 		if decryptedPacket.Private != nil {
 			// we received an anonymous private message
+			log.Lvl2("Decrypted an anonymized private message")
 			g.PrintAnonymousPrivateMessage(*decryptedPacket.Private)
 		} else if decryptedPacket.CallRequest != nil {
 			// we received an anonymous call request
+			log.Lvl2("Decrypted an anonymized call request")
 			g.ReceiveCallRequest(*decryptedPacket.CallRequest)
 		} else if decryptedPacket.CallResponse != nil {
 			// we received an anonymous call response
+			log.Lvl2("Decrypted an anonymized call response")
 			g.ReceiveCallResponse(*decryptedPacket.CallResponse)
 		} else if decryptedPacket.HangUpMsg != nil {
 			// we received an anonymous hangup message
+			log.Lvl2("Decrypted an anonymized hang up message")
 			g.ReceiveHangUpMessage(*decryptedPacket.HangUpMsg)
+		} else if decryptedPacket.AudioMsg != nil {
+			// we received an anonymous audio message
+			log.Lvl2("Decrypted an anonymized audio message")
+			g.ReceiveAudio(*decryptedPacket.AudioMsg)
 		}
 
 	} else if !anon.RouteToReceiver {

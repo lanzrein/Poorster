@@ -7,7 +7,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/jfreymuth/pulse"
 	"go.dedis.ch/onet/log"
+	opus "gopkg.in/hraban/opus.v2"
 )
 
 //      CALL REQUEST      //
@@ -193,7 +195,8 @@ func (g *Gossiper) ReceiveHangUpMessage(hangUp HangUp) {
 			g.CallStatus.ExpectingResponse = false
 			g.CallStatus.OtherParticipant = ""
 		}
-	} else {
+	} else if strings.Compare(hangUp.Origin, g.Name) == 0 {
+		// otherwise, it must be us sending a hangup message
 		canSend := g.NodeCanSendAnonymousPacket(hangUp.Destination)
 		if canSend {
 			gp := GossipPacket{HangUpMsg: &hangUp}
@@ -213,8 +216,77 @@ func (g *Gossiper) ReceiveHangUpMessage(hangUp HangUp) {
 	return
 }
 
+//      AUDIO MESSAGES    //
+// =========================
+const sampleRate = 48000
+const bufferFragmentSize = 1920
+const bitRate = 32000
+const numChanels = 1
+
+func (g *Gossiper) ClientRecordAndSendAudio() {
+	// only process recording and sending audio if we are in a call with someone
+	if g.CallStatus.InCall && strings.Compare(g.CallStatus.OtherParticipant, "") != 0 {
+		// start recording and sending audio
+	}
+	return
+}
+
+func (g *Gossiper) ReceiveAudio(audio AudioMessage) {
+	if g.CallStatus.InCall {
+		if strings.Compare(audio.Destination, g.Name) == 0 &&
+			strings.Compare(audio.Origin, g.CallStatus.OtherParticipant) == 0 {
+			// if we are in a call with the sender of this audio and it was intended for us
+			//		listen to it
+
+		} else if strings.Compare(audio.Destination, g.CallStatus.OtherParticipant) == 0 {
+			// otherwise, it must be us sending the audio message out
+			canSend := g.NodeCanSendAnonymousPacket(audio.Destination)
+			if canSend {
+				gp := GossipPacket{AudioMsg: &audio}
+				// sending an anonymous private message
+				encryptedBytes := g.EncryptPacket(gp, audio.Destination)
+				log.Lvl2("Encrypting anonymous message...")
+				anonMsg := AnonymousMessage{
+					EncryptedContent: encryptedBytes,
+					Receiver:         audio.Destination,
+					AnonymityLevel:   0.5,
+					RouteToReceiver:  false,
+				}
+
+				go g.ReceiveAnonymousMessage(&anonMsg)
+			}
+		}
+	}
+}
+
 //      HELPERS      //
 // ====================
+func recordAudio() {
+	// Opus Encoder
+	enc, err := opus.NewEncoder(sampleRate, numChanels, opus.AppVoIP)
+	if err != nil {
+		log.Panic(err)
+	}
+	if err := enc.SetMaxBandwidth(opus.SuperWideband); err != nil {
+		log.Panic(err)
+	}
+	if err := enc.SetBitrate(bitRate); err != nil {
+		log.Panic(err)
+	}
+
+	// Pulse Client
+	pa, err := pulse.NewClient()
+	if err != nil {
+		log.Panic(err)
+	}
+	defer pa.Close()
+
+}
+
+func playAudio() {
+
+}
+
 func routeMessage(g *Gossiper, packet GossipPacket, dest string) {
 	addr := g.FindPath(dest)
 	if addr == "" {
