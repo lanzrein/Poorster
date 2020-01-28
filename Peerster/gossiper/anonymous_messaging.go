@@ -14,11 +14,11 @@ import (
 func (g *Gossiper) NodeCanSendAnonymousPacket(destination string) bool {
 	// Both sending and receiving node need to be in the same cluster
 	// Sending node needs to have information about the destination's public key
-	if !g.IsInCluster {
+	if g.Cluster.ClusterID != nil {
 		log.Error("Cannot send anonymous packet - current node does not belong to any cluster.")
 		return false
 	}
-	if !isNodeInCluster(g.Cluster, destination) {
+	if !isNodeInCluster(*g.Cluster, destination) {
 		log.Error("Cannot send anonymous packet, node ", destination, " is not in the cluster.")
 		return false
 	}

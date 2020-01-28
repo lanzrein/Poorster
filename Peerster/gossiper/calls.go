@@ -251,7 +251,6 @@ func (g *Gossiper) ClientStartRecording() {
 
 		rec, err := pa.NewRecord(
 			func(p []int16) {
-				fmt.Println("RECORDING")
 				bufRec.Write(p)
 				if bufRec.Len() < bufferFragmentSize {
 					return
@@ -259,6 +258,9 @@ func (g *Gossiper) ClientStartRecording() {
 
 				bufRec.Read(frame)
 				nEnc, err := enc.Encode(frame, data)
+				for _, v := range frame {
+					fmt.Println(v)
+				}
 				if err != nil {
 					log.Panic(err)
 				}
@@ -337,7 +339,9 @@ func (g *Gossiper) ReceiveAudio(audio AudioMessage) {
 						log.Panic(err)
 					}
 					bufPlay.Write(frame[:nDec])
-					fmt.Println("PLAYING")
+					for _, v := range frame[:nDec] {
+						fmt.Println(v)
+					}
 					bufPlay.Read(p)
 				},
 				pulse.PlaybackMono,

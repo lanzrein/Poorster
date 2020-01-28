@@ -144,8 +144,7 @@ type Gossiper struct {
 
 	//Stuff for project
 	Keypair       *ies.KeyPair
-	Cluster       clusters.Cluster
-	IsInCluster   bool
+	Cluster       *clusters.Cluster
 	LeaveChan     chan bool
 	Keys          map[string]ies.PublicKey
 	HearbeatTimer int
