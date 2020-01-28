@@ -107,6 +107,8 @@ type AudioMessage struct {
 }
 
 type AudioData struct {
+	Data       []byte
+	EncryptedN int
 }
 
 //SimpleMessage

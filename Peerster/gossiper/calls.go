@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/jfreymuth/pulse"
@@ -228,21 +229,74 @@ func (g *Gossiper) ClientStartRecording() {
 	if g.CallStatus.InCall && strings.Compare(g.CallStatus.OtherParticipant, "") != 0 {
 		// start recording and sending audio
 		fmt.Println("RECORDING AUDIO DATA")
+		enc, err := opus.NewEncoder(sampleRate, numChanels, opus.AppVoIP)
+		if err != nil {
+			log.Panic(err)
+		}
+		if err := enc.SetMaxBandwidth(opus.SuperWideband); err != nil {
+			log.Panic(err)
+		}
+		if err := enc.SetBitrate(bitRate); err != nil {
+			log.Panic(err)
+		}
+		pa, err := pulse.NewClient()
+		if err != nil {
+			log.Panic(err)
+		}
 
+		frame := make([]int16, bufferFragmentSize)
+		data := make([]byte, bufferFragmentSize)
 		g.AudioChan = make(chan struct{})
-		go func() {
-			for {
-				audio := AudioMessage{Origin: g.Name, Destination: g.CallStatus.OtherParticipant}
+		bufRec := &buffer{}
+
+		rec, err := pa.NewRecord(
+			func(p []int16) {
+				fmt.Println("RECORDING")
+				bufRec.Write(p)
+				if bufRec.Len() < bufferFragmentSize {
+					return
+				}
+
+				bufRec.Read(frame)
+				nEnc, err := enc.Encode(frame, data)
+				if err != nil {
+					log.Panic(err)
+				}
+
+				audioData := AudioData{Data: data, EncryptedN: nEnc}
+				audio := AudioMessage{Origin: g.Name, Destination: g.CallStatus.OtherParticipant, Content: audioData}
 				g.ReceiveAudio(audio)
-				time.Sleep(2 * time.Second)
 				select {
 				case <-g.AudioChan:
 					fmt.Println("\n Finish recording.")
+					pa.Close()
 					return
 				default:
 				}
-			}
-		}()
+			},
+			pulse.RecordMono,
+			pulse.RecordSampleRate(sampleRate),
+			pulse.RecordBufferFragmentSize(bufferFragmentSize),
+		)
+
+		if err != nil {
+			log.Panic(err)
+		}
+		go rec.Start()
+		// go func() {
+		// 	for {
+		// 		audio := AudioMessage{Origin: g.Name, Destination: g.CallStatus.OtherParticipant}
+		// 		g.ReceiveAudio(audio)
+		// 		time.Sleep(2 * time.Second)
+		// 		select {
+		// 		case <-g.AudioChan:
+		// 			fmt.Println("\n Finish recording.")
+		// 			pa.Close()
+		// 			return
+		// 		default:
+		// 		}
+		// 	}
+		// }()
 	} else {
 		log.Error("Current node is not in a call - cannot send audio")
 	}
@@ -261,7 +315,40 @@ func (g *Gossiper) ReceiveAudio(audio AudioMessage) {
 			strings.Compare(audio.Origin, g.CallStatus.OtherParticipant) == 0 {
 			// if we are in a call with the sender of this audio and it was intended for us
 			//		listen to it
-			fmt.Println("LISTENING TO AUDIO DATA from ", audio.Origin)
+			dec, err := opus.NewDecoder(sampleRate, 1)
+			if err != nil {
+				log.Panic(err)
+			}
+			pa, err := pulse.NewClient()
+			if err != nil {
+				log.Panic(err)
+			}
+			defer pa.Close()
+
+			bufPlay := &buffer{}
+			frame := make([]int16, bufferFragmentSize)
+			nEnc := audio.Content.EncryptedN
+			data := audio.Content.Data
+
+			play, err := pa.NewPlayback(
+				func(p []int16) {
+					nDec, err := dec.Decode(data[:nEnc], frame)
+					if err != nil {
+						log.Panic(err)
+					}
+					bufPlay.Write(frame[:nDec])
+					fmt.Println("PLAYING")
+					bufPlay.Read(p)
+				},
+				pulse.PlaybackMono,
+				pulse.PlaybackSampleRate(sampleRate),
+				pulse.PlaybackBufferSize(bufferFragmentSize),
+			)
+			if err != nil {
+				log.Panic(err)
+			}
+			go play.Start()
+
 		} else if strings.Compare(audio.Destination, g.CallStatus.OtherParticipant) == 0 {
 			// otherwise, it must be us sending the audio message out
 			canSend := g.NodeCanSendAnonymousPacket(audio.Destination)
@@ -307,7 +394,7 @@ func record() {
 
 }
 
-func playAudio() {
+func play() {
 
 }
 
@@ -324,4 +411,32 @@ func routeMessage(g *Gossiper, packet GossipPacket, dest string) {
 		log.Error(err)
 	}
 	return
+}
+
+// 		BUFFER		 //
+//================
+type buffer struct {
+	b  []int16
+	mu sync.RWMutex
+}
+
+func (b *buffer) Read(p []int16) {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	if len(b.b) > len(p) {
+		copy(p, b.b[:len(p)])
+		b.b = b.b[len(p):]
+	}
+}
+
+func (b *buffer) Write(p []int16) {
+	b.mu.Lock()
+	b.b = append(b.b, p...)
+	b.mu.Unlock()
+}
+
+func (b *buffer) Len() int {
+	b.mu.RLock()
+	defer b.mu.RUnlock()
+	return len(b.b[:])
 }
