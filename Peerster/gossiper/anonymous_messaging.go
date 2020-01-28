@@ -9,43 +9,53 @@ import (
 	"go.dedis.ch/onet/log"
 )
 
-//ClientSendAnonymousMessage - handles anonymous message sending
-func (g *Gossiper) ClientSendAnonymousMessage(destination string, text string, relayRate float64, fullAnonimity bool) {
-
+//NodeCanSendAnonymousPacket - checks if both nodes are in the same cluster and if
+//	sending node knows the receiver's public key
+func (g *Gossiper) NodeCanSendAnonymousPacket(destination string) bool {
 	// Both sending and receiving node need to be in the same cluster
 	// Sending node needs to have information about the destination's public key
 	if !g.IsInCluster {
-		log.Error("Cannot send anonymous message - current node does not belong to any cluster.")
-		return
+		log.Error("Cannot send anonymous packet - current node does not belong to any cluster.")
+		return false
 	}
 	if !isNodeInCluster(g.Cluster, destination) {
-		log.Error("Cannot send anonymous message, node ", destination, " is not in the cluster.")
-		return
+		log.Error("Cannot send anonymous packet, node ", destination, " is not in the cluster.")
+		return false
 	}
 
 	if _, ok := g.Cluster.PublicKeys[destination]; !ok {
-		log.Error("Cannot send anonymous message, public key of node ", destination, " is not available.")
-		return
+		log.Error("Cannot send anonymous packet, public key of node ", destination, " is not available.")
+		return false
 	}
 
-	anonPrivate := PrivateMessage{Origin: g.Name, Text: text, Destination: destination}
-	// anonymize the origin
-	if fullAnonimity {
-		anonPrivate.Origin = ""
-	}
-	gp := GossipPacket{Private: &anonPrivate}
+	return true
+}
 
-	// sending an anonymous private message
-	encryptedBytes := g.EncryptPacket(gp, destination)
-	log.Lvl2("Encrypting anonymous message...")
-	anonMsg := AnonymousMessage{
-		EncryptedContent: encryptedBytes,
-		Receiver:         destination,
-		AnonymityLevel:   relayRate,
-		RouteToReceiver:  false,
-	}
+//ClientSendAnonymousMessage - handles anonymous message sending
+func (g *Gossiper) ClientSendAnonymousMessage(destination string, text string, relayRate float64, fullAnonimity bool) {
 
-	go g.ReceiveAnonymousMessage(&anonMsg)
+	canSend := g.NodeCanSendAnonymousPacket(destination)
+
+	if canSend {
+		anonPrivate := PrivateMessage{Origin: g.Name, Text: text, Destination: destination}
+		// anonymize the origin
+		if fullAnonimity {
+			anonPrivate.Origin = ""
+		}
+		gp := GossipPacket{Private: &anonPrivate}
+
+		// sending an anonymous private message
+		encryptedBytes := g.EncryptPacket(gp, destination)
+		log.Lvl2("Encrypting anonymous message...")
+		anonMsg := AnonymousMessage{
+			EncryptedContent: encryptedBytes,
+			Receiver:         destination,
+			AnonymityLevel:   relayRate,
+			RouteToReceiver:  false,
+		}
+
+		go g.ReceiveAnonymousMessage(&anonMsg)
+	}
 	return
 }
 
@@ -64,7 +74,17 @@ func (g *Gossiper) ReceiveAnonymousMessage(anon *AnonymousMessage) {
 		if decryptedPacket.Private != nil {
 			// we received an anonymous private message
 			g.PrintAnonymousPrivateMessage(*decryptedPacket.Private)
+		} else if decryptedPacket.CallRequest != nil {
+			// we received an anonymous call request
+			g.ReceiveCallRequest(*decryptedPacket.CallRequest)
+		} else if decryptedPacket.CallResponse != nil {
+			// we received an anonymous call response
+			g.ReceiveCallResponse(*decryptedPacket.CallResponse)
+		} else if decryptedPacket.HangUpMsg != nil {
+			// we received an anonymous hangup message
+			g.ReceiveHangUpMessage(*decryptedPacket.HangUpMsg)
 		}
+
 	} else if !anon.RouteToReceiver {
 		// anonymous message is not for us
 		// if we are still relaying the message, flip a weighted coin to relay or send to destination

@@ -11,7 +11,7 @@ import (
 
 func main() {
 	//some parameters.
-	log.SetDebugVisible(2)
+	// log.SetDebugVisible(2)
 	UIPort := flag.String("UIPort", "8080", "port for the UI client ")
 	gossipAddr := flag.String("gossipAddr", "127.0.0.1:5000", "ip:port for the gossiper")
 

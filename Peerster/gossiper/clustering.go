@@ -9,7 +9,7 @@ import (
 	"go.dedis.ch/protobuf"
 )
 
-const DEFAULTROLLOUT = 10
+const DEFAULTROLLOUT = 20
 const DEFAULTHEARTBEAT = 5
 
 //InitCluster the current gossiper creates a cluster where he is the sole member

@@ -14,11 +14,14 @@ import (
 // =========================
 func (g *Gossiper) ClientSendCallRequest(destination string) {
 	if !g.CallStatus.ExpectingResponse && !g.CallStatus.InCall {
-		callRequest := CallRequest{Origin: g.Name, Destination: destination}
-		g.CallStatus.ExpectingResponse = true
-		g.CallStatus.InCall = false
-		g.CallStatus.OtherParticipant = destination
-		g.ReceiveCallRequest(callRequest)
+		canSend := g.NodeCanSendAnonymousPacket(destination)
+		if canSend {
+			callRequest := CallRequest{Origin: g.Name, Destination: destination}
+			g.CallStatus.ExpectingResponse = true
+			g.CallStatus.InCall = false
+			g.CallStatus.OtherParticipant = destination
+			g.ReceiveCallRequest(callRequest)
+		}
 	} else {
 		log.Lvl2("Current gossiper is already in a call or expecting a call response")
 	}
@@ -72,7 +75,21 @@ func (g *Gossiper) ReceiveCallRequest(req CallRequest) {
 			}()
 		}
 	} else {
+
 		if strings.Compare(req.Origin, g.Name) == 0 {
+
+			gp := GossipPacket{CallRequest: &req}
+			// sending an anonymous private message
+			encryptedBytes := g.EncryptPacket(gp, req.Destination)
+			log.Lvl2("Encrypting anonymous message...")
+			anonMsg := AnonymousMessage{
+				EncryptedContent: encryptedBytes,
+				Receiver:         req.Destination,
+				AnonymityLevel:   0.5,
+				RouteToReceiver:  false,
+			}
+
+			go g.ReceiveAnonymousMessage(&anonMsg)
 			go func() {
 				// wait for 10 seconds for a response, if the other node doesn't pick up, hang up
 				time.Sleep(10 * time.Second)
@@ -82,8 +99,6 @@ func (g *Gossiper) ReceiveCallRequest(req CallRequest) {
 				}
 			}()
 		}
-		packet := GossipPacket{CallRequest: &req}
-		routeMessage(g, packet, req.Destination)
 	}
 	return
 }
@@ -130,8 +145,22 @@ func (g *Gossiper) ReceiveCallResponse(resp CallResponse) {
 			g.CallStatus.OtherParticipant = ""
 		}
 	} else {
-		packet := GossipPacket{CallResponse: &resp}
-		routeMessage(g, packet, resp.Destination)
+
+		canSend := g.NodeCanSendAnonymousPacket(resp.Destination)
+		if canSend {
+			gp := GossipPacket{CallResponse: &resp}
+			// sending an anonymous private message
+			encryptedBytes := g.EncryptPacket(gp, resp.Destination)
+			log.Lvl2("Encrypting anonymous message...")
+			anonMsg := AnonymousMessage{
+				EncryptedContent: encryptedBytes,
+				Receiver:         resp.Destination,
+				AnonymityLevel:   0.5,
+				RouteToReceiver:  false,
+			}
+
+			go g.ReceiveAnonymousMessage(&anonMsg)
+		}
 	}
 	return
 }
@@ -143,6 +172,7 @@ func (g *Gossiper) ClientSendHangUpMessage() {
 		(g.CallStatus.ExpectingResponse && strings.Compare(g.CallStatus.OtherParticipant, "") != 0) {
 
 		hangUp := HangUp{Origin: g.Name, Destination: g.CallStatus.OtherParticipant}
+		log.Lvl2("Current node is hanging up on node ", g.CallStatus.OtherParticipant)
 		g.CallStatus.InCall = false
 		g.CallStatus.ExpectingResponse = false
 		g.CallStatus.OtherParticipant = ""
@@ -154,13 +184,27 @@ func (g *Gossiper) ReceiveHangUpMessage(hangUp HangUp) {
 	if strings.Compare(hangUp.Destination, g.Name) == 0 {
 		// the other call participant wants to hangup on us
 		if g.CallStatus.InCall || strings.Compare(hangUp.Origin, g.CallStatus.OtherParticipant) == 0 {
+			log.Lvl2("Node ", g.CallStatus.OtherParticipant, " hung up on us")
 			g.CallStatus.InCall = false
 			g.CallStatus.ExpectingResponse = false
 			g.CallStatus.OtherParticipant = ""
 		}
 	} else {
-		packet := GossipPacket{HangUpMsg: &hangUp}
-		routeMessage(g, packet, hangUp.Destination)
+		canSend := g.NodeCanSendAnonymousPacket(hangUp.Destination)
+		if canSend {
+			gp := GossipPacket{HangUpMsg: &hangUp}
+			// sending an anonymous private message
+			encryptedBytes := g.EncryptPacket(gp, hangUp.Destination)
+			log.Lvl2("Encrypting anonymous message...")
+			anonMsg := AnonymousMessage{
+				EncryptedContent: encryptedBytes,
+				Receiver:         hangUp.Destination,
+				AnonymityLevel:   0.5,
+				RouteToReceiver:  false,
+			}
+
+			go g.ReceiveAnonymousMessage(&anonMsg)
+		}
 	}
 	return
 }

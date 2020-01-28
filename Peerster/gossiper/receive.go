@@ -99,15 +99,15 @@ func (g *Gossiper) Receive(pckt GossipPacket, addr net.UDPAddr, errChan chan err
 	} else if pckt.AnonymousMsg != nil {
 		log.Lvl2("Got an anonymous message !")
 		g.ReceiveAnonymousMessage(pckt.AnonymousMsg)
-	} else if pckt.CallRequest != nil {
-		log.Lvl2("Got a call request !")
-		g.ReceiveCallRequest(*pckt.CallRequest)
-	} else if pckt.CallResponse != nil {
-		log.Lvl2("Got a call response !")
-		g.ReceiveCallResponse(*pckt.CallResponse)
-	} else if pckt.HangUpMsg != nil {
-		log.Lvl2("Got a hang up message !")
-		g.ReceiveHangUpMessage(*pckt.HangUpMsg)
+		// } else if pckt.CallRequest != nil {
+		// 	log.Lvl2("Got a call request !")
+		// 	g.ReceiveCallRequest(*pckt.CallRequest)
+		// } else if pckt.CallResponse != nil {
+		// 	log.Lvl2("Got a call response !")
+		// 	g.ReceiveCallResponse(*pckt.CallResponse)
+		// } else if pckt.HangUpMsg != nil {
+		// 	log.Lvl2("Got a hang up message !")
+		// 	g.ReceiveHangUpMessage(*pckt.HangUpMsg)
 	} else {
 
 		//should not happen !
