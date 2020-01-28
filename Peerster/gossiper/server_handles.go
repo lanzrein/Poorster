@@ -24,8 +24,8 @@ type FileSearch struct {
 type PrivMessage struct {
 	Destination string
 	Content     string
-	FullAnon bool
-	RelayRate float64
+	FullAnon    bool
+	RelayRate   float64
 }
 
 type ClusterMD struct {
@@ -404,15 +404,8 @@ func replyClusterMembers(g *Gossiper, w http.ResponseWriter) {
 func (g *Gossiper) UpdateClusterMembersHandle(w http.ResponseWriter, r *http.Request) {
 
 }
-<<<<<<< HEAD
+
 func (g *Gossiper) AnonymousMessageHandle(w http.ResponseWriter, r *http.Request) {
-	//Todo
-	//Data sent is a PrivMessage struct with a destination and a content field
-	//var msg := new(PrivMessage)
-	//msg.Content // the content
-	//msg.Destination // the destination
-=======
-func (g *Gossiper)AnonymousMessageHandle(w http.ResponseWriter, r *http.Request){
 
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	if r.Method == "POST" {
@@ -435,10 +428,7 @@ func (g *Gossiper)AnonymousMessageHandle(w http.ResponseWriter, r *http.Request)
 		log.Lvl1("Data : ", message)
 		//Todo here you do the anonmessage handling for peerster...
 
-
 	}
-
->>>>>>> johan
 
 	//at the end update with the current cluster members.
 	replyClusterMembers(g, w)

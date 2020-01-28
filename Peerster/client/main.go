@@ -76,12 +76,8 @@ func main() {
 	} else if *broadcast && *msg != "" {
 		log.Lvl3("Brodacst..")
 		client.SendBroadcast(*msg)
-<<<<<<< HEAD
 	} else if *initcluster {
-=======
-	}else if *initcluster{
 		log.Lvl3("Init cluster")
->>>>>>> johan
 		client.InitCluster()
 	} else if *joinId > 0 && *joinOther != "" {
 		client.JoinCluster(joinId, joinOther)

@@ -224,13 +224,8 @@ func (c *Client) JoinCluster(id *uint64, other *string) {
 	}
 }
 
-<<<<<<< HEAD
 func (c *Client) LeaveCluster() {
-	msg := gossiper.Message{}
-=======
-func (c *Client)LeaveCluster(){
-	msg := gossiper.Message{LeaveCluster:new(bool)}
->>>>>>> johan
+	msg := gossiper.Message{LeaveCluster: new(bool)}
 	*msg.LeaveCluster = true
 	data, err := protobuf.Encode(&msg)
 	if err != nil {
