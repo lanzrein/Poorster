@@ -1,3 +1,6 @@
+//@authors Hrusanov Aleksandar, Lanzrein Johan, Rinaldi Vincent
+//evoting handles the evoting protocol and the different steps
+
 package gossiper
 
 import (
@@ -6,6 +9,7 @@ import (
 	"go.dedis.ch/protobuf"
 )
 
+//BroadcastJoin sends a broadcast concerning the node that will ask to join.
 func (g *Gossiper) BroadcastJoin(nodeToJoin string) {
 	rumor := RumorMessage{
 		Origin: g.Name,
@@ -48,6 +52,8 @@ func (g *Gossiper) BroadcastJoin(nodeToJoin string) {
 	g.ReceiveBroadcast(bm)
 }
 
+
+//BroadcastAccept broadcast to all parties that the gossiper accepts this node
 func (g *Gossiper) BroadcastAccept(nodeToAccept string) {
 	rumor := RumorMessage{
 		Origin: g.Name,
@@ -90,6 +96,7 @@ func (g *Gossiper) BroadcastAccept(nodeToAccept string) {
 	g.ReceiveBroadcast(bm)
 }
 
+//BroadcastDeny broadcast to all members that this gossiper denies the node
 func (g *Gossiper) BroadcastDeny(nodeToDeny string) {
 	rumor := RumorMessage{
 		Origin: g.Name,
@@ -174,6 +181,7 @@ func (g *Gossiper) BroadcastCollected(caseID string) {
 	g.ReceiveBroadcast(bm)
 }
 
+//BroadcastResults broadcasts the result of the evoting.
 func (g *Gossiper) BroadcastResults(results []string) {
 	rumor := RumorMessage{
 		Origin:  g.Name,
@@ -214,6 +222,8 @@ func (g *Gossiper) BroadcastResults(results []string) {
 	}
 }
 
+
+//BroadcastDecision broadcast the decision of an authority.
 func (g *Gossiper) BroadcastDecision(answer string) {
 	rumor := RumorMessage{
 		Origin: g.Name,

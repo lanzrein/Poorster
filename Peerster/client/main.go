@@ -1,3 +1,7 @@
+//main method for the client
+//@authors Hrusanov Aleksandar, Lanzrein Johan, Rinaldi Vincent
+
+
 package main
 
 import (

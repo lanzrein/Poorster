@@ -1,6 +1,6 @@
 /**
  * @file cluster.js contains the handler to connect to the server and make requests for the cluster management
- * @author Johan Lanzrein
+ //@authors Hrusanov Aleksandar, Lanzrein Johan, Rinaldi Vincent
  */
 
 function InitCluster(){
@@ -73,17 +73,51 @@ function anonmessage(){
 let dst;
 function anoncall(){
     dst = $(this).parent().text() ;
-    if (dst.length > 5) {
-        dst = dst.substring(0,dst.length-5);
+    console.log(dst.length);
+    if (dst.length >= 5) {
+        dst = dst.substring(0,dst.length-4);
+    }else{
+        alert("Incorrect name");
     }
     console.log("anon call to : " + dst   );
-    tosend = {"destination":dst, "content":content};
-    $.post(host+"/anoncall",JSON.stringify(tosend)).done(function(data){
-        //update the peer list...
-        console.log("Anonymous call got response : " + data)
+    $("#callee").text(dst);
+    $("#callpannel").show();
 
+}
+let currently_calling;
+
+
+function accept_call(){
+    let callee = $("#callee").text()
+    currently_calling = callee;
+    val = { "Accept" : true, "Member":callee};
+    post_call_data(val)
+    console.log("Accept on :", JSON.stringify(val));
+}
+
+function decline_call(){
+    val = { "Decline" : true, "Member": $("#callee").text()};
+    console.log("hangup on :", JSON.stringify(val));
+    post_call_data(val)
+    close_call();
+}
+
+function hangup_call(){
+    val = { "Hangup" : true, "Member": $("#callee").text()};
+    console.log("Declining on :", JSON.stringify(val));
+    post_call_data(val)
+    close_call();
+}
+
+function post_call_data(tosend){
+    $.post(host+"/callhandler",JSON.stringify(tosend)).done(function(data) {
+        console.log("OK for posting"); ;
     });
+}
 
+function close_call(){
+    $("#callee").text("");
+    $("#callpannel").hide();
 }
 
 let person;
@@ -130,7 +164,6 @@ function castvote(){
 
     closevote()
 }
-
 function closevote(){
     $("#votepannel").hide();
     $("#votetext").text('');
@@ -139,6 +172,8 @@ function closevote(){
 
 
 }
+
+
 
 function openjoin(){
     $("#joinpannel").show();
@@ -159,13 +194,10 @@ function joinrequest(){
 
     });
 
+    closejoin()
 }
 
 function closejoin(){
     $("#joinpannel").hide();
     $("#joinOther").text("");
 }
-
-$("#joincluster").click(openjoin);
-$("#confirmjoin").click(joinrequest);
-$("#closejoin").click(closejoin);

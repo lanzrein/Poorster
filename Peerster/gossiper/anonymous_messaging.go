@@ -1,3 +1,5 @@
+//@authors Hrusanov Aleksandar, Lanzrein Johan, Rinaldi Vincent
+
 package gossiper
 
 import (
