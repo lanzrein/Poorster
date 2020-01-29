@@ -481,6 +481,31 @@ func (g *Gossiper) EvotingHandle(w http.ResponseWriter, r *http.Request) {
 	_, _ = w.Write(tosend)
 }
 
+func (g *Gossiper) ExpellMemberHandle(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	if r.Method == "POST" {
+		data := make([]byte, r.ContentLength)
+		cnt, err := r.Body.Read(data)
+		if cnt != len(data) {
+			log.Lvl3("Could not read all data")
+		}
+
+		log.Lvl3("Data is : ", string(data))
+		if err != nil && err != io.EOF {
+			log.Error("Error on reading data : ", err)
+		}
+
+		message := new(PrivMessage)
+		err = json.Unmarshal(data, message)
+		if err != nil {
+			log.Error("Could not unmarshal message : ", err)
+		}
+		log.Lvl1("Data expell: ", message)
+		//Todo here you do the evoting handling for expelling...
+
+	}
+}
+
 type CallData struct {
 	Dial    bool
 	Accept  bool
