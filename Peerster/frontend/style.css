@@ -75,6 +75,9 @@ li#private{
   border-style: double;
 }
 
+li#vote{
+  border-style:double;
+}
 
 
 
@@ -101,18 +104,44 @@ button.selected{
 }
 
 #clusterpopup{
-  height: 60%;
-  width: 60%;
+  height: 80%;
+  width: 80%;
   position: fixed;
   top:0;
   left:0;
   right: 0;
   bottom: 0;
-  background: rgba(0,0,0,0.4);
+  background: rgba(0,0,0,0.7);
   display: none;
   margin:auto;
 }
 
+
+#votepannel{
+  height: 30%;
+  width: 30%;
+  position: fixed;
+  top:0;
+  left:0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.8);
+  display: none;
+  margin:auto;
+}
+
+#joinpannel{
+  height: 40%;
+  width: 40%;
+  position: fixed;
+  top:0;
+  left:0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.8);
+  display: none;
+  margin:auto;
+}
 
 #anonparams{
     display: none;

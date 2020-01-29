@@ -2,6 +2,7 @@ package clusters
 
 import (
 	"github.com/JohanLanzrein/Peerster/ies"
+	"github.com/Peerster_solo/gossiper"
 	"go.dedis.ch/onet/log"
 	"math/rand"
 
@@ -16,8 +17,17 @@ type Cluster struct {
 	Seed       uint64
 	Counter    uint64 //Count how many times the seed was sampled.
 	source     *rand.Rand
+	Authorities []string
 }
 
+
+func (c *Cluster)IsAnAuthority(name string) bool {
+	return gossiper.Contains(c.Authorities, name)
+}
+
+func (c *Cluster) AmountAuthorities() int {
+	return len(c.Authorities)
+}
 func NewCluster(id *uint64, members []string, masterkey ies.PublicKey, publickey map[string]ies.PublicKey, seed uint64 ) Cluster {
 	source := rand.New(rand.NewSource(int64(seed)))
 
@@ -30,6 +40,7 @@ func NewCluster(id *uint64, members []string, masterkey ies.PublicKey, publickey
 		Seed : seed ,
 		source : source,
 		Counter: 0 ,
+		Authorities : []string{},
 	}
 }
 

@@ -1,3 +1,5 @@
+//encrypt contains method to encrypt and decrypt packets. @author Johan Lanzrein
+
 package ies
 
 import (
@@ -7,6 +9,7 @@ import (
 	"crypto/rand"
 )
 
+//KeyPair a pair of public and private key
 type KeyPair struct {
 	PublicKey
 	PrivateKey
@@ -17,6 +20,7 @@ type PublicKey []byte
 
 const IVLEN = 16
 
+//Encrypt encrypts a msg with key. returns the encrypted packet.
 func Encrypt(key []byte, msg []byte) []byte {
 	trZeros := TrailingZeros(msg)
 	blockcipher, err := aes.NewCipher(key)
@@ -54,6 +58,7 @@ func TrailingZeros(msg []byte) byte{
 	return 255
 }
 
+//Decrypt decrypts a msg with the key returns the decrypted msg
 func Decrypt(key []byte, msg []byte) []byte {
 	iv := msg[0:IVLEN]
 	trZeros := msg[IVLEN]

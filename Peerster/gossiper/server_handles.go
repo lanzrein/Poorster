@@ -29,7 +29,7 @@ type PrivMessage struct {
 }
 
 type ClusterMD struct {
-	Destination string
+	JoinOther string
 	ClusterID   uint64
 }
 
@@ -341,11 +341,11 @@ func (g *Gossiper) JoinClusterRequest(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			log.Error("Could not unmarshal message : ", err)
 		}
-		g.RequestJoining(clusterMD.Destination, clusterMD.ClusterID)
+		g.RequestJoining(clusterMD.JoinOther)
 	}
 }
 
-func (g *Gossiper) LeaveClusterRequest(w http.ResponseWriter, r *http.Request) {
+func (g *Gossiper) LeaveClusterHandle(w http.ResponseWriter, r *http.Request) {
 	log.Lvl1(g.Name, "leaving cluster!")
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	if r.Method == "POST" {
@@ -394,6 +394,9 @@ func (g *Gossiper) BroadcastMessageHandle(w http.ResponseWriter, r *http.Request
 
 func replyClusterMembers(g *Gossiper, w http.ResponseWriter) {
 	//Reply the memebrs..
+	if g.Cluster == nil{
+		return
+	}
 	origins := g.Cluster.Members
 	log.Lvl3("Members : ", origins)
 	tosend, _ := json.Marshal(origins)
@@ -437,5 +440,44 @@ func (g *Gossiper) AnonymousMessageHandle(w http.ResponseWriter, r *http.Request
 func (g *Gossiper) AnonymousCallHandle(w http.ResponseWriter, r *http.Request) {
 	//Todo
 	//data sent is a privmessage like for anonymouse message but only with a destination
+
+}
+
+type EVote struct{
+	Vote string // JOIN ou EXPEL
+	Person string // person
+	Decision bool // true - yes, false no
+}
+
+func (g *Gossiper)EvotingHandle(w http.ResponseWriter, r *http.Request){
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	if r.Method == "POST" {
+		data := make([]byte, r.ContentLength)
+		cnt, err := r.Body.Read(data)
+		if cnt != len(data) {
+			log.Lvl3("Could not read all data")
+		}
+
+		log.Lvl3("Data is : ", string(data))
+		if err != nil && err != io.EOF {
+			log.Error("Error on reading data : ", err)
+		}
+
+		message := new(EVote)
+		err = json.Unmarshal(data, message)
+		if err != nil {
+			log.Error("Could not unmarshal message : ", err)
+		}
+		log.Lvl1("Data : ", message)
+		//Todo here you do the evoting handling for peerster...
+
+
+	}
+	//Like ["JOIN Tom", "EXPEL Rob",....]
+	votes := []string{"JOIN Tom", "EXPEL Rob","JOIN Alice", "EXPEL Bob"} //TODO here change it with the current votes...
+	log.Lvl3("Voting ongoing.  : ", votes)
+	tosend, _ := json.Marshal(votes)
+	log.Lvl3(tosend)
+	_, _ = w.Write(tosend)
 
 }

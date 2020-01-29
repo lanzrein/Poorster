@@ -145,9 +145,9 @@ func (g *Gossiper) Run() error {
 	errChan := make(chan error)
 
 	//if it is not in simple mode *try* to load a server - if it fails ( i.e. if a server is already running then it will just return without saying anything ! )
-	//if !g.SimpleMode{
-	//	go LoadServer(g)
-	//}
+	if !g.SimpleMode{
+		go LoadServer(g)
+	}
 
 	//read from client connection
 	go g.ReadFromPort(errChan, g.connClient, true)
@@ -332,7 +332,7 @@ func (g *Gossiper) ReadFromPort(errChan chan error, conn net.UDPConn, client boo
 			} else if msg.PropAccept != nil {
 				log.Lvl1("Message accept proposition.")
 				for i := 0 ; i < len(g.displayed_requests) ; i++ {
-					if strings.Contains(g.displayed_requests[i], msg.PropAccept) {
+					if strings.Contains(g.displayed_requests[i], *msg.PropAccept) {
 						copy(g.displayed_requests[i:], g.displayed_requests[i+1:])
 						g.displayed_requests = g.displayed_requests[:len(g.displayed_requests) - 1]
 						break
@@ -343,7 +343,7 @@ func (g *Gossiper) ReadFromPort(errChan chan error, conn net.UDPConn, client boo
 			} else if msg.PropDeny != nil {
 				log.Lvl1("Message deny proposition.")
 				for i := 0 ; i < len(g.displayed_requests) ; i++ {
-					if strings.Contains(g.displayed_requests[i], msg.PropDeny) {
+					if strings.Contains(g.displayed_requests[i], *msg.PropDeny) {
 						copy(g.displayed_requests[i:], g.displayed_requests[i+1:])
 						g.displayed_requests = g.displayed_requests[:len(g.displayed_requests) - 1]
 						break

@@ -1,6 +1,7 @@
 package gossiper
 
 import (
+	"github.com/JohanLanzrein/Peerster/ies"
 	"go.dedis.ch/onet/log"
 	"go.dedis.ch/protobuf"
 )

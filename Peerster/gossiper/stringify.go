@@ -6,6 +6,7 @@ import (
 	"bufio"
 	"encoding/hex"
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/JohanLanzrein/Peerster/clusters"
@@ -274,7 +275,8 @@ func (g *Gossiper) PrintAdvanceToNextRound(witnesses []*TLCMessage) {
 }
 
 func (g *Gossiper) PrintDeniedJoining(clusterID uint64) {
-	s := fmt.Sprintf("REQUEST TO JOIN %d DENIED\n", clusterID)
+	str := strconv.FormatUint(clusterID, 10)
+	s := fmt.Sprintf("REQUEST TO JOIN %s DENIED\n", str)
 	fmt.Print(s)
 	g.WriteToBuffer(s)
 }
@@ -318,17 +320,18 @@ func (g *Gossiper) PrintEvotingJoinStep(node string) {
 }
 
 func (g *Gossiper) PrintEvotingPropositionStep(rcvProp int, node string) {
+	var s string
 	if rcvProp == 1 {
-		s := fmt.Sprintf("RECEIVED ACCEPT FOR CASE %s\n", node)
+		s = fmt.Sprintf("RECEIVED ACCEPT FOR CASE %s\n", node)
 	} else { // receivedAnswer == 0
-		s := fmt.Sprintf("RECEIVED DENY FOR CASE %s\n", node)
+		s = fmt.Sprintf("RECEIVED DENY FOR CASE %s\n", node)
 	}
 	g.WriteToBuffer(s)
 	fmt.Print(s)
 }
 
-func (g *Gossiper) PrintEvotingCaseStep(case string, authOrigin string) {
-	s := fmt.Sprintf("RECEIVED COMPARISON REQUEST FOR CASE %s FROM %s\n", case, authOrigin)
+func (g *Gossiper) PrintEvotingCaseStep(step string, authOrigin string) {
+	s := fmt.Sprintf("RECEIVED COMPARISON REQUEST FOR CASE %s FROM %s\n", step, authOrigin)
 	g.WriteToBuffer(s)
 	fmt.Print(s)
 }

@@ -1,6 +1,7 @@
 package gossiper
 
 import (
+	"bytes"
 	"time"
 	"strings"
 	"math/rand"
@@ -31,7 +32,7 @@ func (g *Gossiper) InitCluster() {
 
 func (g *Gossiper) RequestJoining(other string) {
 	//send a request packet to the other gossiper
-
+	log.Lvl1("Joining request :" , other)
 	addr := g.FindPath(other)
 	publickey := g.Keypair.PublicKey
 	req := RequestMessage{
@@ -172,7 +173,8 @@ func (g *Gossiper) ReceiveBroadcast(message BroadcastMessage) {
 
 			g.Cluster.HeartBeats[rumor.Origin] = false
 			delete(g.Cluster.PublicKeys, rumor.Origin)
-			
+			g.Cluster.Members = RemoveFromList(g.Cluster.Members, rumor.Origin)
+
 		} else if message.JoinRequest {
 			log.Lvl2(g.Name, " received message for JOIN e-voting request")
 			decrypted := ies.Decrypt(g.Cluster.MasterKey, message.Data)
@@ -365,7 +367,8 @@ func (g *Gossiper) ReceiveBroadcast(message BroadcastMessage) {
 						accept_counts := 0
 						deny_counts := 0
 						for i := 0 ; i < len(g.slice_results) ; i++ {
-							if string(g.slice_results[i])[0] == string(rumor.Results[0]) {
+							//todo here here changed
+							if string(g.slice_results[i][0]) == string(rumor.Results[0]) {
 								for j := 1 ; j < len(g.slice_results[i]) ; j++ {
 									str := string(((g.slice_results[i])[j])[0])
 									if str == "1" {
@@ -428,10 +431,9 @@ func (g *Gossiper) ReceiveBroadcast(message BroadcastMessage) {
 			if rumor.Text != "" {
 				//print the message
 				g.PrintEvotingDecisionStep(rumor.Text)
-				
 				if g.is_authority {
 					for i := 0 ; i < len(g.slice_results) ; i++ {
-						if strings.Contains(rumor.Text, string((g.slice_results[i])[0]) {
+						if strings.Contains(rumor.Text, string((g.slice_results[i])[0])) {
 							copy(g.slice_results[i:], g.slice_results[i+1:])
 							g.slice_results = g.slice_results[:len(g.slice_results) - 1]
 							break
@@ -439,15 +441,15 @@ func (g *Gossiper) ReceiveBroadcast(message BroadcastMessage) {
 					}
 					if strings.Contains(rumor.Text, "ACCEPT") {
 						str := string(rumor.Text[7:])
-						_, ok := acks_cases[str];
+						_, ok := g.acks_cases[str]
 						if ok {
-							delete(acks_cases, str);
+							delete(g.acks_cases, str)
 						}
 					} else { // strings.Contains(rumor.Text, "DENY") == true
 						str := string(rumor.Text[5:])
-						_, ok := acks_cases[str];
+						_, ok := g.acks_cases[str]
 						if ok {
-							delete(acks_cases, str);
+							delete(g.acks_cases, str)
 						}
 					}
 					g.correct_results_rcv = 0
@@ -512,6 +514,18 @@ func (g *Gossiper) ReceiveBroadcast(message BroadcastMessage) {
 
 }
 
+func RemoveFromList(strings []string, s string) [] string {
+	for i, s1 := range strings{
+		if s1 == s{
+			if i == len(strings)-1{
+				return strings[:i]
+			}
+			return append(strings[:i], strings[i+1:]...)
+		}
+	}
+	return strings
+}
+
 func (g *Gossiper) ReceiveJoinRequest(message RequestMessage) {
 	if message.Recipient != g.Name {
 		addr := g.FindPath(message.Recipient)
@@ -547,15 +561,18 @@ func (g *Gossiper) ReceiveJoinRequest(message RequestMessage) {
 
 func (g *Gossiper) ReceiveDecisionJoinRequest(message RequestMessage, decision int) {
 	//Once the decision has been taken we have the result..
+	var reply RequestReply
 	if decision == 1 {
 		g.UpdateCluster(message)
 		data, err := protobuf.Encode(g.Cluster)
-		
+		if err != nil{
+			log.Error("Could not encode cluster : ", err )
+		}
 		//encrypt it ...
 		ek := g.Keypair.KeyDerivation(&message.PublicKey)
 		enc := ies.Encrypt(ek, data)
 
-		reply := RequestReply{
+		reply = RequestReply{
 			Accepted:           true,
 			Recipient:          message.Origin,
 			ClusterID:          *g.Cluster.ClusterID,
@@ -563,7 +580,7 @@ func (g *Gossiper) ReceiveDecisionJoinRequest(message RequestMessage, decision i
 			ClusterInformation: enc,
 		}
 	} else { // decision == 0
-		reply := RequestReply{
+		reply = RequestReply{
 			Accepted:           false,
 			Recipient:          message.Origin,
 			ClusterID:          0,
@@ -578,7 +595,7 @@ func (g *Gossiper) ReceiveDecisionJoinRequest(message RequestMessage, decision i
 	if addr == "" {
 		log.Error("Could not find the address")
 	}
-	err = g.SendTo(addr, gp)
+	err := g.SendTo(addr, gp)
 	if err != nil {
 		log.Error("Error while sending reply to ", message.Origin, " : ", err)
 	}
@@ -592,7 +609,8 @@ func (g *Gossiper) ReceiveDecisionJoinRequest(message RequestMessage, decision i
 	}
 	
 	for i := 0 ; i < len(g.pending_messages_requests) ; i++ {
-		if (g.pending_messages_requests[i]).Origin == message.Origin && (g.pending_messages_requests[i]).Recipient == message.Recipient && (g.pending_messages_requests[i]).PublicKey == message.PublicKey {
+		//TOdo does the key need to be equal here ?
+		if (g.pending_messages_requests[i]).Origin == message.Origin && (g.pending_messages_requests[i]).Recipient == message.Recipient && bytes.Compare(g.pending_messages_requests[i].PublicKey, message.PublicKey ) == 0 {
 			copy(g.pending_messages_requests[i:], g.pending_messages_requests[i+1:])
 			g.pending_messages_requests = g.pending_messages_requests[:len(g.pending_messages_requests) - 1]
 			break
@@ -656,7 +674,7 @@ func (g *Gossiper) KeyRollout(leader string) {
 		if leader != g.Name {
 			//Request to join
 			<-time.After(time.Second)
-			go g.RequestJoining(leader, *g.Cluster.ClusterID)
+			go g.RequestJoining(leader)
 		}
 		g.Cluster.PublicKeys[g.Name] = g.Keypair.PublicKey
 
@@ -714,6 +732,16 @@ func (g *Gossiper) MasterKeyGen() ies.PublicKey {
 func (g *Gossiper) AnnounceNewMasterKey() error {
 	old := g.Cluster.MasterKey
 	g.Cluster.MasterKey = g.MasterKeyGen()
+	numbers := (len(g.Cluster.Members) + 1 ) / 2
+	if numbers % 2 == 0 {
+		numbers ++
+	}
+	idx := rand.Perm(len(g.Cluster.Members))[:numbers]
+	auth := make([]string, numbers)
+	for i, e := range idx{
+		auth[i] = g.Cluster.Members[e]
+	}
+	g.Cluster.Authorities = auth
 
 	cluster := g.Cluster
 	data, err := protobuf.Encode(cluster)
