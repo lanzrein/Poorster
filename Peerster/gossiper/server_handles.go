@@ -420,13 +420,14 @@ func (g *Gossiper) AnonymousMessageHandle(w http.ResponseWriter, r *http.Request
 			log.Error("Error on reading data : ", err)
 		}
 
-		message := new(PrivMessage)
-		err = json.Unmarshal(data, message)
+		msg := new(PrivMessage)
+		err = json.Unmarshal(data, msg)
 		if err != nil {
 			log.Error("Could not unmarshal message : ", err)
 		}
-		log.Lvl1("Data : ", message)
+		log.Lvl1("Data : ", msg)
 		//Todo here you do the anonmessage handling for peerster...
+		g.ClientSendAnonymousMessage(msg.Destination, msg.Content, msg.RelayRate, msg.FullAnon)
 
 	}
 

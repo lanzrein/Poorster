@@ -136,9 +136,9 @@ func (g *Gossiper) Run() error {
 	errChan := make(chan error)
 
 	//if it is not in simple mode *try* to load a server - if it fails ( i.e. if a server is already running then it will just return without saying anything ! )
-	//if !g.SimpleMode{
-	//	go LoadServer(g)
-	//}
+	if !g.SimpleMode {
+		go LoadServer(g)
+	}
 
 	//read from client connection
 	go g.ReadFromPort(errChan, g.connClient, true)
@@ -262,7 +262,7 @@ func (g *Gossiper) ReadFromPort(errChan chan error, conn net.UDPConn, client boo
 				//its a request to index a file.
 				go g.Index(*msg.File, pathShared)
 				continue
-			} else if msg.Destination != nil && (msg.Anonymous == nil || !(*msg.Anonymous) || !(*msg.CallRequest)) {
+			} else if msg.Destination != nil && (msg.Anonymous == nil || !(*msg.Anonymous) || msg.CallRequest == nil || !(*msg.CallRequest)) {
 				if msg.Anonymous != nil && *msg.Anonymous {
 					log.Lvl1("Message to send anon messaging...")
 					anonymous = true

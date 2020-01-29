@@ -228,6 +228,7 @@ func (g *Gossiper) ClientStartRecording() {
 	// only process recording and sending audio if we are in a call with someone
 	if g.CallStatus.InCall && strings.Compare(g.CallStatus.OtherParticipant, "") != 0 {
 		// start recording and sending audio
+		g.AudioChan = make(chan struct{})
 		g.record()
 		go g.RecordStream.Start()
 	} else {
@@ -253,10 +254,8 @@ func (g *Gossiper) ReceiveAudio(audio AudioMessage) {
 			if err != nil {
 				log.Panic(err)
 			}
-			defer pa.Close()
-
 			g.play(audio.Content.Data, audio.Content.EncryptedN, pa)
-			go g.PlaybackStream.Start()
+
 		} else if strings.Compare(audio.Destination, g.CallStatus.OtherParticipant) == 0 {
 			// otherwise, it must be us sending the audio message out
 			canSend := g.NodeCanSendAnonymousPacket(audio.Destination)
@@ -303,7 +302,10 @@ func (g *Gossiper) initializeAudioFields() {
 	g.PlayBackFrame = make([]int16, bufferFragmentSize)
 	g.RecordFrame = make([]int16, bufferFragmentSize)
 	g.AudioChan = make(chan struct{})
-
+	g.PulseClient, err = pulse.NewClient()
+	if err != nil {
+		log.Panic(err)
+	}
 }
 
 func (g *Gossiper) record() {
@@ -369,6 +371,11 @@ func (g *Gossiper) play(data []byte, nEnc int, pa *pulse.Client) {
 	if err != nil {
 		log.Panic(err)
 	}
+	go func() {
+		g.PlaybackStream.Start()
+		time.Sleep(300 * time.Millisecond)
+		pa.Close()
+	}()
 }
 
 func routeMessage(g *Gossiper, packet GossipPacket, dest string) {
