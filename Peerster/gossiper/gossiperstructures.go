@@ -145,6 +145,7 @@ type Gossiper struct {
 	TimeMapping TimeMapping
 
 	//Stuff for project
+
 	Keypair                   *ies.KeyPair
 	Cluster                   *clusters.Cluster
 	LeaveChan                 chan bool
@@ -165,7 +166,9 @@ type Gossiper struct {
 	nb_authorities            int
 	slice_results             [][]string
 	acks_cases                map[string][]string
-	correct_results_rcv       int
+	correct_results_rcv       map[string][]string
+	reset_requests map[string][]string
+	members_ready_resend_requests map[string][]string
 	pending_nodes_requests    []string
 	pending_messages_requests []RequestMessage
 	displayed_requests        []string

@@ -265,3 +265,127 @@ func (g *Gossiper) BroadcastDecision(answer string) {
 	bm.Destination = g.Name
 	g.ReceiveBroadcast(bm)
 }
+
+func (g *Gossiper) BroadcastCancel(caseToCancel string) {
+	rumor := RumorMessage{
+		Origin: g.Name,
+		ID:     0,
+		Text:   caseToCancel,
+	}
+	data, err := protobuf.Encode(&rumor)
+	if err != nil {
+		log.Error("Could not encode the packet.. ", err)
+		return
+	}
+
+	enc := ies.Encrypt(g.Cluster.MasterKey, data)
+	bm := BroadcastMessage{
+		ClusterID:   	*g.Cluster.ClusterID,
+		HopLimit:    	g.HopLimit,
+		Destination: 	"",
+		Data:        	enc,
+		CancelRequest:  true,
+	}
+	gp := GossipPacket{Broadcast: &bm}
+
+	//Send to all member of the cluster.
+	//This does not need to be anonymized as an attacker can in any case know who is in a cluster by joining it..
+	for _, m := range g.Cluster.Members {
+		if m == g.Name {
+			continue
+		}
+		bm.Destination = m
+		addr := g.FindPath(m)
+		if addr == "" {
+			continue
+		}
+		err := g.SendTo(addr, gp)
+		if err != nil {
+			log.Error("Error while sending to ", m, " : ", err)
+		}
+	}
+	bm.Destination = g.Name
+	g.ReceiveBroadcast(bm)
+}
+
+func (g *Gossiper) BroadcastReset(caseReset string) {
+	rumor := RumorMessage{
+		Origin: g.Name,
+		ID:     0,
+		Text: 	caseReset,
+	}
+	data, err := protobuf.Encode(&rumor)
+	if err != nil {
+		log.Error("Could not encode the packet.. ", err)
+		return
+	}
+
+	enc := ies.Encrypt(g.Cluster.MasterKey, data)
+	bm := BroadcastMessage{
+		ClusterID:   	  *g.Cluster.ClusterID,
+		HopLimit:    	  g.HopLimit,
+		Destination: 	  "",
+		Data:        	  enc,
+		ResetIndication:  true,
+	}
+	gp := GossipPacket{Broadcast: &bm}
+
+	//Send to all member of the cluster.
+	//This does not need to be anonymized as an attacker can in any case know who is in a cluster by joining it..
+	for _, m := range g.Cluster.Members {
+		if m == g.Name {
+			continue
+		}
+		bm.Destination = m
+		addr := g.FindPath(m)
+		if addr == "" {
+			continue
+		}
+		err := g.SendTo(addr, gp)
+		if err != nil {
+			log.Error("Error while sending to ", m, " : ", err)
+		}
+	}
+	bm.Destination = g.Name
+	g.ReceiveBroadcast(bm)
+}
+
+func (g *Gossiper) BroadcastAck(requestToResend string) {
+	rumor := RumorMessage{
+		Origin: g.Name,
+		ID:     0,
+		Text: 	requestToResend,
+	}
+	data, err := protobuf.Encode(&rumor)
+	if err != nil {
+		log.Error("Could not encode the packet.. ", err)
+		return
+	}
+
+	enc := ies.Encrypt(g.Cluster.MasterKey, data)
+	bm := BroadcastMessage{
+		ClusterID:   	  *g.Cluster.ClusterID,
+		HopLimit:    	  g.HopLimit,
+		Destination: 	  "",
+		Data:        	  enc,
+		AckResend:  	  true,
+	}
+	gp := GossipPacket{Broadcast: &bm}
+
+	//Send to all member of the cluster.
+	//This does not need to be anonymized as an attacker can in any case know who is in a cluster by joining it..
+	for _, m := range g.Cluster.Members {
+		if m == g.Name {
+			continue
+		}
+		bm.Destination = m
+		addr := g.FindPath(m)
+		if addr == "" {
+			continue
+		}
+		err := g.SendTo(addr, gp)
+		if err != nil {
+			log.Error("Error while sending to ", m, " : ", err)
+		}
+	}
+}

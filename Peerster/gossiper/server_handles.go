@@ -30,7 +30,7 @@ type PrivMessage struct {
 
 type ClusterMD struct {
 	JoinOther string
-	ClusterID   uint64
+	ClusterID uint64
 }
 
 // GetId /id entry point. returns the id of the gossiper.
@@ -394,7 +394,7 @@ func (g *Gossiper) BroadcastMessageHandle(w http.ResponseWriter, r *http.Request
 
 func replyClusterMembers(g *Gossiper, w http.ResponseWriter) {
 	//Reply the memebrs..
-	if g.Cluster == nil{
+	if g.Cluster == nil {
 		return
 	}
 	origins := g.Cluster.Members
@@ -438,19 +438,13 @@ func (g *Gossiper) AnonymousMessageHandle(w http.ResponseWriter, r *http.Request
 	replyClusterMembers(g, w)
 }
 
-func (g *Gossiper) AnonymousCallHandle(w http.ResponseWriter, r *http.Request) {
-	//Todo
-	//data sent is a privmessage like for anonymouse message but only with a destination
-
+type EVote struct {
+	Vote     string // JOIN ou EXPEL
+	Person   string // person
+	Decision bool   // true - yes, false no
 }
 
-type EVote struct{
-	Vote string // JOIN ou EXPEL
-	Person string // person
-	Decision bool // true - yes, false no
-}
-
-func (g *Gossiper)EvotingHandle(w http.ResponseWriter, r *http.Request){
+func (g *Gossiper) EvotingHandle(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	if r.Method == "POST" {
 		data := make([]byte, r.ContentLength)
@@ -472,30 +466,29 @@ func (g *Gossiper)EvotingHandle(w http.ResponseWriter, r *http.Request){
 		log.Lvl1("Data : ", message)
 		//Todo here you do the evoting handling for peerster...
 
-
 	}
 
 	votes := make([]string, len(g.slice_results))
-	for i, e := range g.slice_results{
+	for i, e := range g.slice_results {
 		votes[i] = e[0]
 	}
 	//votes := g.slice_results //TODO here change it with the current votes...
 	log.Lvl3("Voting ongoing.  : ", votes)
+
 	tosend, _ := json.Marshal(votes)
 	log.Lvl3(tosend)
 	_, _ = w.Write(tosend)
-
 }
 
-type CallData struct{
-	Accept bool
+type CallData struct {
+	Dial    bool
+	Accept  bool
 	Decline bool
-	Hangup bool
-	Member string
+	Hangup  bool
+	Member  string
 }
 
-
-func (g *Gossiper)CallHandle(w http.ResponseWriter, r *http.Request){
+func (g *Gossiper) CallHandle(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	if r.Method == "POST" {
 		data := make([]byte, r.ContentLength)
@@ -520,6 +513,16 @@ func (g *Gossiper)CallHandle(w http.ResponseWriter, r *http.Request){
 
 	}
 
+}
 
+func (g *Gossiper) IncomingCallHandle(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+
+	//TODO here handle the packet.
+	//caller := g.CallStatus.OtherParticipant
+	caller := "Bob"
+	tosend, _ := json.Marshal(caller)
+	log.Lvl3(tosend)
+	_, _ = w.Write(tosend)
 
 }

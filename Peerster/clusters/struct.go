@@ -3,31 +3,32 @@
 package clusters
 
 import (
+	"math/rand"
+
 	"github.com/JohanLanzrein/Peerster/ies"
 	"go.dedis.ch/onet/log"
-	"math/rand"
 )
 
 //Cluster A structure containing values for the cluster.
 type Cluster struct {
-	ClusterID  *uint64
-	Members    []string        //know the members by name
-	HeartBeats map[string]bool //Members for whom we have a heartbeat.
-	MasterKey  ies.PublicKey
-	PublicKeys map[string]ies.PublicKey //public keys of the member of the cluster
-	Seed       uint64
-	Counter    uint64 //Count how many times the seed was sampled.
-	source     *rand.Rand
+	ClusterID   *uint64
+	Members     []string        //know the members by name
+	HeartBeats  map[string]bool //Members for whom we have a heartbeat.
+	MasterKey   ies.PublicKey
+	PublicKeys  map[string]ies.PublicKey //public keys of the member of the cluster
+	Seed        uint64
+	Counter     uint64 //Count how many times the seed was sampled.
+	source      *rand.Rand
 	Authorities []string
 }
 
 //IsAnAuthority returns true iff the name is c.Authorities
-func (c *Cluster)IsAnAuthority(name string) bool {
+func (c *Cluster) IsAnAuthority(name string) bool {
 	return contains(c.Authorities, name)
 }
 
-func contains(  xs []string,  val string ) bool {
-	for _ , x := range xs {
+func contains(xs []string, val string) bool {
+	for _, x := range xs {
 		if val == x {
 			return true
 		}
@@ -41,28 +42,27 @@ func (c *Cluster) AmountAuthorities() int {
 }
 
 //NewCluster returns a new cluster
-func NewCluster(id *uint64, members []string, masterkey ies.PublicKey, publickey map[string]ies.PublicKey, seed uint64 ) Cluster {
+func NewCluster(id *uint64, members []string, masterkey ies.PublicKey, publickey map[string]ies.PublicKey, seed uint64) Cluster {
 	source := rand.New(rand.NewSource(int64(seed)))
 
 	return Cluster{
-		ClusterID:  id,
-		Members:    members,
-		MasterKey:  masterkey,
-		PublicKeys: publickey,
-		HeartBeats: make(map[string]bool),
-		Seed : seed ,
-		source : source,
-		Counter: 0 ,
-		Authorities : []string{},
+		ClusterID:   id,
+		Members:     members,
+		MasterKey:   masterkey,
+		PublicKeys:  publickey,
+		HeartBeats:  make(map[string]bool),
+		Seed:        seed,
+		source:      source,
+		Counter:     0,
+		Authorities: []string{},
 	}
 }
 
-
 //InitCounter initiliazes the source for the cluster to make sure it is synchronized
-func InitCounter(c *Cluster){
+func InitCounter(c *Cluster) {
 	source := rand.New(rand.NewSource(int64(c.Seed)))
 	//Sample it enough time to be "on same clock cycle" as the rest.
-	for i := uint64(0) ; i <  c.Counter; i ++ {
+	for i := uint64(0); i < c.Counter; i++ {
 		source.Intn(len(c.Members))
 	}
 
@@ -70,8 +70,8 @@ func InitCounter(c *Cluster){
 	return
 }
 
-func (c *Cluster)Clock() int {
-	c.Counter ++
+func (c *Cluster) Clock() int {
+	c.Counter++
 	log.Lvl1("Clocking..", c.Counter)
 	return c.source.Intn(len(c.Members))
 }
