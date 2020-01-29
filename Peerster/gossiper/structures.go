@@ -38,18 +38,18 @@ type GossipPacket struct {
 
 /***********DIFFERENT TYPES OF MESSAGES -******************/
 type BroadcastMessage struct {
-	ClusterID    uint64
-	HopLimit     uint32
-	Destination  string
-	Data         []byte
-	Rollout      bool
-	LeaveRequest bool
-	JoinRequest  bool
+	ClusterID         uint64
+	HopLimit          uint32
+	Destination       string
+	Data              []byte
+	Rollout           bool
+	LeaveRequest      bool
+	JoinRequest       bool
 	AcceptProposition bool
 	DenyProposition   bool
-	CaseCompare  	  bool
+	CaseCompare       bool
 	ResultsValidation bool
-	FinalDecision	  bool
+	FinalDecision     bool
 }
 
 type RequestMessage struct {
@@ -74,12 +74,15 @@ type RequestReply struct {
 * RouteToReceiver - initially false,
 *										true if after coin flip the current node decides NOT to relay anymore and
 *										routes the message to it's actual destination
+* Path - !!! only used for testing !!!, comma separated values of the nodes which relayed the
+*					anonymous message
  */
 type AnonymousMessage struct {
 	EncryptedContent []byte
 	Receiver         string
 	AnonymityLevel   float64
 	RouteToReceiver  bool
+	// Path             string
 }
 
 type CallRequest struct {
@@ -150,7 +153,7 @@ type Message struct {
 	HangUp         *bool
 	StartRecording *bool
 	StopRecording  *bool
-	
+
 	//Project - e-voting
 	PropAccept *string
 	PropDeny   *string
@@ -158,9 +161,9 @@ type Message struct {
 
 //RumorMessage
 type RumorMessage struct {
-	Origin string
-	ID     uint32
-	Text   string
+	Origin  string
+	ID      uint32
+	Text    string
 	Results []string
 }
 

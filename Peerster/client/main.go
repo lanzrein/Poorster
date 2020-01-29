@@ -35,7 +35,7 @@ func main() {
 	hangUp := flag.Bool("hangup", false, "Indicates hanging up the current call")
 	startRecording := flag.Bool("startRecording", false, "Indicates beginning of audio recording")
 	stopRecording := flag.Bool("stopRecording", false, "Indicates end of audio recording")
-	
+
 	// e-voting propositions
 	accept := flag.String("accept", "", "Accept a node request")
 	deny := flag.String("deny", "", "Deny a node request")
@@ -98,7 +98,7 @@ func main() {
 		client.StopRecording()
 	} else if *accept != "" {
 		client.ProposeAccept(accept)
-	} elser if *deny != "" {
+	} else if *deny != "" {
 		client.ProposeDeny(deny)
 	} else {
 		fmt.Print("ERROR (Bad argument combination)")

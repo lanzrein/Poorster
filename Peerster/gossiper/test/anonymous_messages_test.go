@@ -12,7 +12,7 @@ import (
 )
 
 func TestAnonymousMessages(t *testing.T) {
-	log.SetDebugVisible(1)
+	// log.SetDebugVisible(1)
 	//Test the anonymous messaging within a cluster
 	g1, err := gossiper.NewGossiper("A", "8080", "127.0.0.1:5000", "127.0.0.1:5001", false, 10, "8000", 10, 3, 5, true, 10, false)
 	if err != nil {
@@ -144,16 +144,46 @@ func TestAnonymousMessages(t *testing.T) {
 	assert.Equal(t, c1.PublicKeys, c5.PublicKeys)
 	assert.Equal(t, c1.PublicKeys, c6.PublicKeys)
 
-	anonText := "Anonymous Message"
-	_, _ = g3.ReplyToClient()
-	g1.ClientSendAnonymousMessage(g3.Name, anonText, 0.5, false)
+	// Anonymous message from gossiper_1 to gossiper_6
+	anonText_1_6 := "Anonymous Message to 6"
+	_, _ = g6.ReplyToClient()
+	g1.ClientSendAnonymousMessage(g6.Name, anonText_1_6, 0.9, false)
 
 	<-time.After(1 * time.Second)
-	b1, err := g3.ReplyToClient()
+	b1, err := g6.ReplyToClient()
 	if err != nil {
 		log.Error(err, "Could not get the buffer")
 	}
 
-	exp := fmt.Sprint("ANONYMOUS contents ", anonText, "\n")
+	exp := fmt.Sprint("ANONYMOUS contents ", anonText_1_6, "\n")
 	assert.Equal(t, string(b1), exp)
+
+	// Anonymous message from gossiper_1 to gossiper_6
+	anonText_2_5 := "Anonymous Message from 2 to 5"
+	_, _ = g5.ReplyToClient()
+	g2.ClientSendAnonymousMessage(g5.Name, anonText_2_5, 0.7, false)
+
+	<-time.After(1 * time.Second)
+	b2, err := g5.ReplyToClient()
+	if err != nil {
+		log.Error(err, "Could not get the buffer")
+	}
+
+	exp_2 := fmt.Sprint("ANONYMOUS contents ", anonText_2_5, "\n")
+	assert.Equal(t, string(b2), exp_2)
+
+	// Anonymous message from gossiper_4 to gossiper_3
+	anonText_4_3 := "Anonymous Message from 4 to 3"
+	_, _ = g3.ReplyToClient()
+	g4.ClientSendAnonymousMessage(g3.Name, anonText_4_3, 0.5, false)
+
+	<-time.After(1 * time.Second)
+	b3, err := g3.ReplyToClient()
+	if err != nil {
+		log.Error(err, "Could not get the buffer")
+	}
+
+	exp_3 := fmt.Sprint("ANONYMOUS contents ", anonText_4_3, "\n")
+	assert.Equal(t, string(b3), exp_3)
+
 }

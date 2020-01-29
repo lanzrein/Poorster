@@ -133,13 +133,6 @@ func (g *Gossiper) PrintPrivateMessage(message PrivateMessage) {
 	g.WriteToBuffer(s)
 }
 
-//PrintPrivateMessage prints a received private messages
-func (g *Gossiper) PrintAnonymousPrivateMessage(message PrivateMessage) {
-	s := fmt.Sprint("ANONYMOUS contents ", message.Text, "\n")
-	fmt.Print(s)
-	g.WriteToBuffer(s)
-}
-
 //PrintDownloadStart prints that a downloading has started
 func (g *Gossiper) PrintDownloadStart(filename string, destination string) {
 	s := fmt.Sprint("DOWNLOADING metafile of ", filename, " from ", destination, "\n")
@@ -317,6 +310,21 @@ func (g *Gossiper) PrintEvotingDecisionStep(decision string) {
 	fmt.Print(s)
 }
 
+//PrintPrivateMessage prints a received private messages
+func (g *Gossiper) PrintAnonymousPrivateMessage(message PrivateMessage) {
+	s := fmt.Sprint("ANONYMOUS contents ", message.Text, "\n")
+	fmt.Print(s)
+	g.WriteToBuffer(s)
+}
+
+// **NOTE - the 'path' field of an anonymous message is only used for testing
+//PrintAnonymousPrivateMessagePath prints a received private messages
+// func (g *Gossiper) PrintAnonymousPrivateMessagePath(path string) {
+// 	s := fmt.Sprint("ANONYMOUS message path ", path, "\n")
+// 	fmt.Print(s)
+// 	g.WriteToBuffer(s)
+// }
+
 //PrintCallRequest prints receiving a call request
 func (g *Gossiper) PrintCallRequest(message CallRequest) {
 	s := fmt.Sprintf("CALL REQUEST from %s\n", message.Origin)
@@ -337,7 +345,7 @@ func (g *Gossiper) PrintCallDeclined(callee string) {
 }
 
 func (g *Gossiper) PrintCallBusy(callee string) {
-	s := fmt.Sprintf("CALL BUSY by %s\n", callee)
+	s := fmt.Sprintf("LINE BUSY by %s\n", callee)
 	fmt.Print(s)
 	g.WriteToBuffer(s)
 }

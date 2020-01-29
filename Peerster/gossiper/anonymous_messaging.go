@@ -62,6 +62,9 @@ func (g *Gossiper) ClientSendAnonymousMessage(destination string, text string, r
 // ReceiveAnonymousMessage - handles receiving a gossip packet with an anonymous message
 func (g *Gossiper) ReceiveAnonymousMessage(anon *AnonymousMessage) {
 	routeBecauseOfCoinFlip := false
+
+	// **NOTE - the 'path' field of an anonymous message is only used for testing
+	// anon.Path = anon.Path + g.Name + ", "
 	if strings.Compare(anon.Receiver, g.Name) == 0 {
 		// anonymous message is for us, decrypt it
 		log.Lvl2("Decrypting an anonymous message addressed to us...")
@@ -75,6 +78,9 @@ func (g *Gossiper) ReceiveAnonymousMessage(anon *AnonymousMessage) {
 			// we received an anonymous private message
 			log.Lvl2("Decrypted an anonymized private message")
 			g.PrintAnonymousPrivateMessage(*decryptedPacket.Private)
+
+			// **NOTE - only used for testing
+			// g.PrintAnonymousPrivateMessagePath(anon.Path)
 		} else if decryptedPacket.CallRequest != nil {
 			// we received an anonymous call request
 			log.Lvl2("Decrypted an anonymized call request")

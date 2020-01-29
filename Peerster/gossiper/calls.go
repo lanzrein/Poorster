@@ -118,7 +118,7 @@ func (g *Gossiper) SendCallResponse(resp CallResponse) {
 		// if we decline a call request, update call status as follows ( we are NOT in another call)
 		g.CallStatus.InCall = false
 		g.CallStatus.ExpectingResponse = false
-		g.CallStatus.OtherParticipant = resp.Destination
+		g.CallStatus.OtherParticipant = ""
 		log.Lvl2("Declining call from ", resp.Destination)
 	}
 	// the last possibility is if respond with BUSY - meaning we are in another call,
