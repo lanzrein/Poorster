@@ -537,6 +537,16 @@ func (g *Gossiper) CallHandle(w http.ResponseWriter, r *http.Request) {
 
 		//TODO here handle the packet.
 		otherParticipant := message.Member
+		if len(otherParticipant) > 0 {
+			if otherParticipant[0] == '"' {
+				otherParticipant = otherParticipant[1:]
+			}
+			if otherParticipant[len(otherParticipant)-1] == '"' {
+				otherParticipant = otherParticipant[:len(otherParticipant)-1]
+			}
+		}
+
+		fmt.Println("MEMBER IS == ", otherParticipant)
 		if message.Dial {
 			// we are calling
 			g.ClientSendCallRequest(otherParticipant)
@@ -549,6 +559,9 @@ func (g *Gossiper) CallHandle(w http.ResponseWriter, r *http.Request) {
 			resp := CallResponse{Origin: g.Name, Destination: otherParticipant, Status: Decline}
 			// we are accepting an incoming call
 			g.SendCallResponse(resp)
+		} else if message.Hangup {
+			// we are hanging up
+			g.ClientSendHangUpMessage()
 		}
 
 	}
