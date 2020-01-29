@@ -334,7 +334,7 @@ func (g *Gossiper) ReceiveBroadcast(message BroadcastMessage) {
 						}
 					}
 					
-					if g.Cluster.AmountAuthorities == len(g.acks_cases[rumor.Text]) {
+					if g.Cluster.AmountAuthorities() == len(g.acks_cases[rumor.Text]) {
 						correct_tag_join := "JOIN " + rumor.Text
 						for j := 0 ; j < len(g.slice_results) ; j++ {
 							if string((g.slice_results[j])[0]) == correct_tag_join {
@@ -405,7 +405,7 @@ func (g *Gossiper) ReceiveBroadcast(message BroadcastMessage) {
 							}
 						}
 					
-						if g.Cluster.AmountAuthorities - 1 == len(g.correct_results_rcv[rumor.Results[0]]) {
+						if g.Cluster.AmountAuthorities() - 1 == len(g.correct_results_rcv[rumor.Results[0]]) {
 							accept_counts := 0
 							deny_counts := 0
 							for i := 0 ; i < len(g.slice_results) ; i++ {
@@ -590,8 +590,8 @@ func (g *Gossiper) ReceiveBroadcast(message BroadcastMessage) {
 				g.PrintEvotingResetStep(rumor.Origin, rumor.Text)
 				
 				is_existing := false
-				for i := 0 ; i < len(pending_nodes_requests) ; i++ {
-					if rumor.Text == pending_nodes_requests[i] {
+				for i := 0 ; i < len(g.pending_nodes_requests) ; i++ {
+					if rumor.Text == g.pending_nodes_requests[i] {
 						is_existing = true
 						break
 					}
@@ -632,9 +632,9 @@ func (g *Gossiper) ReceiveBroadcast(message BroadcastMessage) {
 						data, err := protobuf.Encode(cluster)
 						if err != nil {
 							log.Error("Could not encode cluster :", err)
-							return err
+							return
 						}
-						cipher := ies.Encrypt(old, data)
+						cipher := ies.Encrypt(g.Cluster.MasterKey, data)
 
 						for _, member := range cluster.Members {
 							//send them the new master key using the previous master key
@@ -648,7 +648,7 @@ func (g *Gossiper) ReceiveBroadcast(message BroadcastMessage) {
 								Destination: member,
 								HopLimit:    10,
 								Reset:       true,
-								CaseRequest: rumor.Text
+								CaseRequest: rumor.Text,
 								Data:        cipher,
 							}
 							gp := GossipPacket{Broadcast: &bc}
@@ -676,8 +676,8 @@ func (g *Gossiper) ReceiveBroadcast(message BroadcastMessage) {
 				g.PrintEvotingResendStep(rumor.Origin, rumor.Text)
 				
 				is_existing := false
-				for i := 0 ; i < len(pending_nodes_requests) ; i++ {
-					if rumor.Text == pending_nodes_requests[i] {
+				for i := 0 ; i < len(g.pending_nodes_requests) ; i++ {
+					if rumor.Text == g.pending_nodes_requests[i] {
 						is_existing = true
 						break
 					}
@@ -1023,7 +1023,6 @@ func (g *Gossiper) UpdateCluster(message RequestMessage) {
 	g.Cluster.HeartBeats[message.Origin] = true
 }
 
-<<<<<<< HEAD
 func (g *Gossiper) UpdateFromReset(cluster clusters.Cluster) {
 	log.Lvl3("Update information form reset ")
 
@@ -1032,9 +1031,7 @@ func (g *Gossiper) UpdateFromReset(cluster clusters.Cluster) {
 	g.Cluster.HeartBeats = make(map[string]bool)
 }
 
-=======
 //UpdateFromRollout update information from a rollout.
->>>>>>> bd92fc611534610b42a0a0fb6e91505e594951a5
 func (g *Gossiper) UpdateFromRollout(cluster clusters.Cluster) {
 	log.Lvl3("Update information form a new cluster :O ")
 
@@ -1045,6 +1042,8 @@ func (g *Gossiper) UpdateFromRollout(cluster clusters.Cluster) {
 	g.slice_results = make([][]string, 0)
 	g.acks_cases = make(map[string][]string)
 	g.correct_results_rcv = make(map[string][]string)
+	g.reset_requests = make(map[string][]string)
+	g.members_ready_resend_requests = make(map[string][]string)
 	g.pending_nodes_requests = make([]string, 0)
 	g.pending_messages_requests = make([]RequestMessage, 0)
 	g.displayed_requests = make([]string, 0)

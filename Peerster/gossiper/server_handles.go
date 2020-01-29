@@ -438,11 +438,6 @@ func (g *Gossiper) AnonymousMessageHandle(w http.ResponseWriter, r *http.Request
 	replyClusterMembers(g, w)
 }
 
-func (g *Gossiper) AnonymousCallHandle(w http.ResponseWriter, r *http.Request) {
-	//Todo
-	//data sent is a privmessage like for anonymouse message but only with a destination
-
-}
 
 type EVote struct{
 	Vote string // JOIN ou EXPEL
@@ -481,13 +476,14 @@ func (g *Gossiper)EvotingHandle(w http.ResponseWriter, r *http.Request){
 	}
 	//votes := g.slice_results //TODO here change it with the current votes...
 	log.Lvl3("Voting ongoing.  : ", votes)
+
 	tosend, _ := json.Marshal(votes)
 	log.Lvl3(tosend)
 	_, _ = w.Write(tosend)
-
 }
 
 type CallData struct{
+	Dial bool
 	Accept bool
 	Decline bool
 	Hangup bool
@@ -520,6 +516,18 @@ func (g *Gossiper)CallHandle(w http.ResponseWriter, r *http.Request){
 
 	}
 
+}
 
+
+func (g *Gossiper)IncomingCallHandle(w http.ResponseWriter, r *http.Request){
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+
+
+	//TODO here handle the packet.
+	//caller := g.CallStatus.OtherParticipant
+	caller := "Bob"
+	tosend, _ := json.Marshal(caller)
+	log.Lvl3(tosend)
+	_, _ = w.Write(tosend)
 
 }

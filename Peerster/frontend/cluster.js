@@ -109,6 +109,12 @@ function hangup_call(){
     close_call();
 }
 
+function dial_call(){
+    val = { "Dial" : true, "Member": $("#callee").text()};
+    console.log("Dial on :", JSON.stringify(val));
+    post_call_data(val)
+}
+
 function post_call_data(tosend){
     $.post(host+"/callhandler",JSON.stringify(tosend)).done(function(data) {
         console.log("OK for posting"); ;

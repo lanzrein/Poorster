@@ -80,6 +80,7 @@ $(document).ready(function(){
   $("#decline_call").click(decline_call);
   $("#accept_call").click(accept_call);
   $("#hangup_call").click(hangup_call);
+  $("#dial_call").click(dial_call);
 
   //request the node ID
   requestNodeId();
@@ -396,6 +397,19 @@ function loop(){
 
     }
     $("li[id=vote]").click(openvotepannel);
+
+  });
+
+
+
+  $.get(host+"/incomingcall").done(function(data){
+    //update the peer list...
+    console.log("Calling got response : " + data)
+    if (data !== "" && currently_calling !== data){
+      $("#callpannel").show();
+      $("#callee").text(data);
+      currently_calling = data;
+    }
 
   });
 

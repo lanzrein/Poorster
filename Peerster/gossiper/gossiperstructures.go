@@ -145,24 +145,7 @@ type Gossiper struct {
 	TimeMapping TimeMapping
 
 	//Stuff for project
-<<<<<<< HEAD
-	Keypair       *ies.KeyPair
-	Cluster       *clusters.Cluster
-	LeaveChan     chan bool
-	Keys          map[string]ies.PublicKey
-	HearbeatTimer int
-	RolloutTimer  int //timer in seconds ~~ usually 300
-	CallStatus    GossiperCallStatus
-	AudioChan     chan struct{}
 
-	slice_results 			  [][]string
-	acks_cases	 			  map[string][]string
-	correct_results_rcv 	  map[string][]string
-	pending_nodes_requests    []string
-	pending_messages_requests []RequestMessage
-	displayed_requests		  []string
-	reset_requests			  map[string][]string
-=======
 	Keypair                   *ies.KeyPair
 	Cluster                   *clusters.Cluster
 	LeaveChan                 chan bool
@@ -183,11 +166,12 @@ type Gossiper struct {
 	nb_authorities            int
 	slice_results             [][]string
 	acks_cases                map[string][]string
-	correct_results_rcv       int
+	correct_results_rcv       map[string][]string
+	reset_requests map[string][]string
+	members_ready_resend_requests map[string][]string
 	pending_nodes_requests    []string
 	pending_messages_requests []RequestMessage
 	displayed_requests        []string
->>>>>>> bd92fc611534610b42a0a0fb6e91505e594951a5
 }
 
 type GossiperCallStatus struct {
