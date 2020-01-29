@@ -244,7 +244,6 @@ func (g *Gossiper) ClientStopRecording() {
 }
 
 func (g *Gossiper) ReceiveAudio(audio AudioMessage) {
-	// fmt.Println("RECEIVING AUDIO")
 	if g.CallStatus.InCall {
 		if strings.Compare(audio.Destination, g.Name) == 0 &&
 			strings.Compare(audio.Origin, g.CallStatus.OtherParticipant) == 0 {
@@ -336,7 +335,7 @@ func (g *Gossiper) record() {
 			g.ReceiveAudio(audio)
 			select {
 			case <-g.AudioChan:
-				fmt.Println("\n Finish recording.")
+				log.Lvl2("Finish recording.")
 				pa.Close()
 				return
 			default:
@@ -421,6 +420,9 @@ func (b *buffer) Len() int {
 	return len(b.b[:])
 }
 
+// Sources:
 // https://github.com/gordonklaus/portaudio/blob/master/examples/record.go
 // https://socketloop.com/tutorials/golang-record-voice-audio-from-microphone-to-wav-file
 // https://medium.com/@valentijnnieman_79984/how-to-build-an-audio-streaming-server-in-go-part-1-1676eed93021
+// https://github.com/hraban/opus
+// https://github.com/at-wat/pulseopus-example

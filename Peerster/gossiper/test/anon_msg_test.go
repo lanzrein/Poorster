@@ -55,8 +55,8 @@ func TestAnonymousMessaging(t *testing.T) {
 	g1.InitCluster()
 	//G2 asks to join it..
 	<-time.After(1 * time.Second)
-	g2.RequestJoining(g1.Name, *g1.Cluster.ClusterID)
-	g3.RequestJoining(g1.Name, *g1.Cluster.ClusterID)
+	g2.RequestJoining(g1.Name)
+	g3.RequestJoining(g1.Name)
 	<-time.After(15 * time.Second)
 	//c3 := g3.Cluster
 	//c2 := g2.Cluster
@@ -70,10 +70,9 @@ func TestAnonymousMessaging(t *testing.T) {
 	//assert.Equal(t, c1.Members, c2.Members)
 	//assert.Equal(t, c1.PublicKeys, c2.PublicKeys)
 
-
 	//Check if counter etc are ok
-	for i := 0 ; i < 30 ; i ++{
-		assert.Equal(t, g1.Cluster.Counter , g2.Cluster.Counter)
+	for i := 0; i < 30; i++ {
+		assert.Equal(t, g1.Cluster.Counter, g2.Cluster.Counter)
 		assert.Equal(t, g2.Cluster.Counter, g3.Cluster.Counter)
 		cl1 := g1.Cluster.Clock()
 		cl2 := g2.Cluster.Clock()
@@ -81,7 +80,5 @@ func TestAnonymousMessaging(t *testing.T) {
 		assert.Equal(t, cl1, cl2)
 		assert.Equal(t, cl2, cl3)
 	}
-
-
 
 }

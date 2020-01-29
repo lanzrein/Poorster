@@ -168,37 +168,6 @@ func (g *Gossiper) PrintClientPrivateMessage(message PrivateMessage) {
 	g.WriteToBuffer(s)
 }
 
-//PrintCallRequest prints receiving a call request
-func (g *Gossiper) PrintCallRequest(message CallRequest) {
-	s := fmt.Sprint("CALL REQUEST from ", message.Origin, "\n")
-	fmt.Print(s)
-	g.WriteToBuffer(s)
-}
-
-func (g *Gossiper) PrintCallAccepted(callee string) {
-	s := fmt.Sprint("CALL ACCEPTED by ", callee, "\n")
-	fmt.Print(s)
-	g.WriteToBuffer(s)
-}
-
-func (g *Gossiper) PrintCallDeclined(callee string) {
-	s := fmt.Sprint("CALL DECLINED by ", callee, "\n")
-	fmt.Print(s)
-	g.WriteToBuffer(s)
-}
-
-func (g *Gossiper) PrintCallBusy(callee string) {
-	s := fmt.Sprint("CALL BUSY by ", callee, "\n")
-	fmt.Print(s)
-	g.WriteToBuffer(s)
-}
-
-func (g *Gossiper) PrintHangUp(callee string) {
-	s := fmt.Sprint("HANG UP by ", callee, "\n")
-	fmt.Print(s)
-	g.WriteToBuffer(s)
-}
-
 //PrintMatch prints if there is a match for the search reply.
 func (g *Gossiper) PrintMatch(message SearchReply) {
 	for _, elem := range message.Results {
@@ -346,4 +315,35 @@ func (g *Gossiper) PrintEvotingDecisionStep(decision string) {
 	s := fmt.Sprintf("RECEIVED DECISION %s\n", decision)
 	g.WriteToBuffer(s)
 	fmt.Print(s)
+}
+
+//PrintCallRequest prints receiving a call request
+func (g *Gossiper) PrintCallRequest(message CallRequest) {
+	s := fmt.Sprintf("CALL REQUEST from %s\n", message.Origin)
+	fmt.Print(s)
+	g.WriteToBuffer(s)
+}
+
+func (g *Gossiper) PrintCallAccepted(callee string) {
+	s := fmt.Sprintf("CALL ACCEPTED by %s\n", callee)
+	fmt.Print(s)
+	g.WriteToBuffer(s)
+}
+
+func (g *Gossiper) PrintCallDeclined(callee string) {
+	s := fmt.Sprintf("CALL DECLINED by %s\n", callee)
+	fmt.Print(s)
+	g.WriteToBuffer(s)
+}
+
+func (g *Gossiper) PrintCallBusy(callee string) {
+	s := fmt.Sprintf("CALL BUSY by %s\n", callee)
+	fmt.Print(s)
+	g.WriteToBuffer(s)
+}
+
+func (g *Gossiper) PrintHangUp(callee string) {
+	s := fmt.Sprintf("HANG UP by %s\n", callee)
+	fmt.Print(s)
+	g.WriteToBuffer(s)
 }
