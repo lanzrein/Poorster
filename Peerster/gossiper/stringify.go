@@ -347,3 +347,21 @@ func (g *Gossiper) PrintEvotingDecisionStep(decision string) {
 	g.WriteToBuffer(s)
 	fmt.Print(s)
 }
+
+func (g *Gossiper) PrintEvotingCancellationStep(cancelCase string) {
+	s := fmt.Sprintf("RECEIVED CANCELLATION FOR CASE %s\n", cancelCase)
+	g.WriteToBuffer(s)
+	fmt.Print(s)
+}
+
+func (g *Gossiper) PrintEvotingResetStep(memberReset string, caseReset string) {
+	s := fmt.Sprintf("RECEIVED RESET FROM MEMBER %s FOR CASE %s\n", memberReset, caseReset)
+	g.WriteToBuffer(s)
+	fmt.Print(s)
+}
+
+func (g *Gossiper) PrintEvotingResendStep(memberAck string, request string) {
+	s := fmt.Sprintf("RECEIVED RESEND ACK FROM MEMBER %s FOR REQUEST %s\n", memberAck, request)
+	g.WriteToBuffer(s)
+	fmt.Print(s)
+}

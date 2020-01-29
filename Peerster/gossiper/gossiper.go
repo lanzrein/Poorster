@@ -123,14 +123,14 @@ func NewGossiper(Name string, UIPort string, gossipAddr string, gossipers string
 		HearbeatTimer: DEFAULTHEARTBEAT,
 		LeaveChan:     make(chan bool),
 		CallStatus:    call,
-		is_authority: 			   false,
-		nb_authorities: 		   0,
+
 		slice_results: 			   make([][]string, 0),
 		acks_cases: 			   make(map[string][]string),
-		correct_results_rcv: 	   0,
+		correct_results_rcv: 	   make(map[string][]string),
 		pending_nodes_requests:    make([]string, 0),
 		pending_messages_requests: make([]RequestMessage, 0),
 		displayed_requests:		   make([]string, 0),
+		reset_requests:			   make(map[string][]string),
 	}
 
 	err = gossiper.GenerateKeys()

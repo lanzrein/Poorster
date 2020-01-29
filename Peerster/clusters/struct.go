@@ -21,13 +21,14 @@ type Cluster struct {
 }
 
 
-func (c *Cluster)IsAnAuthority(name string) bool {
+func (c *Cluster) IsAnAuthority(name string) bool {
 	return gossiper.Contains(c.Authorities, name)
 }
 
 func (c *Cluster) AmountAuthorities() int {
 	return len(c.Authorities)
 }
+
 func NewCluster(id *uint64, members []string, masterkey ies.PublicKey, publickey map[string]ies.PublicKey, seed uint64 ) Cluster {
 	source := rand.New(rand.NewSource(int64(seed)))
 
@@ -45,7 +46,7 @@ func NewCluster(id *uint64, members []string, masterkey ies.PublicKey, publickey
 }
 
 
-func InitCounter(c *Cluster){
+func InitCounter(c *Cluster) {
 	source := rand.New(rand.NewSource(int64(c.Seed)))
 	//Sample it enough time to be "on same clock cycle" as the rest.
 	for i := uint64(0) ; i <  c.Counter; i ++ {
@@ -56,7 +57,7 @@ func InitCounter(c *Cluster){
 	return
 }
 
-func (c *Cluster)Clock() int {
+func (c *Cluster) Clock() int {
 	c.Counter ++
 	log.Lvl1("Clocking..", c.Counter)
 	return c.source.Intn(len(c.Members))

@@ -160,6 +160,18 @@ func (g *Gossiper) ReceiveBroadcast(message BroadcastMessage) {
 			}
 
 			g.UpdateFromRollout(cluster)
+		
+		} else if message.Reset {
+			log.Lvl2(g.Name, " received message for reset")
+			cluster := clusters.Cluster{}
+			data := ies.Decrypt(g.Cluster.MasterKey, message.Data)
+			err := protobuf.Decode(data, &cluster)
+			if err != nil {
+				log.Error("Could not decode reset info ", err)
+			}
+
+			g.UpdateFromReset(cluster)
+			g.BroadcastAck(message.CaseRequest)
 
 		} else if message.LeaveRequest {
 			log.Lvl1("Got leave request")
@@ -188,7 +200,7 @@ func (g *Gossiper) ReceiveBroadcast(message BroadcastMessage) {
 				//print the message
 				g.PrintEvotingJoinStep(rumor.Text)
 				g.displayed_requests = append(g.displayed_requests, "JOIN " + rumor.Text)
-				if g.is_authority {
+				if g.Cluster.IsAnAuthority(g.Name) {
 					slice_pending := make([]string, 0)
 					tag := "JOIN " + rumor.Text
 					slice_pending = append(slice_pending, tag)
@@ -209,7 +221,7 @@ func (g *Gossiper) ReceiveBroadcast(message BroadcastMessage) {
 				log.Error(g.Name, "Error decoding packet : ", err, "This may be due to an ongoing rollout.")
 				return
 			}
-			if g.is_authority {
+			if g.Cluster.IsAnAuthority(g.Name) {
 				if rumor.Text != "" {
 					//print the message
 					g.PrintEvotingPropositionStep(1, rumor.Text)
@@ -223,9 +235,9 @@ func (g *Gossiper) ReceiveBroadcast(message BroadcastMessage) {
 									break
 								}							
 							}
-							if (is_existing == false) {
+							if is_existing == false {
 								g.slice_results[i] = append(g.slice_results[i], "1 : " + rumor.Origin)
-								if g.nb_authorities == len(g.slice_results[i]) - 1 {
+								if len(g.Cluster.Members) == len(g.slice_results[i]) - 1 {
 									g.BroadcastCollected(g.slice_results[i][0])
 								}
 							}
@@ -248,7 +260,7 @@ func (g *Gossiper) ReceiveBroadcast(message BroadcastMessage) {
 				log.Error(g.Name, "Error decoding packet : ", err, "This may be due to an ongoing rollout.")
 				return
 			}
-			if g.is_authority {
+			if g.Cluster.IsAnAuthority(g.Name) {
 				if rumor.Text != "" {
 					//print the message
 					g.PrintEvotingPropositionStep(0, rumor.Text)
@@ -262,10 +274,10 @@ func (g *Gossiper) ReceiveBroadcast(message BroadcastMessage) {
 									break
 								}							
 							}
-							if (is_existing == false) {
+							if is_existing == false {
 								g.slice_results[i] = append(g.slice_results[i], "0 : " + rumor.Origin)
-								if g.nb_authorities == len(g.slice_results[i]) - 1 {
-									g.BroadcastCollected((g.slice_results[i])[0])
+								if len(g.Cluster.Members) == len(g.slice_results[i]) - 1 {
+									g.BroadcastCollected(g.slice_results[i][0])
 								}
 							}
 							break
@@ -287,27 +299,32 @@ func (g *Gossiper) ReceiveBroadcast(message BroadcastMessage) {
 				log.Error(g.Name, "Error decoding packet : ", err, "This may be due to an ongoing rollout.")
 				return
 			}
-			if g.is_authority {
+			if g.Cluster.IsAnAuthority(g.Name) {
 				if rumor.Text != "" {
 					//print the message
 					g.PrintEvotingCaseStep(rumor.Text, rumor.Origin)
+					
 					_, ok := g.acks_cases[rumor.Text]
 					if ok == true {
 						is_existing := false
 						for i := 0 ; i < len(g.acks_cases[rumor.Text]) ; i++ {
-							if (g.acks_cases[rumor.Text][i] == rumor.Origin) {
+							if g.acks_cases[rumor.Text][i] == rumor.Origin {
 								is_existing = true
 								break
 							}
 						}
 						if is_existing == false {
-							g.acks_cases[rumor.Text] = append(g.acks_cases[rumor.Text], rumor.Origin)
+							if g.Cluster.IsAnAuthority(rumor.Origin) {
+								g.acks_cases[rumor.Text] = append(g.acks_cases[rumor.Text], rumor.Origin)
+							}
 						}
-					} else {
-						g.acks_cases[rumor.Text] = []string{rumor.Origin}
+					} else { // ok == false
+						if g.Cluster.IsAnAuthority(rumor.Origin) {
+							g.acks_cases[rumor.Text] = []string{rumor.Origin}
+						}
 					}
 					
-					if len(g.acks_cases[rumor.Text]) == g.nb_authorities {
+					if g.Cluster.AmountAuthorities == len(g.acks_cases[rumor.Text]) {
 						correct_tag_join := "JOIN " + rumor.Text
 						for j := 0 ; j < len(g.slice_results) ; j++ {
 							if string((g.slice_results[j])[0]) == correct_tag_join {
@@ -332,7 +349,7 @@ func (g *Gossiper) ReceiveBroadcast(message BroadcastMessage) {
 				log.Error(g.Name, "Error decoding packet : ", err, "This may be due to an ongoing rollout.")
 				return
 			}
-			if g.is_authority {
+			if g.Cluster.IsAnAuthority(g.Name) {
 				if rumor.Results != nil {
 					//print the message
 					g.PrintEvotingValidationStep(rumor.Results, rumor.Origin)
@@ -355,62 +372,80 @@ func (g *Gossiper) ReceiveBroadcast(message BroadcastMessage) {
 							}
 							break
 						}
-					}
+					}					
 					
-					if (is_matched == true) {
-						g.correct_results_rcv++
-					} else {
-						//TODO: STOP PROCEDURE AND RESELECT ODD NUMBER OF AUTHORITY NODES
-					}
-					
-					if g.correct_results_rcv == g.nb_authorities - 1 {
-						accept_counts := 0
-						deny_counts := 0
-						for i := 0 ; i < len(g.slice_results) ; i++ {
-							//todo here here changed
-							if string(g.slice_results[i][0]) == string(rumor.Results[0]) {
-								for j := 1 ; j < len(g.slice_results[i]) ; j++ {
-									str := string(((g.slice_results[i])[j])[0])
-									if str == "1" {
-										accept_counts++
-									} else if str == "0" {
-										deny_counts++
-									}
+					if is_matched == true {
+						_, ok := g.correct_results_rcv[rumor.Results[0]]
+						if ok == true {
+							is_existing := false
+							for i := 0 ; i < len(g.correct_results_rcv[rumor.Results[0]]) ; i++ {
+								if g.correct_results_rcv[rumor.Results[0]][i] == rumor.Origin {
+									is_existing = true
+									break
 								}
-								break
+							}
+							if is_existing == false {
+								if g.Cluster.IsAnAuthority(rumor.Origin) {
+									g.correct_results_rcv[rumor.Results[0]] = append(g.correct_results_rcv[rumor.Results[0]], rumor.Origin)
+								}
+							}
+						} else { // ok == false
+							if g.Cluster.IsAnAuthority(rumor.Origin) {
+								g.correct_results_rcv[rumor.Results[0]] = []string{rumor.Origin}
 							}
 						}
-						if deny_counts == accept_counts {
-							accept_counts = 0
-							deny_counts = 0
+					
+						if g.Cluster.AmountAuthorities - 1 == len(g.correct_results_rcv[rumor.Results[0]]) {
+							accept_counts := 0
+							deny_counts := 0
 							for i := 0 ; i < len(g.slice_results) ; i++ {
-								if string((g.slice_results[i])[0]) == string(rumor.Results[0]) {
+								if string(g.slice_results[i][0]) == string(rumor.Results[0]) {
 									for j := 1 ; j < len(g.slice_results[i]) ; j++ {
-										str := (g.slice_results[i])[j]
-										list_authorities := g.acks_cases[rumor.Results[0]]
-										for k := 0 ; k < len(list_authorities) ; k++ {
-											if string(str[4:]) == list_authorities[k] {
-												str = string(str[0])
-												if str == "1" {
-													accept_counts++
-												} else if str == "0" {
-													deny_counts++
-												}
-											}
+										str := string(((g.slice_results[i])[j])[0])
+										if str == "1" {
+											accept_counts++
+										} else if str == "0" {
+											deny_counts++
 										}
 									}
 									break
 								}
 							}
+							
+							if deny_counts == accept_counts {
+								accept_counts = 0
+								deny_counts = 0
+								for i := 0 ; i < len(g.slice_results) ; i++ {
+									if string((g.slice_results[i])[0]) == string(rumor.Results[0]) {
+										for j := 1 ; j < len(g.slice_results[i]) ; j++ {
+											str := (g.slice_results[i])[j]
+											list_authorities := g.acks_cases[rumor.Results[0]]
+											for k := 0 ; k < len(list_authorities) ; k++ {
+												if string(str[4:]) == list_authorities[k] {
+													str = string(str[0])
+													if str == "1" {
+														accept_counts++
+													} else if str == "0" {
+														deny_counts++
+													}
+												}
+											}
+										}
+										break
+									}
+								}
+							}
+							
+							if accept_counts > deny_counts {
+								answer := "ACCEPT " + rumor.Results[0]
+								g.BroadcastDecision(answer)
+							} else { // accept_counts < deny_counts
+								answer := "DENY " + rumor.Results[0]
+								g.BroadcastDecision(answer)
+							}
 						}
-						
-						if accept_counts > deny_counts {
-							answer := "ACCEPT " + rumor.Results[0]
-							g.BroadcastDecision(answer)
-						} else { // accept_counts < deny_counts
-							answer := "DENY " + rumor.Results[0]
-							g.BroadcastDecision(answer)
-						}
+					} else { // is_matched == false
+						g.BroadcastCancel(rumor.Results[0])
 					}
 				}
 			}
@@ -431,7 +466,7 @@ func (g *Gossiper) ReceiveBroadcast(message BroadcastMessage) {
 			if rumor.Text != "" {
 				//print the message
 				g.PrintEvotingDecisionStep(rumor.Text)
-				if g.is_authority {
+				if g.Cluster.IsAnAuthority(g.Name) {
 					for i := 0 ; i < len(g.slice_results) ; i++ {
 						if strings.Contains(rumor.Text, string((g.slice_results[i])[0])) {
 							copy(g.slice_results[i:], g.slice_results[i+1:])
@@ -441,18 +476,25 @@ func (g *Gossiper) ReceiveBroadcast(message BroadcastMessage) {
 					}
 					if strings.Contains(rumor.Text, "ACCEPT") {
 						str := string(rumor.Text[7:])
-						_, ok := g.acks_cases[str]
-						if ok {
+						_, ok1 := g.acks_cases[str]
+						if ok1 {
 							delete(g.acks_cases, str)
+						}
+						_, ok2 := g.correct_results_rcv[str]
+						if ok2 {
+							delete(g.correct_results_rcv, str)
 						}
 					} else { // strings.Contains(rumor.Text, "DENY") == true
 						str := string(rumor.Text[5:])
-						_, ok := g.acks_cases[str]
-						if ok {
+						_, ok1 := g.acks_cases[str]
+						if ok1 {
 							delete(g.acks_cases, str)
 						}
+						_, ok2 := g.correct_results_rcv[str]
+						if ok2 {
+							delete(g.correct_results_rcv, str)
+						}
 					}
-					g.correct_results_rcv = 0
 				}
 				
 				found_request := false
@@ -480,6 +522,181 @@ func (g *Gossiper) ReceiveBroadcast(message BroadcastMessage) {
 							final_decision = 0
 						}
 						g.ReceiveDecisionJoinRequest(msg, final_decision)
+					}
+				}
+			}
+			//in any case add it to the map..
+			if g.Name != rumor.Origin {
+				g.Cluster.HeartBeats[rumor.Origin] = true
+			}
+		
+		} else if message.CancelRequest {
+			log.Lvl2(g.Name, " received e-voting cancellation")
+			decrypted := ies.Decrypt(g.Cluster.MasterKey, message.Data)
+			var rumor RumorMessage
+			err := protobuf.Decode(decrypted, &rumor)
+			if err != nil {
+				log.Error(g.Name, "Error decoding packet : ", err, "This may be due to an ongoing rollout.")
+				return
+			}
+			if rumor.Text != "" {
+				//print the message
+				g.PrintEvotingCancellationStep(rumor.Text)
+				if g.Cluster.IsAnAuthority(g.Name) {
+					for i := 0 ; i < len(g.slice_results) ; i++ {
+						if rumor.Text == string((g.slice_results[i])[0]) {
+							copy(g.slice_results[i:], g.slice_results[i+1:])
+							g.slice_results = g.slice_results[:len(g.slice_results) - 1]
+							break
+						}
+					}
+					_, ok1 := g.acks_cases[rumor.Text]
+					if ok1 {
+						delete(g.acks_cases, rumor.Text)
+					}
+					_, ok2 := g.correct_results_rcv[rumor.Text]
+					if ok2 {
+						delete(g.correct_results_rcv, rumor.Text)
+					}
+				}
+				g.BroadcastReset(rumor.Text)
+			}
+			//in any case add it to the map..
+			if g.Name != rumor.Origin {
+				g.Cluster.HeartBeats[rumor.Origin] = true
+			}
+			
+		} else if message.ResetIndication {
+			log.Lvl2(g.Name, " received e-voting reset")
+			decrypted := ies.Decrypt(g.Cluster.MasterKey, message.Data)
+			var rumor RumorMessage
+			err := protobuf.Decode(decrypted, &rumor)
+			if err != nil {
+				log.Error(g.Name, "Error decoding packet : ", err, "This may be due to an ongoing rollout.")
+				return
+			}
+			if rumor.Text != "" {
+				//print the message
+				g.PrintEvotingResetStep(rumor.Origin, rumor.Text)
+				
+				is_existing := false
+				for i := 0 ; i < len(pending_nodes_requests) ; i++ {
+					if rumor.Text == pending_nodes_requests[i] {
+						is_existing = true
+						break
+					}
+				}
+				
+				if is_existing == true {
+					_, ok := g.reset_requests[rumor.Text]
+					if ok == true {
+						found := false
+						for j := 0 ; j < len(g.reset_requests[rumor.Text]) ; j++ {
+							if g.reset_requests[rumor.Text][j] == rumor.Origin {
+								found = true
+								break
+							}
+						}
+						if found == false {
+							g.reset_requests[rumor.Text] = append(g.reset_requests[rumor.Text], rumor.Origin)
+						}
+					} else { // ok == false
+						g.reset_requests[rumor.Text] = []string{rumor.Origin}
+					}
+					
+					if len(g.reset_requests[rumor.Text]) == len(g.Cluster.Members) {
+						delete(g.reset_requests, rumor.Text)
+						
+						numbers := (len(g.Cluster.Members) + 1 ) / 2
+						if numbers % 2 == 0 {
+							numbers ++
+						}
+						idx := rand.Perm(len(g.Cluster.Members))[:numbers]
+						auth := make([]string, numbers)
+						for i, e := range idx{
+							auth[i] = g.Cluster.Members[e]
+						}
+						g.Cluster.Authorities = auth
+
+						cluster := g.Cluster
+						data, err := protobuf.Encode(cluster)
+						if err != nil {
+							log.Error("Could not encode cluster :", err)
+							return err
+						}
+						cipher := ies.Encrypt(old, data)
+
+						for _, member := range cluster.Members {
+							//send them the new master key using the previous master key
+							if member == g.Name {
+								continue
+							}
+							addr := g.FindPath(member)
+
+							bc := BroadcastMessage{
+								ClusterID:   *cluster.ClusterID,
+								Destination: member,
+								HopLimit:    10,
+								Reset:       true,
+								CaseRequest: rumor.Text
+								Data:        cipher,
+							}
+							gp := GossipPacket{Broadcast: &bc}
+							go g.SendTo(addr, gp)
+						}
+					}
+				}
+			}
+			//in any case add it to the map..
+			if g.Name != rumor.Origin {
+				g.Cluster.HeartBeats[rumor.Origin] = true
+			}
+		
+		} else if message.AckResend {
+			log.Lvl2(g.Name, " received e-voting ack for request resending")
+			decrypted := ies.Decrypt(g.Cluster.MasterKey, message.Data)
+			var rumor RumorMessage
+			err := protobuf.Decode(decrypted, &rumor)
+			if err != nil {
+				log.Error(g.Name, "Error decoding packet : ", err, "This may be due to an ongoing rollout.")
+				return
+			}
+			if rumor.Text != "" {
+				//print the message
+				g.PrintEvotingResendStep(rumor.Origin, rumor.Text)
+				
+				is_existing := false
+				for i := 0 ; i < len(pending_nodes_requests) ; i++ {
+					if rumor.Text == pending_nodes_requests[i] {
+						is_existing = true
+						break
+					}
+				}
+				
+				if is_existing == true {
+					_, ok := g.members_ready_resend_requests[rumor.Text]
+					if ok == true {
+						found := false
+						for j := 0 ; j < len(g.members_ready_resend_requests[rumor.Text]) ; j++ {
+							if g.members_ready_resend_requests[rumor.Text][j] == rumor.Origin {
+								found = true
+								break
+							}
+						}
+						if found == false {
+							g.members_ready_resend_requests[rumor.Text] = append(g.members_ready_resend_requests[rumor.Text], rumor.Origin)
+						}
+					} else { // ok == false
+						g.members_ready_resend_requests[rumor.Text] = []string{rumor.Origin}
+					}
+					
+					if len(g.members_ready_resend_requests[rumor.Text]) == len(g.Cluster.Members) - 1 {
+						delete(g.members_ready_resend_requests, rumor.Text)
+						
+						if strings.Contains(rumor.Text, "JOIN ") {
+							nodeRequest := rumor.Text[5:]
+							g.BroadcastJoin(nodeRequest)
+						}
 					}
 				}
 			}
@@ -778,13 +995,27 @@ func (g *Gossiper) UpdateCluster(message RequestMessage) {
 	g.Cluster.HeartBeats[message.Origin] = true
 }
 
+func (g *Gossiper) UpdateFromReset(cluster clusters.Cluster) {
+	log.Lvl3("Update information form reset ")
+
+	g.Cluster = &cluster
+	clusters.InitCounter(g.Cluster)
+	g.Cluster.HeartBeats = make(map[string]bool)
+}
+
 func (g *Gossiper) UpdateFromRollout(cluster clusters.Cluster) {
 	log.Lvl3("Update information form a new cluster :O ")
 
 	g.Cluster = &cluster
 	clusters.InitCounter(g.Cluster)
 	g.Cluster.HeartBeats = make(map[string]bool)
-
+	
+	g.slice_results = make([][]string, 0)
+	g.acks_cases = make(map[string][]string)
+	g.correct_results_rcv = make(map[string][]string)
+	g.pending_nodes_requests = make([]string, 0)
+	g.pending_messages_requests = make([]RequestMessage, 0)
+	g.displayed_requests = make([]string, 0)
 }
 
 func (g *Gossiper) RequestLeave() {

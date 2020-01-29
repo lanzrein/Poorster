@@ -43,6 +43,7 @@ type BroadcastMessage struct {
 	Destination  string
 	Data         []byte
 	Rollout      bool
+	Reset        bool
 	LeaveRequest bool
 	JoinRequest  bool
 	AcceptProposition bool
@@ -50,6 +51,10 @@ type BroadcastMessage struct {
 	CaseCompare  	  bool
 	ResultsValidation bool
 	FinalDecision	  bool
+	CancelRequest	  bool
+	ResetIndication	  bool
+	CaseRequest 	  string
+	AckResend		  bool
 }
 
 type RequestMessage struct {
