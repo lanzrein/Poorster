@@ -225,7 +225,6 @@ const bitRate = 32000
 const numChanels = 1
 
 func (g *Gossiper) ClientStartRecording() {
-	fmt.Println("SENDING AUDIO")
 	// only process recording and sending audio if we are in a call with someone
 	if g.CallStatus.InCall && strings.Compare(g.CallStatus.OtherParticipant, "") != 0 {
 		// start recording and sending audio
@@ -250,34 +249,14 @@ func (g *Gossiper) ReceiveAudio(audio AudioMessage) {
 			strings.Compare(audio.Origin, g.CallStatus.OtherParticipant) == 0 {
 			// if we are in a call with the sender of this audio and it was intended for us
 			//		listen to it
-
 			pa, err := pulse.NewClient()
 			if err != nil {
 				log.Panic(err)
 			}
+			defer pa.Close()
 
-			bufPlay := &buffer{}
-			nEnc := audio.Content.EncryptedN
-			data := audio.Content.Data
-
-			play, err := pa.NewPlayback(
-				func(p []int16) {
-					nDec, err := g.OpusDecoder.Decode(data[:nEnc], g.PlayBackFrame)
-					if err != nil {
-						log.Panic(err)
-					}
-					bufPlay.Write(g.PlayBackFrame[:nDec])
-					bufPlay.Read(p)
-				},
-				pulse.PlaybackMono,
-				pulse.PlaybackSampleRate(sampleRate),
-				pulse.PlaybackBufferSize(bufferFragmentSize),
-			)
-			if err != nil {
-				log.Panic(err)
-			}
-			go play.Start()
-
+			g.play(audio.Content.Data, audio.Content.EncryptedN, pa)
+			go g.PlaybackStream.Start()
 		} else if strings.Compare(audio.Destination, g.CallStatus.OtherParticipant) == 0 {
 			// otherwise, it must be us sending the audio message out
 			canSend := g.NodeCanSendAnonymousPacket(audio.Destination)
@@ -371,8 +350,25 @@ func (g *Gossiper) record() {
 	}
 }
 
-func play() {
-
+func (g *Gossiper) play(data []byte, nEnc int, pa *pulse.Client) {
+	bufPlay := &buffer{}
+	var err error
+	g.PlaybackStream, err = pa.NewPlayback(
+		func(p []int16) {
+			nDec, err := g.OpusDecoder.Decode(data[:nEnc], g.PlayBackFrame)
+			if err != nil {
+				log.Panic(err)
+			}
+			bufPlay.Write(g.PlayBackFrame[:nDec])
+			bufPlay.Read(p)
+		},
+		pulse.PlaybackMono,
+		pulse.PlaybackSampleRate(sampleRate),
+		pulse.PlaybackBufferSize(bufferFragmentSize),
+	)
+	if err != nil {
+		log.Panic(err)
+	}
 }
 
 func routeMessage(g *Gossiper, packet GossipPacket, dest string) {
