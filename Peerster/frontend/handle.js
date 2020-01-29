@@ -64,6 +64,7 @@ $(document).ready(function(){
 
   $("li span[class=anoncall]").click(anoncall);
   $("li span[class=anonmessage]").click(anonmessage);
+  $("li span[class=expellmember]").click(expellmember);
 
   $("#acceptvote").click(castvote);
   $("#denyvote").click(castvote);
@@ -233,10 +234,10 @@ function sendprivatemsg(){
 
       for(let i = 0 ; i < res.length ; i ++){
         if (res[i] === currently_calling){
-          $("#clustermembers").append("<li id='member' style='color: crimson'>"+res[i]+"<span class=\"anonmessage\"> ✉️</span><span class=\"anoncall\">📞</span></li>");
+          $("#clustermembers").append("<li id='member' style='color: crimson'>"+res[i]+"<span class=\"anonmessage\"> ✉️</span><span class=\"anoncall\">📞</span><span class=\"expellmember\">❌</span></li>");
 
         }else{
-          $("#clustermembers").append("<li id='member'>"+res[i]+"<span class=\"anonmessage\"> ✉️</span><span class=\"anoncall\">📞</span></li>");
+          $("#clustermembers").append("<li id='member'>"+res[i]+"<span class=\"anonmessage\"> ✉️</span><span class=\"anoncall\">📞</span><span class=\"expellmember\">❌EXPELL</span></li>");
 
         }
 
@@ -244,6 +245,7 @@ function sendprivatemsg(){
 
       $("li span[class=anoncall]").click(anoncall);
       $("li span[class=anonmessage]").click(anonmessage);
+      $("li span[class=expellmember]").click(expellmember);
 
 
     });
@@ -375,12 +377,18 @@ function loop(){
     res = JSON.parse(data);
 
     for(let i = 0 ; i < res.length ; i ++){
-      $("#clustermembers").append("<li id='member'>"+res[i]+"<span class=\"anonmessage\">✉️</span><span class=\"anoncall\">📞</span></li>");
+      if (res[i] === currently_calling){
+        $("#clustermembers").append("<li id='member' style='color: crimson'>"+res[i]+"<span class=\"anonmessage\"> ✉️</span><span class=\"anoncall\">📞</span><span class=\"expellmember\">❌</span></li>");
 
+      }else{
+        $("#clustermembers").append("<li id='member'>"+res[i]+"<span class=\"anonmessage\"> ✉️</span><span class=\"anoncall\">📞</span><span class=\"expellmember\">❌</span></li>");
+
+      }
     }
 
     $("li span[class=anoncall]").click(anoncall);
     $("li span[class=anonmessage]").click(anonmessage);
+    $("li span[class=expellmember]").click(expellmember);
 
 
   });
@@ -405,7 +413,8 @@ function loop(){
   $.get(host+"/incomingcall").done(function(data){
     //update the peer list...
     console.log("Calling got response : " + data)
-    if (data !== "" && currently_calling !== data){
+    res = JSON.parse(data)
+    if (res !== "" && currently_calling !== res){
       $("#callpannel").show();
       $("#callee").text(data);
       currently_calling = data;
@@ -414,6 +423,8 @@ function loop(){
   });
 
 }
+
+
 var x;
 
 /**
@@ -469,8 +480,6 @@ function addnode(){
       }
     });
   }
-
-
 
 
 }
