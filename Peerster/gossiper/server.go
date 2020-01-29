@@ -25,9 +25,13 @@ func LoadServer(g *Gossiper) {
 	http.HandleFunc("/downloadfoundfile", g.FoundFileHandle)
 	//project handlers
 	http.HandleFunc("/initcluster", g.InitClusterHandle)
+	http.HandleFunc("/leavecluster", g.LeaveClusterHandle)
+	http.HandleFunc("/joinrequest", g.JoinClusterRequest)
 	http.HandleFunc("/broadcastmsg", g.BroadcastMessageHandle)
 	http.HandleFunc("/anonmessage",g.AnonymousMessageHandle)
 	http.HandleFunc("/anoncall", g.AnonymousCallHandle)
+
+	http.HandleFunc("/evoting", g.EvotingHandle)
 
 
 

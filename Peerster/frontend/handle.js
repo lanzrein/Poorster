@@ -6,7 +6,7 @@ const regexIP = /^(?!0)(?!.*\.$)((1?\d?\d|25[0-5]|2[0-4]\d)(\.|$)){4}$/;
 const regexPort = /^[0-9]+$/;
 
 //host to which we connect hard-coded
-const host = "http://127.0.0.1:8000";
+let host = "http://127.0.0.1:";
 
 
 console.log("Handle loaded.");
@@ -31,6 +31,8 @@ function searchedfiledownload() {
 
 $(document).ready(function(){
   //bind the buttons to the functions
+  let port = prompt("Enter port used for GUI", "8000");
+  host = host + port;
   $("#buttonNode").click(addnode);
   $("#sendmsg").click(send);
 
@@ -56,11 +58,21 @@ $(document).ready(function(){
   $("#closecluster").click(closeclusterpannel);
 
   $("#initcluster").click(InitCluster);
+  $("#leavecluster").click(LeaveCluster);
   $("#sendbroadcast").click(SendBroadcast);
 
   $("li span[class=anoncall]").click(anoncall);
   $("li span[class=anonmessage]").click(anonmessage);
 
+  $("#acceptvote").click(castvote);
+  $("#denyvote").click(castvote);
+
+
+  $("li[id=vote]").click(openvotepannel);
+  $("#closevote").click(closevote);
+  $("#joincluster").click(openjoin);
+  $("#confirmjoin").click(joinrequest);
+  $("#closejoin").click(closejoin);
   //request the node ID
   requestNodeId();
   // //loop and request data sometimes.
@@ -245,7 +257,14 @@ function showprivate(){
 }
 
 function showclusterpannel(){
+
+
+  $.get()
+
   $("#clusterpopup").show();
+
+
+
 }
 
 function closeclusterpannel(){
@@ -331,6 +350,39 @@ function loop(){
     }
 
     $("li[id=file]").dblclick(searchedfiledownload);
+  });
+
+
+  $.get(host+"/anonmessage").done(function(data){
+    //update the peer list...
+    console.log("Anonymous Message got response : " + data)
+    $("#clustermembers").empty();
+    res = JSON.parse(data);
+
+    for(let i = 0 ; i < res.length ; i ++){
+      $("#clustermembers").append("<li id='member'>"+res[i]+"<span class=\"anonmessage\">✉️</span><span class=\"anoncall\">📞</span></li>");
+
+    }
+
+    $("li span[class=anoncall]").click(anoncall);
+    $("li span[class=anonmessage]").click(anonmessage);
+
+
+  });
+
+  $.get(host+"/evoting").done(function(data){
+    //update the peer list...
+    console.log("Evoting got response : " + data)
+    $("#votelist").empty();
+    res = JSON.parse(data);
+
+    for(let i = 0 ; i < res.length ; i ++){
+
+      $("#votelist").append("<li id='vote'>"+res[i]+"</li>");
+
+    }
+    $("li[id=vote]").click(openvotepannel);
+
   });
 
 }

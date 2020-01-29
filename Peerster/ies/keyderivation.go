@@ -1,3 +1,5 @@
+//keyderivation contains the method used for key derivation @author johan lanzrein
+
 package ies
 
 import (
@@ -7,6 +9,7 @@ import (
 	"golang.org/x/crypto/hkdf"
 )
 
+//GenerateKeyPair generates a fresh key pair.
 func GenerateKeyPair() (*KeyPair, error) {
 
 	pk := make([]byte, 32)
@@ -25,6 +28,7 @@ func GenerateKeyPair() (*KeyPair, error) {
 
 }
 
+//PublicKeyFromBytes creates a public key from given bytes.
 func PublicKeyFromBytes(data []byte) PublicKey {
 	pk := make([]byte, 32)
 	copy(pk, data)
@@ -35,10 +39,10 @@ func PublicKeyFromBytes(data []byte) PublicKey {
 func (kp *KeyPair) KeyDerivation(public *PublicKey) []byte {
 	shared := combineKeys(&kp.PrivateKey, public)
 	//use the shared key to create a master key that can be used to enc dec
-
 	masterKey := hkdf.Extract(sha256.New, shared, nil)
 	return masterKey
 }
+
 
 func combineKeys(sk *PrivateKey, pk *PublicKey) []byte {
 	//we need to do sk*pk

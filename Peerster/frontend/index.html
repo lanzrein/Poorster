@@ -86,17 +86,42 @@
 <div id="clusterpopup">
   <button type ="button" id="initcluster">Init new cluster</button>
   <button type="button" id="leavecluster">Leave current cluster</button>
+  <button type="button" id="joincluster">Join a cluster</button>
   <button type="button" id="closecluster" style="position: absolute;top: 10px;right: 10px;"> Close </button>
 
   <ul id="clustermembers">
-<!-- TODO here need to do the handler -->
     <li id="member">Member random <span class="anonmessage">✉️</span><span class="anoncall">📞</span></li>
   </ul>
 
   <textarea style="width:100%;" id="broadcastcontent" rows="8" cols="80"></textarea>
   <button type="button" id="sendbroadcast">Send broadcast</button>
-
+  <div id ="voting">
+    <b>Currently voting for : </b>
+    <ul id="votelist">
+      <li id="vote">JOIN Tom</li>
+      <li id="vote">EXPEL Rob</li>
+    </ul>
+  </div>
 
 </div>
+
+
+ <div id="votepannel">
+   <p>Would you like ...</p>
+   <p id="votetext">bla</p>
+
+   <div><button type="button" id="acceptvote">YES</button> <button type="button" id="denyvote">NO</button> </div>
+   <button type="button" id="closevote" style="position: absolute;top: 10px;right: 10px;"> Cancel </button>
+
+ </div>
+
+
+ <div id="joinpannel">
+   <p>Enter the members cluster you would like to join ! </p>
+   <input id="joinOther" value="">
+   <button type="button" id="confirmjoin">Confirm</button>
+   <button type="button" id="closejoin" style="position: absolute;top: 10px;right: 10px;"> Cancel </button>
+
+ </div>
 
 
