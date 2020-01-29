@@ -413,3 +413,7 @@ func (b *buffer) Len() int {
 	defer b.mu.RUnlock()
 	return len(b.b[:])
 }
+
+// https://github.com/gordonklaus/portaudio/blob/master/examples/record.go
+// https://socketloop.com/tutorials/golang-record-voice-audio-from-microphone-to-wav-file
+// https://medium.com/@valentijnnieman_79984/how-to-build-an-audio-streaming-server-in-go-part-1-1676eed93021
