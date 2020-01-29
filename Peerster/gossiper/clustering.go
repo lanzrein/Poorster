@@ -1,10 +1,14 @@
+//clustering file for the handling of a cluster by  agossiper
+//@authors Hrusanov Aleksandar, Lanzrein Johan, Rinaldi Vincent
+
 package gossiper
 
 import (
 	"bytes"
-	"time"
-	"strings"
 	"math/rand"
+	"sort"
+	"strings"
+	"time"
 
 	"github.com/JohanLanzrein/Peerster/clusters"
 	"github.com/JohanLanzrein/Peerster/ies"
@@ -12,6 +16,7 @@ import (
 	"go.dedis.ch/protobuf"
 )
 
+//Constant values
 const DEFAULTROLLOUT = 300
 const DEFAULTHEARTBEAT = 5
 
@@ -30,6 +35,7 @@ func (g *Gossiper) InitCluster() {
 	go g.HeartbeatLoop()
 }
 
+//RequestJoining Sends a packet to request joining a cluster from other
 func (g *Gossiper) RequestJoining(other string) {
 	//send a request packet to the other gossiper
 	log.Lvl1("Joining request :" , other)
@@ -47,6 +53,7 @@ func (g *Gossiper) RequestJoining(other string) {
 
 }
 
+//HeartbeatLoop
 func (g *Gossiper) HeartbeatLoop() {
 	dur := time.Duration(g.RolloutTimer) * time.Second
 	timer := time.NewTimer(dur)
@@ -66,13 +73,14 @@ func (g *Gossiper) HeartbeatLoop() {
 			log.Lvl4("Time for a rolllllllllout")
 			idx := g.Cluster.Clock()
 			log.Lvl1(g.Name, "My idx is :", idx)
-
+			sort.Strings(g.Cluster.Members)
 			g.KeyRollout(g.Cluster.Members[idx])
 			timer.Reset(dur)
 		}
 	}
 }
 
+//LeaveCluster stops the heartbeat loop and resets the value of cluster
 func (g *Gossiper) LeaveCluster() {
 	//Stop the heartbeat loop
 	g.PrintLeaveCluster()
@@ -85,6 +93,7 @@ func (g *Gossiper) LeaveCluster() {
 	return
 }
 
+//SendBroadcast with thte given text. if the leave flag is set will also be a request to leave.
 func (g *Gossiper) SendBroadcast(text string, leave bool) {
 	rumor := RumorMessage{
 		Origin: g.Name,
@@ -130,6 +139,7 @@ func (g *Gossiper) SendBroadcast(text string, leave bool) {
 	}
 }
 
+//ReveiceBroadcast handles a broadcast message and displays it if possible otherwise sends it further
 func (g *Gossiper) ReceiveBroadcast(message BroadcastMessage) {
 	if message.Destination != g.Name {
 		//Send it further.
@@ -146,7 +156,7 @@ func (g *Gossiper) ReceiveBroadcast(message BroadcastMessage) {
 		}
 		return
 	}
-	if g.Cluster.ClusterID != nil && message.ClusterID == *g.Cluster.ClusterID {
+	if g.Cluster != nil && message.ClusterID == *g.Cluster.ClusterID {
 		log.Lvl2("Got broadcast for my cluster")
 
 		if message.Rollout {
@@ -713,7 +723,7 @@ func (g *Gossiper) ReceiveBroadcast(message BroadcastMessage) {
 				log.Error(g.Name, "Error decoding packet : ", err, "This may be due to an ongoing rollout.")
 				return
 			}
-			log.Lvl1(g.Name, "got a broadcast..from ", rumor.Origin)
+			log.Lvl3(g.Name, "got a broadcast..from ", rumor.Origin)
 
 			if rumor.Text != "" && rumor.Origin != g.Name {
 				//print the message
@@ -731,6 +741,7 @@ func (g *Gossiper) ReceiveBroadcast(message BroadcastMessage) {
 
 }
 
+//RemoveFromList removes s from strings
 func RemoveFromList(strings []string, s string) [] string {
 	for i, s1 := range strings{
 		if s1 == s{
@@ -743,6 +754,7 @@ func RemoveFromList(strings []string, s string) [] string {
 	return strings
 }
 
+//ReceiveJoinRequest handles a join request will triger the e-voting mechanism if activated.
 func (g *Gossiper) ReceiveJoinRequest(message RequestMessage) {
 	if message.Recipient != g.Name {
 		addr := g.FindPath(message.Recipient)
@@ -758,7 +770,7 @@ func (g *Gossiper) ReceiveJoinRequest(message RequestMessage) {
 		}
 		return
 	}
-
+	log.Lvl1("Got request from " , message.Origin)
 	_, ok := g.Cluster.HeartBeats[message.Origin]
 	if ok {
 		//its an update message.
@@ -770,14 +782,22 @@ func (g *Gossiper) ReceiveJoinRequest(message RequestMessage) {
 		log.Lvl4(g.Name, "got new request from : ", message.Origin)
 	}
 
+	if g.ackAll{
+		g.ReceiveDecisionJoinRequest(message, 1)
+	}else{
+		g.pending_nodes_requests = append(g.pending_nodes_requests, "JOIN " + message.Origin)
+		g.pending_messages_requests = append(g.pending_messages_requests, message)
+		g.BroadcastJoin(message.Origin)
+	}
 	//Start e-voting protocol to decide if accept...
-	g.pending_nodes_requests = append(g.pending_nodes_requests, "JOIN " + message.Origin)
-	g.pending_messages_requests = append(g.pending_messages_requests, message)
-	g.BroadcastJoin(message.Origin)
+
 }
 
+
+//ReceiveDecisionJoinRequest receives a decision concerning a request.
 func (g *Gossiper) ReceiveDecisionJoinRequest(message RequestMessage, decision int) {
 	//Once the decision has been taken we have the result..
+	log.Lvl1("Decision for ", message.Origin,", is :" , decision)
 	var reply RequestReply
 	if decision == 1 {
 		g.UpdateCluster(message)
@@ -816,6 +836,9 @@ func (g *Gossiper) ReceiveDecisionJoinRequest(message RequestMessage, decision i
 	if err != nil {
 		log.Error("Error while sending reply to ", message.Origin, " : ", err)
 	}
+	if g.ackAll {
+		return
+	}
 	
 	for i := 0 ; i < len(g.pending_nodes_requests) ; i++ {
 		if string(g.pending_nodes_requests[i]) == "JOIN " + message.Origin {
@@ -826,7 +849,6 @@ func (g *Gossiper) ReceiveDecisionJoinRequest(message RequestMessage, decision i
 	}
 	
 	for i := 0 ; i < len(g.pending_messages_requests) ; i++ {
-		//TOdo does the key need to be equal here ?
 		if (g.pending_messages_requests[i]).Origin == message.Origin && (g.pending_messages_requests[i]).Recipient == message.Recipient && bytes.Compare(g.pending_messages_requests[i].PublicKey, message.PublicKey ) == 0 {
 			copy(g.pending_messages_requests[i:], g.pending_messages_requests[i+1:])
 			g.pending_messages_requests = g.pending_messages_requests[:len(g.pending_messages_requests) - 1]
@@ -835,6 +857,7 @@ func (g *Gossiper) ReceiveDecisionJoinRequest(message RequestMessage, decision i
 	}
 }
 
+//ReceiveRequestReply receive a reply for a request if the member is accepted then initiliaze the cluster.
 func (g *Gossiper) ReceiveRequestReply(message RequestReply) {
 
 	if message.Recipient != g.Name {
@@ -873,7 +896,7 @@ func (g *Gossiper) ReceiveRequestReply(message RequestReply) {
 	go g.HeartbeatLoop()
 }
 
-//Initiate the key rollout. Assume that the leader has been elected and he calls this method.
+//KeyRollout Initiate the key rollout. Assume that the leader has been elected and he calls this method.
 func (g *Gossiper) KeyRollout(leader string) {
 	//Send a new key pair to the "leader"
 
@@ -893,6 +916,7 @@ func (g *Gossiper) KeyRollout(leader string) {
 			<-time.After(time.Second)
 			go g.RequestJoining(leader)
 		}
+
 		g.Cluster.PublicKeys[g.Name] = g.Keypair.PublicKey
 
 	}()
@@ -915,6 +939,7 @@ func (g *Gossiper) KeyRollout(leader string) {
 
 		}
 		g.Cluster.Members = nextMembers
+
 		log.Lvl2("New members for this key rollout : ", nextMembers)
 
 		//Check if received all the keys from them
@@ -937,6 +962,7 @@ func (g *Gossiper) KeyRollout(leader string) {
 
 }
 
+//MasterKeyGen generate a new master key
 func (g *Gossiper) MasterKeyGen() ies.PublicKey {
 	kp, err := ies.GenerateKeyPair()
 	if err != nil {
@@ -946,6 +972,7 @@ func (g *Gossiper) MasterKeyGen() ies.PublicKey {
 	return kp.PublicKey
 }
 
+//AnnounceNewMasterKey anniounce the new master key and new information for this key rollout.
 func (g *Gossiper) AnnounceNewMasterKey() error {
 	old := g.Cluster.MasterKey
 	g.Cluster.MasterKey = g.MasterKeyGen()
@@ -989,12 +1016,14 @@ func (g *Gossiper) AnnounceNewMasterKey() error {
 	return nil
 }
 
+//UpdateCluster updates the cluster.
 func (g *Gossiper) UpdateCluster(message RequestMessage) {
 	g.Cluster.Members = append(g.Cluster.Members, message.Origin)
 	g.Cluster.PublicKeys[message.Origin] = message.PublicKey
 	g.Cluster.HeartBeats[message.Origin] = true
 }
 
+<<<<<<< HEAD
 func (g *Gossiper) UpdateFromReset(cluster clusters.Cluster) {
 	log.Lvl3("Update information form reset ")
 
@@ -1003,6 +1032,9 @@ func (g *Gossiper) UpdateFromReset(cluster clusters.Cluster) {
 	g.Cluster.HeartBeats = make(map[string]bool)
 }
 
+=======
+//UpdateFromRollout update information from a rollout.
+>>>>>>> bd92fc611534610b42a0a0fb6e91505e594951a5
 func (g *Gossiper) UpdateFromRollout(cluster clusters.Cluster) {
 	log.Lvl3("Update information form a new cluster :O ")
 
@@ -1018,6 +1050,7 @@ func (g *Gossiper) UpdateFromRollout(cluster clusters.Cluster) {
 	g.displayed_requests = make([]string, 0)
 }
 
+//RequestLeave sends a broadcast with the leave flag set
 func (g *Gossiper) RequestLeave() {
 	g.SendBroadcast("", true)
 }

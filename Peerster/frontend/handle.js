@@ -1,4 +1,5 @@
 //Handle for the server.
+//@authors Hrusanov Aleksandar, Lanzrein Johan, Rinaldi Vincent
 
 
 //Some regexes to verify if ip or ports are ok
@@ -73,6 +74,13 @@ $(document).ready(function(){
   $("#joincluster").click(openjoin);
   $("#confirmjoin").click(joinrequest);
   $("#closejoin").click(closejoin);
+
+
+  //For calls
+  $("#decline_call").click(decline_call);
+  $("#accept_call").click(accept_call);
+  $("#hangup_call").click(hangup_call);
+
   //request the node ID
   requestNodeId();
   // //loop and request data sometimes.
@@ -223,7 +231,13 @@ function sendprivatemsg(){
       res = JSON.parse(data);
 
       for(let i = 0 ; i < res.length ; i ++){
-        $("#clustermembers").append("<li id='member'>"+res[i]+"<span class=\"anonmessage\">✉️</span><span class=\"anoncall\">📞</span></li>");
+        if (res[i] === currently_calling){
+          $("#clustermembers").append("<li id='member' style='color: crimson'>"+res[i]+"<span class=\"anonmessage\"> ✉️</span><span class=\"anoncall\">📞</span></li>");
+
+        }else{
+          $("#clustermembers").append("<li id='member'>"+res[i]+"<span class=\"anonmessage\"> ✉️</span><span class=\"anoncall\">📞</span></li>");
+
+        }
 
       }
 

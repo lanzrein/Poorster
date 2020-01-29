@@ -55,8 +55,8 @@ func TestAnonymousMessaging(t *testing.T) {
 	g1.InitCluster()
 	//G2 asks to join it..
 	<-time.After(1 * time.Second)
-	g2.RequestJoining(g1.Name, *g1.Cluster.ClusterID)
-	g3.RequestJoining(g1.Name, *g1.Cluster.ClusterID)
+	g2.RequestJoining(g1.Name)
+	g3.RequestJoining(g1.Name)
 	<-time.After(15 * time.Second)
 	//c3 := g3.Cluster
 	//c2 := g2.Cluster

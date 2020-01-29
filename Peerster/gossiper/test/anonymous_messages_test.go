@@ -2,6 +2,7 @@ package test
 
 import (
 	"fmt"
+	"sort"
 	"testing"
 	"time"
 
@@ -10,35 +11,35 @@ import (
 	"go.dedis.ch/onet/log"
 )
 
-func TestAnonymousMessaging(t *testing.T) {
-	// log.SetDebugVisible(2)
+func TestAnonymousMessages(t *testing.T) {
+	log.SetDebugVisible(1)
 	//Test the anonymous messaging within a cluster
-	g1, err := gossiper.NewGossiper("A", "8080", "127.0.0.1:5000", "127.0.0.1:5001", false, 10, "8000", 10, 3, 5, false, 10, false)
+	g1, err := gossiper.NewGossiper("A", "8080", "127.0.0.1:5000", "127.0.0.1:5001", false, 10, "8000", 10, 3, 5, true, 10, false)
 	if err != nil {
 		t.Fatal(err)
 	}
 	//suppose an other gossiper g2
-	g2, err := gossiper.NewGossiper("B", "8081", "127.0.0.1:5001", "127.0.0.1:5002", false, 10, "8001", 10, 3, 5, false, 10, false)
+	g2, err := gossiper.NewGossiper("B", "8081", "127.0.0.1:5001", "127.0.0.1:5002", false, 10, "8001", 10, 3, 5, true, 10, false)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	g3, err := gossiper.NewGossiper("C", "8083", "127.0.0.1:5002", "127.0.0.1:5003", false, 10, "8002", 10, 3, 5, false, 10, false)
+	g3, err := gossiper.NewGossiper("C", "8083", "127.0.0.1:5002", "127.0.0.1:5000", false, 10, "8002", 10, 3, 5, true, 10, false)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	g4, err := gossiper.NewGossiper("C", "8084", "127.0.0.1:5003", "127.0.0.1:5004", false, 10, "8003", 10, 3, 5, false, 10, false)
+	g4, err := gossiper.NewGossiper("D", "8084", "127.0.0.1:5003", "127.0.0.1:5000", false, 10, "8003", 10, 3, 5, true, 10, false)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	g5, err := gossiper.NewGossiper("C", "8085", "127.0.0.1:5004", "127.0.0.1:5005", false, 10, "8004", 10, 3, 5, false, 10, false)
+	g5, err := gossiper.NewGossiper("E", "8085", "127.0.0.1:5004", "127.0.0.1:5005", false, 10, "8004", 10, 3, 5, false, 10, false)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	g6, err := gossiper.NewGossiper("C", "8086", "127.0.0.1:5005", "127.0.0.1:5000", false, 10, "8005", 10, 3, 5, false, 10, false)
+	g6, err := gossiper.NewGossiper("F", "8086", "127.0.0.1:5005", "127.0.0.1:5000", false, 10, "8005", 10, 3, 5, false, 10, false)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -90,12 +91,32 @@ func TestAnonymousMessaging(t *testing.T) {
 	g1.InitCluster()
 	//G2 asks to join it..
 	<-time.After(1 * time.Second)
-	g2.RequestJoining(g1.Name, *g1.Cluster.ClusterID)
-	g3.RequestJoining(g1.Name, *g1.Cluster.ClusterID)
-	g4.RequestJoining(g1.Name, *g1.Cluster.ClusterID)
-	g5.RequestJoining(g1.Name, *g1.Cluster.ClusterID)
-	g6.RequestJoining(g1.Name, *g1.Cluster.ClusterID)
-	<-time.After(30 * time.Second)
+	g2.RequestJoining(g1.Name )
+	g3.RequestJoining(g1.Name )
+	<- time.After(1 * time.Second)
+	g4.RequestJoining(g1.Name )
+	g5.RequestJoining(g1.Name )
+	<- time.After(1 * time.Second)
+	g6.RequestJoining(g1.Name )
+	// g5.RequestJoining(g1.Name, *g1.Cluster.ClusterID)
+	// g6.RequestJoining(g1.Name, *g1.Cluster.ClusterID)
+	<- time.After(15 * time.Second)
+	sort.Strings(g1.Cluster.Members)
+	sort.Strings(g2.Cluster.Members)
+	sort.Strings(g3.Cluster.Members)
+	sort.Strings(g4.Cluster.Members)
+	sort.Strings(g5.Cluster.Members)
+	sort.Strings(g6.Cluster.Members)
+	go func() {idx := 0; g1.KeyRollout(g1.Cluster.Members[idx])}()
+	go func() {idx := 0; g2.KeyRollout(g2.Cluster.Members[idx])}()
+
+	go func() {idx := 0; g3.KeyRollout(g3.Cluster.Members[idx])}()
+	go func() {idx := 0; g4.KeyRollout(g4.Cluster.Members[idx])}()
+
+	go func() {idx := 0; g5.KeyRollout(g5.Cluster.Members[idx])}()
+	go func() {idx := 0; g6.KeyRollout(g6.Cluster.Members[idx])}()
+
+	<-time.After(5 * time.Second)
 	c6 := g6.Cluster
 	c5 := g5.Cluster
 	c4 := g4.Cluster
@@ -124,13 +145,14 @@ func TestAnonymousMessaging(t *testing.T) {
 	assert.Equal(t, c1.PublicKeys, c6.PublicKeys)
 
 	anonText := "Anonymous Message"
-	g1.ClientSendAnonymousMessage(g3.Name, anonText, 0.5, false)
 	_, _ = g3.ReplyToClient()
+	g1.ClientSendAnonymousMessage(g3.Name, anonText, 0.5, false)
 
-	<-time.After(3 * time.Second)
+
+	<-time.After(1 * time.Second)
 	b1, err := g3.ReplyToClient()
 	if err != nil {
-		log.ErrFatal(err, "Could not get the buffer")
+		log.Error(err, "Could not get the buffer")
 	}
 
 	exp := fmt.Sprint("ANONYMOUS contents ", anonText, "\n")

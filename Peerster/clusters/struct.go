@@ -1,13 +1,14 @@
+//@authors Hrusanov Aleksandar, Lanzrein Johan, Rinaldi Vincent
+//clusters utility functions for the cluster
 package clusters
 
 import (
 	"github.com/JohanLanzrein/Peerster/ies"
-	"github.com/Peerster_solo/gossiper"
 	"go.dedis.ch/onet/log"
 	"math/rand"
-
 )
 
+//Cluster A structure containing values for the cluster.
 type Cluster struct {
 	ClusterID  *uint64
 	Members    []string        //know the members by name
@@ -20,15 +21,35 @@ type Cluster struct {
 	Authorities []string
 }
 
+<<<<<<< HEAD
 
 func (c *Cluster) IsAnAuthority(name string) bool {
 	return gossiper.Contains(c.Authorities, name)
+=======
+//IsAnAuthority returns true iff the name is c.Authorities
+func (c *Cluster)IsAnAuthority(name string) bool {
+	return contains(c.Authorities, name)
 }
 
+func contains(  xs []string,  val string ) bool {
+	for _ , x := range xs {
+		if val == x {
+			return true
+		}
+	}
+	return false
+>>>>>>> bd92fc611534610b42a0a0fb6e91505e594951a5
+}
+
+//AmountAuthorities returns the number of authorities
 func (c *Cluster) AmountAuthorities() int {
 	return len(c.Authorities)
 }
 
+<<<<<<< HEAD
+=======
+//NewCluster returns a new cluster
+>>>>>>> bd92fc611534610b42a0a0fb6e91505e594951a5
 func NewCluster(id *uint64, members []string, masterkey ies.PublicKey, publickey map[string]ies.PublicKey, seed uint64 ) Cluster {
 	source := rand.New(rand.NewSource(int64(seed)))
 
@@ -46,7 +67,12 @@ func NewCluster(id *uint64, members []string, masterkey ies.PublicKey, publickey
 }
 
 
+<<<<<<< HEAD
 func InitCounter(c *Cluster) {
+=======
+//InitCounter initiliazes the source for the cluster to make sure it is synchronized
+func InitCounter(c *Cluster){
+>>>>>>> bd92fc611534610b42a0a0fb6e91505e594951a5
 	source := rand.New(rand.NewSource(int64(c.Seed)))
 	//Sample it enough time to be "on same clock cycle" as the rest.
 	for i := uint64(0) ; i <  c.Counter; i ++ {

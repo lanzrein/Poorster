@@ -1,3 +1,4 @@
+//@authors Hrusanov Aleksandar, Lanzrein Johan, Rinaldi Vincent
 //Client file that handles message from the client to the node.
 package main
 

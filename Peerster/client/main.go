@@ -1,3 +1,7 @@
+//main method for the client
+//@authors Hrusanov Aleksandar, Lanzrein Johan, Rinaldi Vincent
+
+
 package main
 
 import (
@@ -98,7 +102,7 @@ func main() {
 		client.StopRecording()
 	} else if *accept != "" {
 		client.ProposeAccept(accept)
-	} elser if *deny != "" {
+	} else if *deny != "" {
 		client.ProposeDeny(deny)
 	} else {
 		fmt.Print("ERROR (Bad argument combination)")

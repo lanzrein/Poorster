@@ -1,3 +1,5 @@
+//@authors Hrusanov Aleksandar, Lanzrein Johan, Rinaldi Vincent
+
 package gossiper
 
 import (
@@ -8,6 +10,7 @@ import (
 	"go.dedis.ch/protobuf"
 )
 
+//GenerateKeys generates a fresh key pair for g
 func (g *Gossiper) GenerateKeys() (err error) {
 
 	g.Keypair, err = ies.GenerateKeyPair()
@@ -15,6 +18,7 @@ func (g *Gossiper) GenerateKeys() (err error) {
 
 }
 
+//EncryptPacket encrypts a packet for receiver by generating an ephemeral key
 func (g *Gossiper) EncryptPacket(packet GossipPacket, receiver string) []byte {
 	pubkey := g.Cluster.PublicKeys[receiver]
 	//sample a new key
@@ -25,7 +29,6 @@ func (g *Gossiper) EncryptPacket(packet GossipPacket, receiver string) []byte {
 	}
 
 	shared := kp.KeyDerivation(&pubkey)
-	//todo should we store the shared key until a key rollout ? could be interesting...
 	data, err := protobuf.Encode(&packet)
 	if err != nil {
 		log.Error("Could not encode packet : ", err)

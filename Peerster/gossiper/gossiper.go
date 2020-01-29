@@ -6,9 +6,9 @@ import (
 	"bytes"
 	"math/rand"
 	"net"
+	"strings"
 	"sync"
 	"time"
-	"strings"
 
 	"github.com/JohanLanzrein/Peerster/ies"
 	"go.dedis.ch/onet/log"
@@ -118,6 +118,7 @@ func NewGossiper(Name string, UIPort string, gossipAddr string, gossipers string
 		RunningConfirmation: false,
 		TimeMapping:         TimeMapping{sync.Mutex{}, make(map[string][]uint32)},
 
+<<<<<<< HEAD
 		Keys:          keys,
 		RolloutTimer:  DEFAULTROLLOUT,
 		HearbeatTimer: DEFAULTHEARTBEAT,
@@ -131,6 +132,21 @@ func NewGossiper(Name string, UIPort string, gossipAddr string, gossipers string
 		pending_messages_requests: make([]RequestMessage, 0),
 		displayed_requests:		   make([]string, 0),
 		reset_requests:			   make(map[string][]string),
+=======
+		Keys:                      keys,
+		RolloutTimer:              DEFAULTROLLOUT,
+		HearbeatTimer:             DEFAULTHEARTBEAT,
+		LeaveChan:                 make(chan bool),
+		CallStatus:                call,
+		is_authority:              false,
+		nb_authorities:            0,
+		slice_results:             make([][]string, 0),
+		acks_cases:                make(map[string][]string),
+		correct_results_rcv:       0,
+		pending_nodes_requests:    make([]string, 0),
+		pending_messages_requests: make([]RequestMessage, 0),
+		displayed_requests:        make([]string, 0),
+>>>>>>> bd92fc611534610b42a0a0fb6e91505e594951a5
 	}
 
 	err = gossiper.GenerateKeys()
@@ -145,7 +161,7 @@ func (g *Gossiper) Run() error {
 	errChan := make(chan error)
 
 	//if it is not in simple mode *try* to load a server - if it fails ( i.e. if a server is already running then it will just return without saying anything ! )
-	if !g.SimpleMode{
+	if !g.SimpleMode {
 		go LoadServer(g)
 	}
 
@@ -271,7 +287,7 @@ func (g *Gossiper) ReadFromPort(errChan chan error, conn net.UDPConn, client boo
 				//its a request to index a file.
 				go g.Index(*msg.File, pathShared)
 				continue
-			} else if msg.Destination != nil && (msg.Anonymous == nil || !(*msg.Anonymous) || !(*msg.CallRequest)) {
+			} else if msg.Destination != nil && (msg.Anonymous == nil || !(*msg.Anonymous) || msg.CallRequest == nil || !(*msg.CallRequest)) {
 				if msg.Anonymous != nil && *msg.Anonymous {
 					log.Lvl1("Message to send anon messaging...")
 					anonymous = true
@@ -331,10 +347,10 @@ func (g *Gossiper) ReadFromPort(errChan chan error, conn net.UDPConn, client boo
 				g.ClientStopRecording()
 			} else if msg.PropAccept != nil {
 				log.Lvl1("Message accept proposition.")
-				for i := 0 ; i < len(g.displayed_requests) ; i++ {
+				for i := 0; i < len(g.displayed_requests); i++ {
 					if strings.Contains(g.displayed_requests[i], *msg.PropAccept) {
 						copy(g.displayed_requests[i:], g.displayed_requests[i+1:])
-						g.displayed_requests = g.displayed_requests[:len(g.displayed_requests) - 1]
+						g.displayed_requests = g.displayed_requests[:len(g.displayed_requests)-1]
 						break
 					}
 				}
@@ -342,10 +358,10 @@ func (g *Gossiper) ReadFromPort(errChan chan error, conn net.UDPConn, client boo
 				continue
 			} else if msg.PropDeny != nil {
 				log.Lvl1("Message deny proposition.")
-				for i := 0 ; i < len(g.displayed_requests) ; i++ {
+				for i := 0; i < len(g.displayed_requests); i++ {
 					if strings.Contains(g.displayed_requests[i], *msg.PropDeny) {
 						copy(g.displayed_requests[i:], g.displayed_requests[i+1:])
-						g.displayed_requests = g.displayed_requests[:len(g.displayed_requests) - 1]
+						g.displayed_requests = g.displayed_requests[:len(g.displayed_requests)-1]
 						break
 					}
 				}

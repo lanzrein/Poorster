@@ -1,3 +1,5 @@
+//@authors Hrusanov Aleksandar, Lanzrein Johan, Rinaldi Vincent
+
 package gossiper
 
 import (
@@ -14,7 +16,7 @@ import (
 func (g *Gossiper) NodeCanSendAnonymousPacket(destination string) bool {
 	// Both sending and receiving node need to be in the same cluster
 	// Sending node needs to have information about the destination's public key
-	if g.Cluster.ClusterID != nil {
+	if g.Cluster.ClusterID == nil {
 		log.Error("Cannot send anonymous packet - current node does not belong to any cluster.")
 		return false
 	}
