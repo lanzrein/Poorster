@@ -57,10 +57,13 @@ function SendBroadcast(){
 let anonFlag = false;
 
 function anonmessage(){
-    dst = $(this).parent().text();
-    if (dst.length > 5) {
-        dst = dst.substring(0,dst.length-5);
-    }
+  dst = $(this).parent().text() ;
+  console.log(dst.length);
+  if (dst.length >= 5) {
+      dst = dst.substring(0,dst.length-4);
+  }else{
+      alert("Incorrect name");
+  }
     console.log("anon message ! "+ dst ) ;
 
     $("#receiver").text(dst);
