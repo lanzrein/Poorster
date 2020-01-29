@@ -59,6 +59,7 @@ func (g *Gossiper) ReceiveCallRequest(req CallRequest) {
 				log.Error(err)
 			}
 		} else {
+			g.CallStatus.OtherParticipant = req.Origin
 			// terminal prompt
 			reader := bufio.NewReader(os.Stdin)
 			go func() {
@@ -120,6 +121,7 @@ func (g *Gossiper) SendCallResponse(resp CallResponse) {
 		g.CallStatus.ExpectingResponse = false
 		g.CallStatus.OtherParticipant = resp.Destination
 		g.initializeAudioFields()
+		g.ClientStartRecording()
 		log.Lvl2("Accepting call from ", resp.Destination)
 	} else if resp.Status == Decline {
 		// if we decline a call request, update call status as follows ( we are NOT in another call)
@@ -147,6 +149,7 @@ func (g *Gossiper) ReceiveCallResponse(resp CallResponse) {
 			g.CallStatus.InCall = true
 			g.CallStatus.OtherParticipant = resp.Origin
 			g.initializeAudioFields()
+			g.ClientStartRecording()
 		} else {
 			if resp.Status == Decline {
 				log.Lvl2("Node ", resp.Origin, " declined our call")
@@ -193,6 +196,7 @@ func (g *Gossiper) ClientSendHangUpMessage() {
 		g.CallStatus.ExpectingResponse = false
 		g.CallStatus.OtherParticipant = ""
 		g.ReceiveHangUpMessage(hangUp)
+		g.ClientStopRecording()
 	}
 }
 
@@ -206,6 +210,7 @@ func (g *Gossiper) ReceiveHangUpMessage(hangUp HangUp) {
 			g.CallStatus.InCall = false
 			g.CallStatus.ExpectingResponse = false
 			g.CallStatus.OtherParticipant = ""
+			g.ClientStopRecording()
 		}
 	} else if strings.Compare(hangUp.Origin, g.Name) == 0 {
 		// otherwise, it must be us sending a hangup message

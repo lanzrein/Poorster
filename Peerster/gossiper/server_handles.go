@@ -3,6 +3,7 @@ package gossiper
 import (
 	"encoding/hex"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net"
 	"net/http"
@@ -510,6 +511,20 @@ func (g *Gossiper) CallHandle(w http.ResponseWriter, r *http.Request) {
 		log.Lvl1("Data : ", message)
 
 		//TODO here handle the packet.
+		otherParticipant := message.Member
+		if message.Dial {
+			// we are calling
+			g.ClientSendCallRequest(otherParticipant)
+		} else if message.Accept {
+			resp := CallResponse{Origin: g.Name, Destination: otherParticipant, Status: Accept}
+			// we are accepting an incoming call
+			g.SendCallResponse(resp)
+		} else if message.Decline {
+			// we are declining an incoming call
+			resp := CallResponse{Origin: g.Name, Destination: otherParticipant, Status: Decline}
+			// we are accepting an incoming call
+			g.SendCallResponse(resp)
+		}
 
 	}
 
@@ -519,10 +534,12 @@ func (g *Gossiper) IncomingCallHandle(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 
 	//TODO here handle the packet.
-	//caller := g.CallStatus.OtherParticipant
-	caller := "Bob"
-	tosend, _ := json.Marshal(caller)
-	log.Lvl3(tosend)
-	_, _ = w.Write(tosend)
+	if g.CallStatus.OtherParticipant != "" {
+		caller := g.CallStatus.OtherParticipant
+		fmt.Println("GETTING A CALL FROM ", caller)
+		tosend, _ := json.Marshal(caller)
+		log.Lvl3(tosend)
+		_, _ = w.Write(tosend)
+	}
 
 }
