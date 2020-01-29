@@ -5,7 +5,9 @@ import (
 
 	"github.com/JohanLanzrein/Peerster/clusters"
 	"github.com/JohanLanzrein/Peerster/ies"
+	"github.com/jfreymuth/pulse"
 	"go.dedis.ch/onet/log"
+	opus "gopkg.in/hraban/opus.v2"
 
 	//"encoding/hex"
 	"net"
@@ -143,14 +145,22 @@ type Gossiper struct {
 	TimeMapping TimeMapping
 
 	//Stuff for project
-	Keypair       *ies.KeyPair
-	Cluster       *clusters.Cluster
-	LeaveChan     chan bool
-	Keys          map[string]ies.PublicKey
-	HearbeatTimer int
-	RolloutTimer  int //timer in seconds ~~ usually 300
-	CallStatus    GossiperCallStatus
-	AudioChan     chan struct{}
+	Keypair        *ies.KeyPair
+	Cluster        *clusters.Cluster
+	LeaveChan      chan bool
+	Keys           map[string]ies.PublicKey
+	HearbeatTimer  int
+	RolloutTimer   int //timer in seconds ~~ usually 300
+	CallStatus     GossiperCallStatus
+	PulseClient    *pulse.Client
+	RecordStream   *pulse.RecordStream
+	RecordFrame    []int16
+	PlaybackStream *pulse.PlaybackStream
+	PlayBackFrame  []int16
+	AudioDataSlice []byte
+	OpusEncoder    *opus.Encoder
+	OpusDecoder    *opus.Decoder
+	AudioChan      chan struct{}
 }
 
 type GossiperCallStatus struct {

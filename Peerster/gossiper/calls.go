@@ -56,8 +56,6 @@ func (g *Gossiper) ReceiveCallRequest(req CallRequest) {
 		} else {
 			// terminal prompt
 			reader := bufio.NewReader(os.Stdin)
-			// TODO: Would this work? (e.g. need a loop until user puts Y or N, but
-			//		do not want to block, want to still keep processing incoming messages)
 			go func() {
 				for {
 					fmt.Printf("Received a call request from node %s: accept/decline [y/n]?\n", req.Origin)
@@ -114,6 +112,7 @@ func (g *Gossiper) SendCallResponse(resp CallResponse) {
 		g.CallStatus.InCall = true
 		g.CallStatus.ExpectingResponse = false
 		g.CallStatus.OtherParticipant = resp.Destination
+		g.initializeAudioFields()
 		log.Lvl2("Accepting call from ", resp.Destination)
 	} else if resp.Status == Decline {
 		// if we decline a call request, update call status as follows ( we are NOT in another call)
@@ -139,6 +138,7 @@ func (g *Gossiper) ReceiveCallResponse(resp CallResponse) {
 			g.PrintCallAccepted(resp.Origin)
 			g.CallStatus.InCall = true
 			g.CallStatus.OtherParticipant = resp.Origin
+			g.initializeAudioFields()
 		} else {
 			if resp.Status == Decline {
 				log.Lvl2("Node ", resp.Origin, " declined our call")
@@ -225,76 +225,12 @@ const bitRate = 32000
 const numChanels = 1
 
 func (g *Gossiper) ClientStartRecording() {
+	fmt.Println("SENDING AUDIO")
 	// only process recording and sending audio if we are in a call with someone
 	if g.CallStatus.InCall && strings.Compare(g.CallStatus.OtherParticipant, "") != 0 {
 		// start recording and sending audio
-		enc, err := opus.NewEncoder(sampleRate, numChanels, opus.AppVoIP)
-		if err != nil {
-			log.Panic(err)
-		}
-		if err := enc.SetMaxBandwidth(opus.SuperWideband); err != nil {
-			log.Panic(err)
-		}
-		if err := enc.SetBitrate(bitRate); err != nil {
-			log.Panic(err)
-		}
-		pa, err := pulse.NewClient()
-		if err != nil {
-			log.Panic(err)
-		}
-
-		frame := make([]int16, bufferFragmentSize)
-		data := make([]byte, bufferFragmentSize)
-		g.AudioChan = make(chan struct{})
-		bufRec := &buffer{}
-
-		rec, err := pa.NewRecord(
-			func(p []int16) {
-				bufRec.Write(p)
-				if bufRec.Len() < bufferFragmentSize {
-					return
-				}
-
-				bufRec.Read(frame)
-				nEnc, err := enc.Encode(frame, data)
-				if err != nil {
-					log.Panic(err)
-				}
-
-				audioData := AudioData{Data: data, EncryptedN: nEnc}
-				audio := AudioMessage{Origin: g.Name, Destination: g.CallStatus.OtherParticipant, Content: audioData}
-				g.ReceiveAudio(audio)
-				select {
-				case <-g.AudioChan:
-					fmt.Println("\n Finish recording.")
-					pa.Close()
-					return
-				default:
-				}
-			},
-			pulse.RecordMono,
-			pulse.RecordSampleRate(sampleRate),
-			pulse.RecordBufferFragmentSize(bufferFragmentSize),
-		)
-
-		if err != nil {
-			log.Panic(err)
-		}
-		go rec.Start()
-		// go func() {
-		// 	for {
-		// 		audio := AudioMessage{Origin: g.Name, Destination: g.CallStatus.OtherParticipant}
-		// 		g.ReceiveAudio(audio)
-		// 		time.Sleep(2 * time.Second)
-		// 		select {
-		// 		case <-g.AudioChan:
-		// 			fmt.Println("\n Finish recording.")
-		// 			pa.Close()
-		// 			return
-		// 		default:
-		// 		}
-		// 	}
-		// }()
+		g.record()
+		go g.RecordStream.Start()
 	} else {
 		log.Error("Current node is not in a call - cannot send audio")
 	}
@@ -308,33 +244,29 @@ func (g *Gossiper) ClientStopRecording() {
 }
 
 func (g *Gossiper) ReceiveAudio(audio AudioMessage) {
+	// fmt.Println("RECEIVING AUDIO")
 	if g.CallStatus.InCall {
 		if strings.Compare(audio.Destination, g.Name) == 0 &&
 			strings.Compare(audio.Origin, g.CallStatus.OtherParticipant) == 0 {
 			// if we are in a call with the sender of this audio and it was intended for us
 			//		listen to it
-			dec, err := opus.NewDecoder(sampleRate, 1)
-			if err != nil {
-				log.Panic(err)
-			}
+
 			pa, err := pulse.NewClient()
 			if err != nil {
 				log.Panic(err)
 			}
-			defer pa.Close()
 
 			bufPlay := &buffer{}
-			frame := make([]int16, bufferFragmentSize)
 			nEnc := audio.Content.EncryptedN
 			data := audio.Content.Data
 
 			play, err := pa.NewPlayback(
 				func(p []int16) {
-					nDec, err := dec.Decode(data[:nEnc], frame)
+					nDec, err := g.OpusDecoder.Decode(data[:nEnc], g.PlayBackFrame)
 					if err != nil {
 						log.Panic(err)
 					}
-					bufPlay.Write(frame[:nDec])
+					bufPlay.Write(g.PlayBackFrame[:nDec])
 					bufPlay.Read(p)
 				},
 				pulse.PlaybackMono,
@@ -369,26 +301,74 @@ func (g *Gossiper) ReceiveAudio(audio AudioMessage) {
 
 //      HELPERS      //
 // ====================
-func record() {
-	// Opus Encoder
-	enc, err := opus.NewEncoder(sampleRate, numChanels, opus.AppVoIP)
+func (g *Gossiper) initializeAudioFields() {
+	// Opus Encoder initialization
+	var err error
+	g.OpusEncoder, err = opus.NewEncoder(sampleRate, numChanels, opus.AppVoIP)
 	if err != nil {
 		log.Panic(err)
 	}
-	if err := enc.SetMaxBandwidth(opus.SuperWideband); err != nil {
+	if err := g.OpusEncoder.SetMaxBandwidth(opus.SuperWideband); err != nil {
 		log.Panic(err)
 	}
-	if err := enc.SetBitrate(bitRate); err != nil {
+	if err := g.OpusEncoder.SetBitrate(bitRate); err != nil {
 		log.Panic(err)
 	}
 
-	// Pulse Client
+	// Opus Decoder initialization
+	g.OpusDecoder, err = opus.NewDecoder(sampleRate, 1)
+	if err != nil {
+		log.Panic(err)
+	}
+
+	g.PlayBackFrame = make([]int16, bufferFragmentSize)
+	g.RecordFrame = make([]int16, bufferFragmentSize)
+	g.AudioChan = make(chan struct{})
+
+}
+
+func (g *Gossiper) record() {
+
 	pa, err := pulse.NewClient()
 	if err != nil {
 		log.Panic(err)
 	}
-	defer pa.Close()
 
+	data := make([]byte, bufferFragmentSize)
+	bufRec := &buffer{}
+
+	g.RecordStream, err = pa.NewRecord(
+		func(p []int16) {
+			bufRec.Write(p)
+			if bufRec.Len() < bufferFragmentSize {
+				return
+			}
+
+			bufRec.Read(g.RecordFrame)
+			nEnc, err := g.OpusEncoder.Encode(g.RecordFrame, data)
+			if err != nil {
+				log.Panic(err)
+			}
+
+			audioData := AudioData{Data: data, EncryptedN: nEnc}
+			audio := AudioMessage{Origin: g.Name, Destination: g.CallStatus.OtherParticipant, Content: audioData}
+			g.ReceiveAudio(audio)
+			select {
+			case <-g.AudioChan:
+				fmt.Println("\n Finish recording.")
+				pa.Close()
+				return
+			default:
+			}
+		},
+		pulse.RecordMono,
+		pulse.RecordSampleRate(sampleRate),
+		pulse.RecordBufferFragmentSize(bufferFragmentSize),
+	)
+
+	if err != nil {
+		log.Panic(err)
+	}
 }
 
 func play() {
