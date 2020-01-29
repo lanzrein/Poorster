@@ -181,13 +181,13 @@ func (c *Client) SendBroadcast(content string) {
 	*msg.Broadcast = true
 	data, err := protobuf.Encode(&msg)
 	if err != nil {
-		log.Error("Could nto encode packet : ", err)
+		log.Error("Could not encode packet : ", err)
 		return
 	}
 
 	err = c.SendBytes(data)
 	if err != nil {
-		log.Error("Could nto send data : ", err)
+		log.Error("Could not send data : ", err)
 	}
 
 }
@@ -197,30 +197,29 @@ func (c *Client) InitCluster() {
 	*msg.InitCluster = true
 	data, err := protobuf.Encode(&msg)
 	if err != nil {
-		log.Error("Could nto encode packet : ", err)
+		log.Error("Could not encode packet : ", err)
 		return
 	}
 
 	err = c.SendBytes(data)
 	if err != nil {
-		log.Error("Could nto send data : ", err)
+		log.Error("Could not send data : ", err)
 	}
 }
 
-func (c *Client) JoinCluster(id *uint64, other *string) {
+func (c *Client) JoinCluster(other *string) {
 	msg := gossiper.Message{}
-	msg.JoinId = id
 	msg.JoinOther = other
 
 	data, err := protobuf.Encode(&msg)
 	if err != nil {
-		log.Error("Could nto encode packet : ", err)
+		log.Error("Could not encode packet : ", err)
 		return
 	}
 
 	err = c.SendBytes(data)
 	if err != nil {
-		log.Error("Could nto send data : ", err)
+		log.Error("Could not send data : ", err)
 	}
 }
 
@@ -229,13 +228,45 @@ func (c *Client) LeaveCluster() {
 	*msg.LeaveCluster = true
 	data, err := protobuf.Encode(&msg)
 	if err != nil {
-		log.Error("Could nto encode packet : ", err)
+		log.Error("Could not encode packet : ", err)
 		return
 	}
 
 	err = c.SendBytes(data)
 	if err != nil {
-		log.Error("Could nto send data : ", err)
+		log.Error("Could not send data : ", err)
+	}
+}
+
+func (c *Client) ProposeAccept(node *string) {
+	msg := gossiper.Message{}
+	msg.PropAccept = node
+
+	data, err := protobuf.Encode(&msg)
+	if err != nil {
+		log.Error("Could not encode packet : ", err)
+		return
+	}
+
+	err = c.SendBytes(data)
+	if err != nil {
+		log.Error("Could not send data : ", err)
+	}
+}
+
+func (c *Client) ProposeDeny(node *string) {
+	msg := gossiper.Message{}
+	msg.PropDeny = node
+
+	data, err := protobuf.Encode(&msg)
+	if err != nil {
+		log.Error("Could not encode packet : ", err)
+		return
+	}
+
+	err = c.SendBytes(data)
+	if err != nil {
+		log.Error("Could not send data : ", err)
 	}
 }
 

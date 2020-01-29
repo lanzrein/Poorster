@@ -44,6 +44,12 @@ type BroadcastMessage struct {
 	Data         []byte
 	Rollout      bool
 	LeaveRequest bool
+	JoinRequest  bool
+	AcceptProposition bool
+	DenyProposition   bool
+	CaseCompare  	  bool
+	ResultsValidation bool
+	FinalDecision	  bool
 }
 
 type RequestMessage struct {
@@ -132,7 +138,6 @@ type Message struct {
 	Broadcast    *bool
 	InitCluster  *bool
 	LeaveCluster *bool
-	JoinId       *uint64
 	JoinOther    *string
 
 	//Project - anonimity
@@ -145,6 +150,10 @@ type Message struct {
 	HangUp         *bool
 	StartRecording *bool
 	StopRecording  *bool
+	
+	//Project - e-voting
+	PropAccept *string
+	PropDeny   *string
 }
 
 //RumorMessage
@@ -152,6 +161,7 @@ type RumorMessage struct {
 	Origin string
 	ID     uint32
 	Text   string
+	Results []string
 }
 
 //PeerStatus

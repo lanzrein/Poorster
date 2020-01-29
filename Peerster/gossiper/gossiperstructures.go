@@ -151,6 +151,14 @@ type Gossiper struct {
 	RolloutTimer  int //timer in seconds ~~ usually 300
 	CallStatus    GossiperCallStatus
 	AudioChan     chan struct{}
+	is_authority 			  bool
+	nb_authorities 			  int
+	slice_results 			  [][]string
+	acks_cases	 			  map[string][]string
+	correct_results_rcv 	  int
+	pending_nodes_requests    []string
+	pending_messages_requests []RequestMessage
+	displayed_requests		  []string
 }
 
 type GossiperCallStatus struct {

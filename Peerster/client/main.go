@@ -22,7 +22,6 @@ func main() {
 	//Stuff for project...
 	broadcast := flag.Bool("broadcast", false, "Broadcast flag")
 	initcluster := flag.Bool("initcluster", false, "Initialize a new cluster at this node")
-	joinId := flag.Uint64("joinID", 0, "ID of the cluster the node wants to join")
 	joinOther := flag.String("joinOther", "", "Name of the peer that is the entry point to the cluster")
 	leavecluster := flag.Bool("leavecluster", false, "Leave the current cluster")
 
@@ -36,6 +35,10 @@ func main() {
 	hangUp := flag.Bool("hangup", false, "Indicates hanging up the current call")
 	startRecording := flag.Bool("startRecording", false, "Indicates beginning of audio recording")
 	stopRecording := flag.Bool("stopRecording", false, "Indicates end of audio recording")
+	
+	// e-voting propositions
+	accept := flag.String("accept", "", "Accept a node request")
+	deny := flag.String("deny", "", "Deny a node request")
 
 	flag.Parse()
 
@@ -80,8 +83,8 @@ func main() {
 	} else if *initcluster {
 		log.Lvl3("Init cluster")
 		client.InitCluster()
-	} else if *joinId > 0 && *joinOther != "" {
-		client.JoinCluster(joinId, joinOther)
+	} else if *joinOther != "" {
+		client.JoinCluster(joinOther)
 	} else if *leavecluster {
 		client.LeaveCluster()
 	} else if *hangUp {
@@ -93,6 +96,10 @@ func main() {
 	} else if *stopRecording {
 		log.Lvl3("Stop recording audio data")
 		client.StopRecording()
+	} else if *accept != "" {
+		client.ProposeAccept(accept)
+	} elser if *deny != "" {
+		client.ProposeDeny(deny)
 	} else {
 		fmt.Print("ERROR (Bad argument combination)")
 		os.Exit(1)

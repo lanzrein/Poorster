@@ -2,7 +2,7 @@ package gossiper
 
 import (
 	"time"
-
+	"strings"
 	"math/rand"
 
 	"github.com/JohanLanzrein/Peerster/clusters"
@@ -29,7 +29,7 @@ func (g *Gossiper) InitCluster() {
 	go g.HeartbeatLoop()
 }
 
-func (g *Gossiper) RequestJoining(other string, clusterID uint64) {
+func (g *Gossiper) RequestJoining(other string) {
 	//send a request packet to the other gossiper
 
 	addr := g.FindPath(other)
@@ -172,6 +172,320 @@ func (g *Gossiper) ReceiveBroadcast(message BroadcastMessage) {
 
 			g.Cluster.HeartBeats[rumor.Origin] = false
 			delete(g.Cluster.PublicKeys, rumor.Origin)
+			
+		} else if message.JoinRequest {
+			log.Lvl2(g.Name, " received message for JOIN e-voting request")
+			decrypted := ies.Decrypt(g.Cluster.MasterKey, message.Data)
+			var rumor RumorMessage
+			err := protobuf.Decode(decrypted, &rumor)
+			if err != nil {
+				log.Error(g.Name, "Error decoding packet : ", err, "This may be due to an ongoing rollout.")
+				return
+			}
+			if rumor.Text != "" {
+				//print the message
+				g.PrintEvotingJoinStep(rumor.Text)
+				g.displayed_requests = append(g.displayed_requests, "JOIN " + rumor.Text)
+				if g.is_authority {
+					slice_pending := make([]string, 0)
+					tag := "JOIN " + rumor.Text
+					slice_pending = append(slice_pending, tag)
+					g.slice_results = append(g.slice_results, slice_pending)
+				}
+			}
+			//in any case add it to the map..
+			if g.Name != rumor.Origin {
+				g.Cluster.HeartBeats[rumor.Origin] = true
+			}
+			
+		} else if message.AcceptProposition {
+			log.Lvl2(g.Name, " received ACCEPT for e-voting case")
+			decrypted := ies.Decrypt(g.Cluster.MasterKey, message.Data)
+			var rumor RumorMessage
+			err := protobuf.Decode(decrypted, &rumor)
+			if err != nil {
+				log.Error(g.Name, "Error decoding packet : ", err, "This may be due to an ongoing rollout.")
+				return
+			}
+			if g.is_authority {
+				if rumor.Text != "" {
+					//print the message
+					g.PrintEvotingPropositionStep(1, rumor.Text)
+					correct_tag_join := "JOIN " + rumor.Text
+					for i := 0 ; i < len(g.slice_results) ; i++ {
+						if string((g.slice_results[i])[0]) == correct_tag_join {
+							is_existing := false
+							for j := 0 ; j < len(g.slice_results[i]) ; j++ {
+								if string((g.slice_results[i])[j]) == "1 : " + rumor.Origin || string((g.slice_results[i])[j]) == "0 : " + rumor.Origin {
+									is_existing = true
+									break
+								}							
+							}
+							if (is_existing == false) {
+								g.slice_results[i] = append(g.slice_results[i], "1 : " + rumor.Origin)
+								if g.nb_authorities == len(g.slice_results[i]) - 1 {
+									g.BroadcastCollected(g.slice_results[i][0])
+								}
+							}
+							break
+						}
+					}
+				}
+			}
+			//in any case add it to the map..
+			if g.Name != rumor.Origin {
+				g.Cluster.HeartBeats[rumor.Origin] = true
+			}
+
+		} else if message.DenyProposition {	
+			log.Lvl2(g.Name, " received DENY for e-voting case")
+			decrypted := ies.Decrypt(g.Cluster.MasterKey, message.Data)
+			var rumor RumorMessage
+			err := protobuf.Decode(decrypted, &rumor)
+			if err != nil {
+				log.Error(g.Name, "Error decoding packet : ", err, "This may be due to an ongoing rollout.")
+				return
+			}
+			if g.is_authority {
+				if rumor.Text != "" {
+					//print the message
+					g.PrintEvotingPropositionStep(0, rumor.Text)
+					correct_tag_join := "JOIN " + rumor.Text
+					for i := 0 ; i < len(g.slice_results) ; i++ {
+						if string((g.slice_results[i])[0]) == correct_tag_join {
+							is_existing := false
+							for j := 0 ; j < len(g.slice_results[i]) ; j++ {
+								if string((g.slice_results[i])[j]) == "1 : " + rumor.Origin || string((g.slice_results[i])[j]) == "0 : " + rumor.Origin {
+									is_existing = true
+									break
+								}							
+							}
+							if (is_existing == false) {
+								g.slice_results[i] = append(g.slice_results[i], "0 : " + rumor.Origin)
+								if g.nb_authorities == len(g.slice_results[i]) - 1 {
+									g.BroadcastCollected((g.slice_results[i])[0])
+								}
+							}
+							break
+						}
+					}
+				}
+			}
+			//in any case add it to the map..
+			if g.Name != rumor.Origin {
+				g.Cluster.HeartBeats[rumor.Origin] = true
+			}
+			
+		} else if message.CaseCompare {
+			log.Lvl2(g.Name, " received e-voting identifier to start comparison process")
+			decrypted := ies.Decrypt(g.Cluster.MasterKey, message.Data)
+			var rumor RumorMessage
+			err := protobuf.Decode(decrypted, &rumor)
+			if err != nil {
+				log.Error(g.Name, "Error decoding packet : ", err, "This may be due to an ongoing rollout.")
+				return
+			}
+			if g.is_authority {
+				if rumor.Text != "" {
+					//print the message
+					g.PrintEvotingCaseStep(rumor.Text, rumor.Origin)
+					_, ok := g.acks_cases[rumor.Text]
+					if ok == true {
+						is_existing := false
+						for i := 0 ; i < len(g.acks_cases[rumor.Text]) ; i++ {
+							if (g.acks_cases[rumor.Text][i] == rumor.Origin) {
+								is_existing = true
+								break
+							}
+						}
+						if is_existing == false {
+							g.acks_cases[rumor.Text] = append(g.acks_cases[rumor.Text], rumor.Origin)
+						}
+					} else {
+						g.acks_cases[rumor.Text] = []string{rumor.Origin}
+					}
+					
+					if len(g.acks_cases[rumor.Text]) == g.nb_authorities {
+						correct_tag_join := "JOIN " + rumor.Text
+						for j := 0 ; j < len(g.slice_results) ; j++ {
+							if string((g.slice_results[j])[0]) == correct_tag_join {
+								g.BroadcastResults(g.slice_results[j])
+								break
+							}
+						}
+					}
+				}
+			}
+			//in any case add it to the map..
+			if g.Name != rumor.Origin {
+				g.Cluster.HeartBeats[rumor.Origin] = true
+			}
+			
+		} else if message.ResultsValidation {
+			log.Lvl2(g.Name, " received list of e-voting results for validation")
+			decrypted := ies.Decrypt(g.Cluster.MasterKey, message.Data)
+			var rumor RumorMessage
+			err := protobuf.Decode(decrypted, &rumor)
+			if err != nil {
+				log.Error(g.Name, "Error decoding packet : ", err, "This may be due to an ongoing rollout.")
+				return
+			}
+			if g.is_authority {
+				if rumor.Results != nil {
+					//print the message
+					g.PrintEvotingValidationStep(rumor.Results, rumor.Origin)
+					
+					is_matched := true
+					for i := 0 ; i < len(g.slice_results) ; i++ {
+						if string((g.slice_results[i])[0]) == string(rumor.Results[0]) {
+							for j := 1 ; j < len(g.slice_results[i]) ; j++ {
+								found := false
+								for k := 1 ; k < len(rumor.Results) ; k++ {
+									if string((g.slice_results[i])[j]) == string(rumor.Results[k]) {
+										found = true
+										break
+									}
+								}
+								if found == false {
+									is_matched = false
+									break
+								}
+							}
+							break
+						}
+					}
+					
+					if (is_matched == true) {
+						g.correct_results_rcv++
+					} else {
+						//TODO: STOP PROCEDURE AND RESELECT ODD NUMBER OF AUTHORITY NODES
+					}
+					
+					if g.correct_results_rcv == g.nb_authorities - 1 {
+						accept_counts := 0
+						deny_counts := 0
+						for i := 0 ; i < len(g.slice_results) ; i++ {
+							if string(g.slice_results[i])[0] == string(rumor.Results[0]) {
+								for j := 1 ; j < len(g.slice_results[i]) ; j++ {
+									str := string(((g.slice_results[i])[j])[0])
+									if str == "1" {
+										accept_counts++
+									} else if str == "0" {
+										deny_counts++
+									}
+								}
+								break
+							}
+						}
+						if deny_counts == accept_counts {
+							accept_counts = 0
+							deny_counts = 0
+							for i := 0 ; i < len(g.slice_results) ; i++ {
+								if string((g.slice_results[i])[0]) == string(rumor.Results[0]) {
+									for j := 1 ; j < len(g.slice_results[i]) ; j++ {
+										str := (g.slice_results[i])[j]
+										list_authorities := g.acks_cases[rumor.Results[0]]
+										for k := 0 ; k < len(list_authorities) ; k++ {
+											if string(str[4:]) == list_authorities[k] {
+												str = string(str[0])
+												if str == "1" {
+													accept_counts++
+												} else if str == "0" {
+													deny_counts++
+												}
+											}
+										}
+									}
+									break
+								}
+							}
+						}
+						
+						if accept_counts > deny_counts {
+							answer := "ACCEPT " + rumor.Results[0]
+							g.BroadcastDecision(answer)
+						} else { // accept_counts < deny_counts
+							answer := "DENY " + rumor.Results[0]
+							g.BroadcastDecision(answer)
+						}
+					}
+				}
+			}
+			//in any case add it to the map..
+			if g.Name != rumor.Origin {
+				g.Cluster.HeartBeats[rumor.Origin] = true
+			}
+		
+		} else if message.FinalDecision {
+			log.Lvl2(g.Name, " received e-voting final decision")
+			decrypted := ies.Decrypt(g.Cluster.MasterKey, message.Data)
+			var rumor RumorMessage
+			err := protobuf.Decode(decrypted, &rumor)
+			if err != nil {
+				log.Error(g.Name, "Error decoding packet : ", err, "This may be due to an ongoing rollout.")
+				return
+			}
+			if rumor.Text != "" {
+				//print the message
+				g.PrintEvotingDecisionStep(rumor.Text)
+				
+				if g.is_authority {
+					for i := 0 ; i < len(g.slice_results) ; i++ {
+						if strings.Contains(rumor.Text, string((g.slice_results[i])[0]) {
+							copy(g.slice_results[i:], g.slice_results[i+1:])
+							g.slice_results = g.slice_results[:len(g.slice_results) - 1]
+							break
+						}
+					}
+					if strings.Contains(rumor.Text, "ACCEPT") {
+						str := string(rumor.Text[7:])
+						_, ok := acks_cases[str];
+						if ok {
+							delete(acks_cases, str);
+						}
+					} else { // strings.Contains(rumor.Text, "DENY") == true
+						str := string(rumor.Text[5:])
+						_, ok := acks_cases[str];
+						if ok {
+							delete(acks_cases, str);
+						}
+					}
+					g.correct_results_rcv = 0
+				}
+				
+				found_request := false
+				idx_request := -1
+				for i := 0 ; i < len(g.pending_nodes_requests) ; i++ {
+					if strings.Contains(rumor.Text, g.pending_nodes_requests[i]) {
+						found_request = true
+						idx_request = i
+						break
+					}
+				}
+				if found_request == true {
+					if strings.Contains(g.pending_nodes_requests[idx_request], "JOIN ") {
+						var msg RequestMessage
+						for j := 0 ; j < len(g.pending_messages_requests) ; j++ {
+							if (g.pending_messages_requests[j]).Origin == string((g.pending_nodes_requests[idx_request])[5:]) {
+								msg = g.pending_messages_requests[j]
+								break
+							}
+						}
+						var final_decision int
+						if (strings.Contains(rumor.Text, "ACCEPT ")) {
+							final_decision = 1
+						} else { // strings.Contains(rumor.Text, "DENY ") == true
+							final_decision = 0
+						}
+						g.ReceiveDecisionJoinRequest(msg, final_decision)
+					}
+				}
+			}
+			//in any case add it to the map..
+			if g.Name != rumor.Origin {
+				g.Cluster.HeartBeats[rumor.Origin] = true
+			}
+		
 		} else {
 			decrypted := ies.Decrypt(g.Cluster.MasterKey, message.Data)
 			var rumor RumorMessage
@@ -225,24 +539,37 @@ func (g *Gossiper) ReceiveJoinRequest(message RequestMessage) {
 		log.Lvl4(g.Name, "got new request from : ", message.Origin)
 	}
 
-	//TODO start e-voting protocol to decide if accept...
+	//Start e-voting protocol to decide if accept...
+	g.pending_nodes_requests = append(g.pending_nodes_requests, "JOIN " + message.Origin)
+	g.pending_messages_requests = append(g.pending_messages_requests, message)
+	g.BroadcastJoin(message.Origin)
+}
 
+func (g *Gossiper) ReceiveDecisionJoinRequest(message RequestMessage, decision int) {
 	//Once the decision has been taken we have the result..
-	//For now we always accept.
+	if decision == 1 {
+		g.UpdateCluster(message)
+		data, err := protobuf.Encode(g.Cluster)
+		
+		//encrypt it ...
+		ek := g.Keypair.KeyDerivation(&message.PublicKey)
+		enc := ies.Encrypt(ek, data)
 
-	g.UpdateCluster(message)
-	data, err := protobuf.Encode(g.Cluster)
-	//encrypt it ...
-
-	ek := g.Keypair.KeyDerivation(&message.PublicKey)
-	enc := ies.Encrypt(ek, data)
-
-	reply := RequestReply{
-		Accepted:           true,
-		Recipient:          message.Origin,
-		ClusterID:          *g.Cluster.ClusterID,
-		EphemeralKey:       g.Keypair.PublicKey,
-		ClusterInformation: enc,
+		reply := RequestReply{
+			Accepted:           true,
+			Recipient:          message.Origin,
+			ClusterID:          *g.Cluster.ClusterID,
+			EphemeralKey:       g.Keypair.PublicKey,
+			ClusterInformation: enc,
+		}
+	} else { // decision == 0
+		reply := RequestReply{
+			Accepted:           false,
+			Recipient:          message.Origin,
+			ClusterID:          0,
+			EphemeralKey:       nil,
+			ClusterInformation: nil,
+		}
 	}
 
 	//Update the cluster with the new member info.
@@ -255,9 +582,22 @@ func (g *Gossiper) ReceiveJoinRequest(message RequestMessage) {
 	if err != nil {
 		log.Error("Error while sending reply to ", message.Origin, " : ", err)
 	}
-
-	return
-
+	
+	for i := 0 ; i < len(g.pending_nodes_requests) ; i++ {
+		if string(g.pending_nodes_requests[i]) == "JOIN " + message.Origin {
+			copy(g.pending_nodes_requests[i:], g.pending_nodes_requests[i+1:])
+			g.pending_nodes_requests = g.pending_nodes_requests[:len(g.pending_nodes_requests) - 1]
+			break
+		}
+	}
+	
+	for i := 0 ; i < len(g.pending_messages_requests) ; i++ {
+		if (g.pending_messages_requests[i]).Origin == message.Origin && (g.pending_messages_requests[i]).Recipient == message.Recipient && (g.pending_messages_requests[i]).PublicKey == message.PublicKey {
+			copy(g.pending_messages_requests[i:], g.pending_messages_requests[i+1:])
+			g.pending_messages_requests = g.pending_messages_requests[:len(g.pending_messages_requests) - 1]
+			break
+		}
+	}
 }
 
 func (g *Gossiper) ReceiveRequestReply(message RequestReply) {

@@ -8,6 +8,7 @@ import (
 	"net"
 	"sync"
 	"time"
+	"strings"
 
 	"github.com/JohanLanzrein/Peerster/ies"
 	"go.dedis.ch/onet/log"
@@ -122,6 +123,14 @@ func NewGossiper(Name string, UIPort string, gossipAddr string, gossipers string
 		HearbeatTimer: DEFAULTHEARTBEAT,
 		LeaveChan:     make(chan bool),
 		CallStatus:    call,
+		is_authority: 			   false,
+		nb_authorities: 		   0,
+		slice_results: 			   make([][]string, 0),
+		acks_cases: 			   make(map[string][]string),
+		correct_results_rcv: 	   0,
+		pending_nodes_requests:    make([]string, 0),
+		pending_messages_requests: make([]RequestMessage, 0),
+		displayed_requests:		   make([]string, 0),
 	}
 
 	err = gossiper.GenerateKeys()
@@ -301,9 +310,9 @@ func (g *Gossiper) ReadFromPort(errChan chan error, conn net.UDPConn, client boo
 				log.Lvl1("Message to init the cluster..")
 				g.InitCluster()
 				continue
-			} else if msg.JoinOther != nil && msg.JoinId != nil {
+			} else if msg.JoinOther != nil {
 				log.Lvl1("Message joining request.")
-				g.RequestJoining(*msg.JoinOther, *msg.JoinId)
+				g.RequestJoining(*msg.JoinOther)
 				continue
 			} else if msg.LeaveCluster != nil && *msg.LeaveCluster {
 				g.LeaveCluster()
@@ -320,6 +329,28 @@ func (g *Gossiper) ReadFromPort(errChan chan error, conn net.UDPConn, client boo
 				log.Lvl1("Message to record and send audio ...")
 				audio = true
 				g.ClientStopRecording()
+			} else if msg.PropAccept != nil {
+				log.Lvl1("Message accept proposition.")
+				for i := 0 ; i < len(g.displayed_requests) ; i++ {
+					if strings.Contains(g.displayed_requests[i], msg.PropAccept) {
+						copy(g.displayed_requests[i:], g.displayed_requests[i+1:])
+						g.displayed_requests = g.displayed_requests[:len(g.displayed_requests) - 1]
+						break
+					}
+				}
+				g.BroadcastAccept(*msg.PropAccept)
+				continue
+			} else if msg.PropDeny != nil {
+				log.Lvl1("Message deny proposition.")
+				for i := 0 ; i < len(g.displayed_requests) ; i++ {
+					if strings.Contains(g.displayed_requests[i], msg.PropDeny) {
+						copy(g.displayed_requests[i:], g.displayed_requests[i+1:])
+						g.displayed_requests = g.displayed_requests[:len(g.displayed_requests) - 1]
+						break
+					}
+				}
+				g.BroadcastDeny(*msg.PropDeny)
+				continue
 			} else {
 				packet = GossipPacket{Simple: &SimpleMessage{
 					OriginalName:  "",
