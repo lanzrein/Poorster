@@ -2,10 +2,8 @@ package clusters
 
 import (
 	"github.com/JohanLanzrein/Peerster/ies"
-	"github.com/Peerster_solo/gossiper"
 	"go.dedis.ch/onet/log"
 	"math/rand"
-
 )
 
 type Cluster struct {
@@ -22,7 +20,16 @@ type Cluster struct {
 
 
 func (c *Cluster)IsAnAuthority(name string) bool {
-	return gossiper.Contains(c.Authorities, name)
+	return contains(c.Authorities, name)
+}
+
+func contains(  xs []string,  val string ) bool {
+	for _ , x := range xs {
+		if val == x {
+			return true
+		}
+	}
+	return false
 }
 
 func (c *Cluster) AmountAuthorities() int {

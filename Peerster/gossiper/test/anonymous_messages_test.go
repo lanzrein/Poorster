@@ -26,11 +26,11 @@ func TestAnonymousMessages(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	//
-	// g4, err := gossiper.NewGossiper("D", "8084", "127.0.0.1:5003", "127.0.0.1:5000", false, 10, "8003", 10, 3, 5, false, 10, false)
-	// if err != nil {
-	// 	t.Fatal(err)
-	// }
+
+	g4, err := gossiper.NewGossiper("D", "8084", "127.0.0.1:5003", "127.0.0.1:5000", false, 10, "8003", 10, 3, 5, false, 10, false)
+	if err != nil {
+		t.Fatal(err)
+	}
 	//
 	// g5, err := gossiper.NewGossiper("E", "8085", "127.0.0.1:5004", "127.0.0.1:5005", false, 10, "8004", 10, 3, 5, false, 10, false)
 	// if err != nil {
@@ -50,9 +50,9 @@ func TestAnonymousMessages(t *testing.T) {
 	go func() {
 		g3.Run()
 	}()
-	// go func() {
-	// 	g4.Run()
-	// }()
+	go func() {
+		g4.Run()
+	}()
 	// go func() {
 	// 	g5.Run()
 	// }()
@@ -69,11 +69,11 @@ func TestAnonymousMessages(t *testing.T) {
 		log.Warn("Path not established yet. Waiting 5 more seconds")
 		<-time.After((5 * time.Second))
 	}
-	//
-	// for g1.FindPath(g4.Name) == "" {
-	// 	log.Warn("Path not established yet. Waiting 5 more seconds")
-	// 	<-time.After((5 * time.Second))
-	// }
+
+	for g1.FindPath(g4.Name) == "" {
+		log.Warn("Path not established yet. Waiting 5 more seconds")
+		<-time.After((5 * time.Second))
+	}
 	//
 	// for g1.FindPath(g5.Name) == "" {
 	// 	log.Warn("Path not established yet. Waiting 5 more seconds")
@@ -91,7 +91,7 @@ func TestAnonymousMessages(t *testing.T) {
 	<-time.After(1 * time.Second)
 	g2.RequestJoining(g1.Name, *g1.Cluster.ClusterID)
 	g3.RequestJoining(g1.Name, *g1.Cluster.ClusterID)
-	// g4.RequestJoining(g1.Name, *g1.Cluster.ClusterID)
+	g4.RequestJoining(g1.Name, *g1.Cluster.ClusterID)
 	// g5.RequestJoining(g1.Name, *g1.Cluster.ClusterID)
 	// g6.RequestJoining(g1.Name, *g1.Cluster.ClusterID)
 	<-time.After(20 * time.Second)
