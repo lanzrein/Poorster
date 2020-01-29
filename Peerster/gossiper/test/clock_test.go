@@ -60,7 +60,7 @@ func TestClock(t *testing.T) {
 	}
 	//G2 asks to join it..
 	<-time.After(1 * time.Second)
-	g2.RequestJoining(g1.Name, *g1.Cluster.ClusterID)
+	g2.RequestJoining(g1.Name)
 	<-time.After(3 * time.Second)
 	for i := 0 ; i < 30 ; i ++{
 		assert.Equal(t, g1.Cluster.Counter , g2.Cluster.Counter)
@@ -122,8 +122,8 @@ func TestClockRollout(t *testing.T) {
 	g1.InitCluster()
 	//G2 asks to join it..
 	<-time.After(1 * time.Second)
-	g2.RequestJoining(g1.Name, *g1.Cluster.ClusterID)
-	g3.RequestJoining(g1.Name, *g1.Cluster.ClusterID)
+	g2.RequestJoining(g1.Name)
+	g3.RequestJoining(g1.Name)
 	<- time.After(5 * time.Second)
 	go func() { g1.KeyRollout(g1.Name) }()
 	go func() { g2.KeyRollout(g1.Name) }()
@@ -207,7 +207,7 @@ func TestClockJoinLater(t *testing.T){
 	g1.InitCluster()
 	//G2 asks to join it..
 	<-time.After(1 * time.Second)
-	g2.RequestJoining(g1.Name, *g1.Cluster.ClusterID)
+	g2.RequestJoining(g1.Name)
 	<- time.After(5 * time.Second)
 	c2 := g2.Cluster
 	c1 := g1.Cluster
@@ -226,7 +226,7 @@ func TestClockJoinLater(t *testing.T){
 	}
 
 
-	g3.RequestJoining(g1.Name, *g1.Cluster.ClusterID)
+	g3.RequestJoining(g1.Name)
     <- time.After(5 *time.Second)
 	go func() { g1.KeyRollout(g1.Name) }()
 	go func() { g2.KeyRollout(g1.Name) }()

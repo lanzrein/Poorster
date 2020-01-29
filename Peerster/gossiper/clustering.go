@@ -2,9 +2,10 @@ package gossiper
 
 import (
 	"bytes"
-	"time"
-	"strings"
 	"math/rand"
+	"sort"
+	"strings"
+	"time"
 
 	"github.com/JohanLanzrein/Peerster/clusters"
 	"github.com/JohanLanzrein/Peerster/ies"
@@ -66,7 +67,7 @@ func (g *Gossiper) HeartbeatLoop() {
 			log.Lvl4("Time for a rolllllllllout")
 			idx := g.Cluster.Clock()
 			log.Lvl1(g.Name, "My idx is :", idx)
-
+			sort.Strings(g.Cluster.Members)
 			g.KeyRollout(g.Cluster.Members[idx])
 			timer.Reset(dur)
 		}
@@ -146,7 +147,7 @@ func (g *Gossiper) ReceiveBroadcast(message BroadcastMessage) {
 		}
 		return
 	}
-	if g.Cluster.ClusterID != nil && message.ClusterID == *g.Cluster.ClusterID {
+	if g.Cluster != nil && message.ClusterID == *g.Cluster.ClusterID {
 		log.Lvl2("Got broadcast for my cluster")
 
 		if message.Rollout {
@@ -496,7 +497,7 @@ func (g *Gossiper) ReceiveBroadcast(message BroadcastMessage) {
 				log.Error(g.Name, "Error decoding packet : ", err, "This may be due to an ongoing rollout.")
 				return
 			}
-			log.Lvl1(g.Name, "got a broadcast..from ", rumor.Origin)
+			log.Lvl3(g.Name, "got a broadcast..from ", rumor.Origin)
 
 			if rumor.Text != "" && rumor.Origin != g.Name {
 				//print the message
@@ -541,7 +542,7 @@ func (g *Gossiper) ReceiveJoinRequest(message RequestMessage) {
 		}
 		return
 	}
-
+	log.Lvl1("Got request from " , message.Origin)
 	_, ok := g.Cluster.HeartBeats[message.Origin]
 	if ok {
 		//its an update message.
@@ -553,14 +554,20 @@ func (g *Gossiper) ReceiveJoinRequest(message RequestMessage) {
 		log.Lvl4(g.Name, "got new request from : ", message.Origin)
 	}
 
+	if g.ackAll{
+		g.ReceiveDecisionJoinRequest(message, 1)
+	}else{
+		g.pending_nodes_requests = append(g.pending_nodes_requests, "JOIN " + message.Origin)
+		g.pending_messages_requests = append(g.pending_messages_requests, message)
+		g.BroadcastJoin(message.Origin)
+	}
 	//Start e-voting protocol to decide if accept...
-	g.pending_nodes_requests = append(g.pending_nodes_requests, "JOIN " + message.Origin)
-	g.pending_messages_requests = append(g.pending_messages_requests, message)
-	g.BroadcastJoin(message.Origin)
+
 }
 
 func (g *Gossiper) ReceiveDecisionJoinRequest(message RequestMessage, decision int) {
 	//Once the decision has been taken we have the result..
+	log.Lvl1("Decision for ", message.Origin,", is :" , decision)
 	var reply RequestReply
 	if decision == 1 {
 		g.UpdateCluster(message)
@@ -599,6 +606,9 @@ func (g *Gossiper) ReceiveDecisionJoinRequest(message RequestMessage, decision i
 	if err != nil {
 		log.Error("Error while sending reply to ", message.Origin, " : ", err)
 	}
+	if g.ackAll {
+		return
+	}
 	
 	for i := 0 ; i < len(g.pending_nodes_requests) ; i++ {
 		if string(g.pending_nodes_requests[i]) == "JOIN " + message.Origin {
@@ -609,7 +619,6 @@ func (g *Gossiper) ReceiveDecisionJoinRequest(message RequestMessage, decision i
 	}
 	
 	for i := 0 ; i < len(g.pending_messages_requests) ; i++ {
-		//TOdo does the key need to be equal here ?
 		if (g.pending_messages_requests[i]).Origin == message.Origin && (g.pending_messages_requests[i]).Recipient == message.Recipient && bytes.Compare(g.pending_messages_requests[i].PublicKey, message.PublicKey ) == 0 {
 			copy(g.pending_messages_requests[i:], g.pending_messages_requests[i+1:])
 			g.pending_messages_requests = g.pending_messages_requests[:len(g.pending_messages_requests) - 1]
@@ -676,6 +685,7 @@ func (g *Gossiper) KeyRollout(leader string) {
 			<-time.After(time.Second)
 			go g.RequestJoining(leader)
 		}
+
 		g.Cluster.PublicKeys[g.Name] = g.Keypair.PublicKey
 
 	}()
@@ -698,6 +708,7 @@ func (g *Gossiper) KeyRollout(leader string) {
 
 		}
 		g.Cluster.Members = nextMembers
+
 		log.Lvl2("New members for this key rollout : ", nextMembers)
 
 		//Check if received all the keys from them

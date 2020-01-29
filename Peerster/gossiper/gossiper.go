@@ -145,9 +145,9 @@ func (g *Gossiper) Run() error {
 	errChan := make(chan error)
 
 	//if it is not in simple mode *try* to load a server - if it fails ( i.e. if a server is already running then it will just return without saying anything ! )
-	if !g.SimpleMode {
-		go LoadServer(g)
-	}
+	//if !g.SimpleMode {
+	//	go LoadServer(g)
+	//}
 
 	//read from client connection
 	go g.ReadFromPort(errChan, g.connClient, true)
