@@ -32,6 +32,7 @@ func LoadServer(g *Gossiper) {
 	http.HandleFunc("/anoncall", g.AnonymousCallHandle)
 
 	http.HandleFunc("/evoting", g.EvotingHandle)
+	http.HandleFunc("/callhandler",g.CallHandle)
 
 
 

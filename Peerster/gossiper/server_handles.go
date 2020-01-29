@@ -474,11 +474,52 @@ func (g *Gossiper)EvotingHandle(w http.ResponseWriter, r *http.Request){
 
 
 	}
-	//Like ["JOIN Tom", "EXPEL Rob",....]
-	votes := []string{"JOIN Tom", "EXPEL Rob","JOIN Alice", "EXPEL Bob"} //TODO here change it with the current votes...
+
+	votes := make([]string, len(g.slice_results))
+	for i, e := range g.slice_results{
+		votes[i] = e[0]
+	}
+	//votes := g.slice_results //TODO here change it with the current votes...
 	log.Lvl3("Voting ongoing.  : ", votes)
 	tosend, _ := json.Marshal(votes)
 	log.Lvl3(tosend)
 	_, _ = w.Write(tosend)
+
+}
+
+type CallData struct{
+	Accept bool
+	Decline bool
+	Hangup bool
+	Member string
+}
+
+
+func (g *Gossiper)CallHandle(w http.ResponseWriter, r *http.Request){
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	if r.Method == "POST" {
+		data := make([]byte, r.ContentLength)
+		cnt, err := r.Body.Read(data)
+		if cnt != len(data) {
+			log.Lvl3("Could not read all data")
+		}
+
+		log.Lvl3("Data is : ", string(data))
+		if err != nil && err != io.EOF {
+			log.Error("Error on reading data : ", err)
+		}
+
+		message := new(CallData)
+		err = json.Unmarshal(data, message)
+		if err != nil {
+			log.Error("Could not unmarshal message : ", err)
+		}
+		log.Lvl1("Data : ", message)
+
+		//TODO here handle the packet.
+
+	}
+
+
 
 }
