@@ -13,3 +13,4 @@
 
 #Ignore my .git in peerster. 
 Peerster/.git
+.ipynb_checkpoints
