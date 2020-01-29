@@ -1,4 +1,5 @@
 //Handle for the server.
+//@authors Hrusanov Aleksandar, Lanzrein Johan, Rinaldi Vincent
 
 
 //Some regexes to verify if ip or ports are ok

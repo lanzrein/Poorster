@@ -1,3 +1,5 @@
+//@authors Hrusanov Aleksandar, Lanzrein Johan, Rinaldi Vincent
+//clusters utility functions for the cluster
 package clusters
 
 import (
@@ -6,6 +8,7 @@ import (
 	"math/rand"
 )
 
+//Cluster A structure containing values for the cluster.
 type Cluster struct {
 	ClusterID  *uint64
 	Members    []string        //know the members by name
@@ -18,7 +21,7 @@ type Cluster struct {
 	Authorities []string
 }
 
-
+//IsAnAuthority returns true iff the name is c.Authorities
 func (c *Cluster)IsAnAuthority(name string) bool {
 	return contains(c.Authorities, name)
 }
@@ -32,9 +35,12 @@ func contains(  xs []string,  val string ) bool {
 	return false
 }
 
+//AmountAuthorities returns the number of authorities
 func (c *Cluster) AmountAuthorities() int {
 	return len(c.Authorities)
 }
+
+//NewCluster returns a new cluster
 func NewCluster(id *uint64, members []string, masterkey ies.PublicKey, publickey map[string]ies.PublicKey, seed uint64 ) Cluster {
 	source := rand.New(rand.NewSource(int64(seed)))
 
@@ -52,6 +58,7 @@ func NewCluster(id *uint64, members []string, masterkey ies.PublicKey, publickey
 }
 
 
+//InitCounter initiliazes the source for the cluster to make sure it is synchronized
 func InitCounter(c *Cluster){
 	source := rand.New(rand.NewSource(int64(c.Seed)))
 	//Sample it enough time to be "on same clock cycle" as the rest.

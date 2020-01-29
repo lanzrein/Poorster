@@ -1,6 +1,6 @@
 /**
  * @file cluster.js contains the handler to connect to the server and make requests for the cluster management
- * @author Johan Lanzrein
+ //@authors Hrusanov Aleksandar, Lanzrein Johan, Rinaldi Vincent
  */
 
 function InitCluster(){

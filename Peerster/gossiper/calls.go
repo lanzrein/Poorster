@@ -1,3 +1,5 @@
+//@authors Hrusanov Aleksandar, Lanzrein Johan, Rinaldi Vincent
+
 package gossiper
 
 import (
@@ -15,6 +17,8 @@ import (
 
 //      CALL REQUEST      //
 // =========================
+
+//ClientSendCallRequest handles the call request form the client
 func (g *Gossiper) ClientSendCallRequest(destination string) {
 	if !g.CallStatus.ExpectingResponse && !g.CallStatus.InCall {
 		canSend := g.NodeCanSendAnonymousPacket(destination)
@@ -30,6 +34,7 @@ func (g *Gossiper) ClientSendCallRequest(destination string) {
 	}
 }
 
+//ReceiveCallRequest handles a call request packet
 func (g *Gossiper) ReceiveCallRequest(req CallRequest) {
 	if req.Destination == g.Name {
 		// call request is for us
@@ -106,6 +111,8 @@ func (g *Gossiper) ReceiveCallRequest(req CallRequest) {
 
 //      CALL RESPONSE      //
 // =========================
+
+//SendCallResponse sends a call response to the origin of the call
 func (g *Gossiper) SendCallResponse(resp CallResponse) {
 	if resp.Status == Accept {
 		// if we accept a call request, update call status as follows
@@ -128,6 +135,7 @@ func (g *Gossiper) SendCallResponse(resp CallResponse) {
 	g.ReceiveCallResponse(resp)
 }
 
+//ReceiveCallResponse handles a packet of a call response and initializes the call
 func (g *Gossiper) ReceiveCallResponse(resp CallResponse) {
 	if strings.Compare(resp.Destination, g.Name) == 0 {
 		// we received a call response
@@ -173,6 +181,8 @@ func (g *Gossiper) ReceiveCallResponse(resp CallResponse) {
 
 //      HANG UP MSG       //
 // =========================
+
+//ClientSendHangUpMessage initializes the packet to request a hang up
 func (g *Gossiper) ClientSendHangUpMessage() {
 	if (g.CallStatus.InCall && strings.Compare(g.CallStatus.OtherParticipant, "") != 0) ||
 		(g.CallStatus.ExpectingResponse && strings.Compare(g.CallStatus.OtherParticipant, "") != 0) {
@@ -186,6 +196,7 @@ func (g *Gossiper) ClientSendHangUpMessage() {
 	}
 }
 
+//ReceiveHangUpMessage handles the packet and hangs up the call if there is one.
 func (g *Gossiper) ReceiveHangUpMessage(hangUp HangUp) {
 	if strings.Compare(hangUp.Destination, g.Name) == 0 {
 		// the other call participant wants to hangup on us
@@ -224,6 +235,7 @@ const bufferFragmentSize = 1920
 const bitRate = 32000
 const numChanels = 1
 
+//ClientStartRecording start the recoring from microphone
 func (g *Gossiper) ClientStartRecording() {
 	// only process recording and sending audio if we are in a call with someone
 	if g.CallStatus.InCall && strings.Compare(g.CallStatus.OtherParticipant, "") != 0 {
@@ -243,6 +255,7 @@ func (g *Gossiper) ClientStopRecording() {
 	}
 }
 
+//ReceiveAudio handles incoming AudioMessage and feeds it to the player.
 func (g *Gossiper) ReceiveAudio(audio AudioMessage) {
 	// fmt.Println("RECEIVING AUDIO")
 	if g.CallStatus.InCall {
