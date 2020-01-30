@@ -14,7 +14,7 @@ import (
 	"github.com/JohanLanzrein/Peerster/ies"
 	"go.dedis.ch/onet/log"
 	"go.dedis.ch/protobuf"
-	
+
 	"fmt" //TOREMOVE
 )
 
@@ -174,7 +174,7 @@ func (g *Gossiper) ReceiveBroadcast(message BroadcastMessage) {
 			}
 			ClusterUpdated <- true
 			g.UpdateFromRollout(cluster)
-		
+
 		} else if message.Reset {
 			log.Lvl1(g.Name, " received message for reset")
 			cluster := clusters.Cluster{}
@@ -225,7 +225,7 @@ func (g *Gossiper) ReceiveBroadcast(message BroadcastMessage) {
 			if g.Name != rumor.Origin {
 				g.Cluster.HeartBeats[rumor.Origin] = true
 			}
-			
+
 		} else if message.AcceptProposition {
 			log.Lvl1(g.Name, " received ACCEPT for e-voting case")
 			decrypted := ies.Decrypt(g.Cluster.MasterKey, message.Data)
@@ -235,7 +235,7 @@ func (g *Gossiper) ReceiveBroadcast(message BroadcastMessage) {
 				log.Error(g.Name, "Error decoding packet : ", err, "This may be due to an ongoing rollout.")
 				return
 			}
-			if g.Cluster.IsAnAuthority(g.Name) {				
+			if g.Cluster.IsAnAuthority(g.Name) {
 				if rumor.Text != "" {
 					//print the message
 					g.PrintEvotingPropositionStep(1, rumor.Text, rumor.Origin)
@@ -246,17 +246,17 @@ func (g *Gossiper) ReceiveBroadcast(message BroadcastMessage) {
 							for j := 0 ; j < len(g.slice_results[i]) ; j++ {
 								if string((g.slice_results[i])[j]) == "1 : " + rumor.Origin || string((g.slice_results[i])[j]) == "0 : " + rumor.Origin {
 									is_existing = true
-									
+
 									fmt.Println("Already existing", g.slice_results) //TOREMOVE
-									
+
 									break
-								}							
+								}
 							}
 							if is_existing == false {
 								g.slice_results[i] = append(g.slice_results[i], "1 : " + rumor.Origin)
-								
+
 								fmt.Println(g.slice_results) //TOREMOVE
-								
+
 								if len(g.Cluster.Members) == len(g.slice_results[i]) - 1 {
 									g.BroadcastCollected(g.slice_results[i][0])
 								}
@@ -271,7 +271,7 @@ func (g *Gossiper) ReceiveBroadcast(message BroadcastMessage) {
 				g.Cluster.HeartBeats[rumor.Origin] = true
 			}
 
-		} else if message.DenyProposition {	
+		} else if message.DenyProposition {
 			log.Lvl1(g.Name, " received DENY for e-voting case")
 			decrypted := ies.Decrypt(g.Cluster.MasterKey, message.Data)
 			var rumor RumorMessage
@@ -291,17 +291,17 @@ func (g *Gossiper) ReceiveBroadcast(message BroadcastMessage) {
 							for j := 0 ; j < len(g.slice_results[i]) ; j++ {
 								if string((g.slice_results[i])[j]) == "1 : " + rumor.Origin || string((g.slice_results[i])[j]) == "0 : " + rumor.Origin {
 									is_existing = true
-									
+
 									fmt.Println("Already existing", g.slice_results) //TOREMOVE
-									
+
 									break
-								}							
+								}
 							}
 							if is_existing == false {
 								g.slice_results[i] = append(g.slice_results[i], "0 : " + rumor.Origin)
-								
+
 								fmt.Println(g.slice_results) //TOREMOVE
-								
+
 								if len(g.Cluster.Members) == len(g.slice_results[i]) - 1 {
 									g.BroadcastCollected(g.slice_results[i][0])
 								}
@@ -315,7 +315,7 @@ func (g *Gossiper) ReceiveBroadcast(message BroadcastMessage) {
 			if g.Name != rumor.Origin {
 				g.Cluster.HeartBeats[rumor.Origin] = true
 			}
-			
+
 		} else if message.CaseCompare {
 			log.Lvl1(g.Name, " received e-voting identifier to start comparison process")
 			decrypted := ies.Decrypt(g.Cluster.MasterKey, message.Data)
@@ -329,7 +329,7 @@ func (g *Gossiper) ReceiveBroadcast(message BroadcastMessage) {
 				if rumor.Text != "" {
 					//print the message
 					g.PrintEvotingCaseStep(rumor.Text, rumor.Origin)
-					
+
 					_, ok := g.acks_cases[rumor.Text]
 					if ok == true {
 						is_existing := false
@@ -349,7 +349,7 @@ func (g *Gossiper) ReceiveBroadcast(message BroadcastMessage) {
 							g.acks_cases[rumor.Text] = []string{rumor.Origin}
 						}
 					}
-					
+
 					if g.Cluster.AmountAuthorities() == len(g.acks_cases[rumor.Text]) {
 						for j := 0 ; j < len(g.slice_results) ; j++ {
 							if string((g.slice_results[j])[0]) == rumor.Text {
@@ -403,7 +403,7 @@ func (g *Gossiper) ReceiveBroadcast(message BroadcastMessage) {
 			if g.Name != rumor.Origin {
 				g.Cluster.HeartBeats[rumor.Origin] = true
 			}
-			
+
 		} else if message.ResultsValidation {
 			log.Lvl1(g.Name, " received list of e-voting results for validation")
 			decrypted := ies.Decrypt(g.Cluster.MasterKey, message.Data)
@@ -417,7 +417,7 @@ func (g *Gossiper) ReceiveBroadcast(message BroadcastMessage) {
 				if rumor.Results != nil {
 					//print the message
 					g.PrintEvotingValidationStep(rumor.Results, rumor.Origin)
-					
+
 					is_matched := true
 					for i := 0 ; i < len(g.slice_results) ; i++ {
 						if string((g.slice_results[i])[0]) == string(rumor.Results[0]) {
@@ -436,8 +436,8 @@ func (g *Gossiper) ReceiveBroadcast(message BroadcastMessage) {
 							}
 							break
 						}
-					}					
-					
+					}
+
 					if is_matched == true {
 						_, ok := g.correct_results_rcv[rumor.Results[0]]
 						if ok == true {
@@ -458,7 +458,7 @@ func (g *Gossiper) ReceiveBroadcast(message BroadcastMessage) {
 								g.correct_results_rcv[rumor.Results[0]] = []string{rumor.Origin}
 							}
 						}
-					
+
 						if g.Cluster.AmountAuthorities() - 1 == len(g.correct_results_rcv[rumor.Results[0]]) {
 							accept_counts := 0
 							deny_counts := 0
@@ -475,7 +475,7 @@ func (g *Gossiper) ReceiveBroadcast(message BroadcastMessage) {
 									break
 								}
 							}
-							
+
 							if deny_counts == accept_counts {
 								accept_counts = 0
 								deny_counts = 0
@@ -500,7 +500,7 @@ func (g *Gossiper) ReceiveBroadcast(message BroadcastMessage) {
 									}
 								}
 							}
-							
+
 							if accept_counts > deny_counts {
 								answer := "ACCEPT " + rumor.Results[0]
 								g.BroadcastDecision(answer)
@@ -518,7 +518,7 @@ func (g *Gossiper) ReceiveBroadcast(message BroadcastMessage) {
 			if g.Name != rumor.Origin {
 				g.Cluster.HeartBeats[rumor.Origin] = true
 			}
-		
+
 		} else if message.FinalDecision {
 			log.Lvl1(g.Name, " received e-voting final decision")
 			decrypted := ies.Decrypt(g.Cluster.MasterKey, message.Data)
@@ -561,7 +561,7 @@ func (g *Gossiper) ReceiveBroadcast(message BroadcastMessage) {
 						}
 					}
 				}
-				
+
 				found_request := false
 				idx_request := -1
 				for i := 0 ; i < len(g.pending_nodes_requests) ; i++ {
@@ -580,7 +580,7 @@ func (g *Gossiper) ReceiveBroadcast(message BroadcastMessage) {
 								break
 							}
 						}
-						
+
 						for i := 0 ; i < len(g.pending_nodes_requests) ; i++ {
 							if string(g.pending_nodes_requests[i]) == "JOIN " + msg.Origin {
 								copy(g.pending_nodes_requests[i:], g.pending_nodes_requests[i+1:])
@@ -588,7 +588,7 @@ func (g *Gossiper) ReceiveBroadcast(message BroadcastMessage) {
 								break
 							}
 						}
-						
+
 						for i := 0 ; i < len(g.pending_messages_requests) ; i++ {
 							if (g.pending_messages_requests[i]).Origin == msg.Origin && (g.pending_messages_requests[i]).Recipient == msg.Recipient && bytes.Compare(g.pending_messages_requests[i].PublicKey, msg.PublicKey ) == 0 {
 								copy(g.pending_messages_requests[i:], g.pending_messages_requests[i+1:])
@@ -596,7 +596,7 @@ func (g *Gossiper) ReceiveBroadcast(message BroadcastMessage) {
 								break
 							}
 						}
-						
+
 						var final_decision int
 						if (strings.Contains(rumor.Text, "ACCEPT ")) {
 							final_decision = 1
@@ -611,7 +611,7 @@ func (g *Gossiper) ReceiveBroadcast(message BroadcastMessage) {
 			if g.Name != rumor.Origin {
 				g.Cluster.HeartBeats[rumor.Origin] = true
 			}
-		
+
 		} else if message.CancelRequest {
 			log.Lvl1(g.Name, " received e-voting cancellation")
 			decrypted := ies.Decrypt(g.Cluster.MasterKey, message.Data)
@@ -647,7 +647,7 @@ func (g *Gossiper) ReceiveBroadcast(message BroadcastMessage) {
 			if g.Name != rumor.Origin {
 				g.Cluster.HeartBeats[rumor.Origin] = true
 			}
-			
+
 		} else if message.ResetIndication {
 			log.Lvl1(g.Name, " received e-voting reset")
 			decrypted := ies.Decrypt(g.Cluster.MasterKey, message.Data)
@@ -660,7 +660,7 @@ func (g *Gossiper) ReceiveBroadcast(message BroadcastMessage) {
 			if rumor.Text != "" {
 				//print the message
 				g.PrintEvotingResetStep(rumor.Origin, rumor.Text)
-				
+
 				is_existing := false
 				for i := 0 ; i < len(g.pending_nodes_requests) ; i++ {
 					if rumor.Text == g.pending_nodes_requests[i] {
@@ -668,7 +668,7 @@ func (g *Gossiper) ReceiveBroadcast(message BroadcastMessage) {
 						break
 					}
 				}
-				
+
 				if is_existing == true {
 					_, ok := g.reset_requests[rumor.Text]
 					if ok == true {
@@ -685,10 +685,10 @@ func (g *Gossiper) ReceiveBroadcast(message BroadcastMessage) {
 					} else { // ok == false
 						g.reset_requests[rumor.Text] = []string{rumor.Origin}
 					}
-					
+
 					if len(g.reset_requests[rumor.Text]) == len(g.Cluster.Members) {
 						delete(g.reset_requests, rumor.Text)
-						
+
 						numbers := (len(g.Cluster.Members) + 1 ) / 2
 						if numbers % 2 == 0 {
 							numbers ++
@@ -733,7 +733,7 @@ func (g *Gossiper) ReceiveBroadcast(message BroadcastMessage) {
 			if g.Name != rumor.Origin {
 				g.Cluster.HeartBeats[rumor.Origin] = true
 			}
-		
+
 		} else if message.AckResend {
 			log.Lvl1(g.Name, " received e-voting ack for request resending")
 			decrypted := ies.Decrypt(g.Cluster.MasterKey, message.Data)
@@ -746,7 +746,7 @@ func (g *Gossiper) ReceiveBroadcast(message BroadcastMessage) {
 			if rumor.Text != "" {
 				//print the message
 				g.PrintEvotingResendStep(rumor.Origin, rumor.Text)
-				
+
 				is_existing := false
 				for i := 0 ; i < len(g.pending_nodes_requests) ; i++ {
 					if rumor.Text == g.pending_nodes_requests[i] {
@@ -754,7 +754,7 @@ func (g *Gossiper) ReceiveBroadcast(message BroadcastMessage) {
 						break
 					}
 				}
-				
+
 				if is_existing == true {
 					_, ok := g.members_ready_resend_requests[rumor.Text]
 					if ok == true {
@@ -771,10 +771,10 @@ func (g *Gossiper) ReceiveBroadcast(message BroadcastMessage) {
 					} else { // ok == false
 						g.members_ready_resend_requests[rumor.Text] = []string{rumor.Origin}
 					}
-					
+
 					if len(g.members_ready_resend_requests[rumor.Text]) == len(g.Cluster.Members) - 1 {
 						delete(g.members_ready_resend_requests, rumor.Text)
-						
+
 						if strings.Contains(rumor.Text, "JOIN ") {
 							nodeRequest := rumor.Text[5:]
 							g.BroadcastJoin(nodeRequest)
@@ -786,7 +786,7 @@ func (g *Gossiper) ReceiveBroadcast(message BroadcastMessage) {
 			if g.Name != rumor.Origin {
 				g.Cluster.HeartBeats[rumor.Origin] = true
 			}
-		
+
 		} else {
 			decrypted := ies.Decrypt(g.Cluster.MasterKey, message.Data)
 			var rumor RumorMessage
@@ -1011,7 +1011,7 @@ func (g *Gossiper) KeyRollout(leader string) {
 
 		//Check if received all the keys from them
 		for {
-			<-time.After(time.Second)
+			<-time.After(5*time.Second)
 			if len(g.Cluster.PublicKeys) == len(nextMembers) {
 				//we got all the maps we can generate the master key and return
 				log.Lvl1("Got all the members needed")
