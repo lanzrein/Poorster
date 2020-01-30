@@ -172,7 +172,7 @@ func (g *Gossiper) ReceiveBroadcast(message BroadcastMessage) {
 			if err != nil {
 				log.Error("Could not decode rollout info ", err)
 			}
-			ClusterUpdated <- true 
+			ClusterUpdated <- true
 			g.UpdateFromRollout(cluster)
 		
 		} else if message.Reset {
@@ -964,7 +964,7 @@ func (g *Gossiper) KeyRollout(leader string) {
 		log.Error("Could not generate new keypair : ", err)
 	}
 
-	go func() {
+	//go func() {
 		log.Lvl1(g.Name, "sending a rollout update to ", leader)
 		g.Cluster.PublicKeys[g.Name] = g.Keypair.PublicKey
 
@@ -986,7 +986,7 @@ func (g *Gossiper) KeyRollout(leader string) {
 		}
 
 
-	}()
+	//}()
 
 	//leader does the rest.
 	if leader == g.Name {
