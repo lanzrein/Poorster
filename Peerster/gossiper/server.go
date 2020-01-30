@@ -32,7 +32,7 @@ func LoadServer(g *Gossiper) {
 
 	http.HandleFunc("/evoting", g.EvotingHandle)
 	http.HandleFunc("/callhandler",g.CallHandle)
-
+	http.HandleFunc("/expellmember", g.ExpellMemberHandle)
 	http.HandleFunc("/incomingcall",g.IncomingCallHandle)
 
 
