@@ -224,6 +224,22 @@ func (c *Client) JoinCluster(other *string) {
 	}
 }
 
+func (c *Client) ExpelFromCluster(other *string) {
+	msg := gossiper.Message{}
+	msg.ExpelOther = other
+
+	data, err := protobuf.Encode(&msg)
+	if err != nil {
+		log.Error("Could not encode packet : ", err)
+		return
+	}
+
+	err = c.SendBytes(data)
+	if err != nil {
+		log.Error("Could not send data : ", err)
+	}
+}
+
 func (c *Client) LeaveCluster() {
 	msg := gossiper.Message{LeaveCluster: new(bool)}
 	*msg.LeaveCluster = true

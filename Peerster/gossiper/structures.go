@@ -50,11 +50,13 @@ type BroadcastMessage struct {
 	DenyProposition   bool
 	CaseCompare       bool
 	ResultsValidation bool
-	FinalDecision     bool
-	CancelRequest     bool
-	ResetIndication   bool
-	CaseRequest       string
-	AckResend         bool
+
+	FinalDecision	  bool
+	CancelRequest	  bool
+	ResetIndication	  bool
+	CaseRequest 	  string
+	AckResend		  bool
+	ExpelRequest	  bool
 }
 
 type RequestMessage struct {
@@ -65,6 +67,8 @@ type RequestMessage struct {
 
 type RequestReply struct {
 	Accepted           bool
+	Banned			   bool
+	ExpelRequest	   bool
 	Recipient          string
 	ClusterID          uint64
 	EphemeralKey       []byte
@@ -147,6 +151,7 @@ type Message struct {
 	InitCluster  *bool
 	LeaveCluster *bool
 	JoinOther    *string
+	ExpelOther 	 *string
 
 	//Project - anonimity
 	Anonymous     *bool

@@ -519,7 +519,7 @@ func (g *Gossiper) ExpellMemberHandle(w http.ResponseWriter, r *http.Request) {
 		//Todo here you do the evoting handling for expelling...
 
 		//str := "EXPEL "+message.Destination
-		//g.RequestExpelling(message.Destination)
+		g.RequestExpelling(message.Destination)
 
 	}
 }
