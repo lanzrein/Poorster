@@ -3,7 +3,6 @@ package gossiper
 import (
 	"encoding/hex"
 	"encoding/json"
-	"fmt"
 	"io"
 	"net"
 	"net/http"
@@ -546,7 +545,6 @@ func (g *Gossiper) CallHandle(w http.ResponseWriter, r *http.Request) {
 			}
 		}
 
-		fmt.Println("MEMBER IS == ", otherParticipant)
 		if message.Dial {
 			// we are calling
 			g.ClientSendCallRequest(otherParticipant)
@@ -574,7 +572,6 @@ func (g *Gossiper) IncomingCallHandle(w http.ResponseWriter, r *http.Request) {
 	//TODO here handle the packet.
 	if g.CallStatus.OtherParticipant != "" {
 		caller := g.CallStatus.OtherParticipant
-		fmt.Println("GETTING A CALL FROM ", caller)
 		tosend, _ := json.Marshal(caller)
 		log.Lvl3(tosend)
 		_, _ = w.Write(tosend)

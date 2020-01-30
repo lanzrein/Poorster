@@ -53,18 +53,19 @@ func (g *Gossiper) ReceiveCallRequest(req CallRequest) {
 			callResp.Status = Busy
 			// send BUSY response
 			log.Lvl2("Sending a BUSY call response for ", req.Origin, " by routing it to : ", addr)
-			packet := GossipPacket{CallResponse: &callResp}
-			err := g.SendTo(addr, packet)
-			if err != nil {
-				log.Error(err)
-			}
+			fmt.Println("Sending a BUSY call response for ", req.Origin, " by routing it to : ", addr)
+			// packet := GossipPacket{CallResponse: &callResp}
+			// err := g.SendTo(addr, packet)
+			// if err != nil {
+			// 	log.Error(err)
+			// }
+			g.SendCallResponse(callResp)
 		} else {
 			g.CallStatus.OtherParticipant = req.Origin
 			// terminal prompt
 			reader := bufio.NewReader(os.Stdin)
 			go func() {
 				for {
-					fmt.Printf("Received a call request from node %s: accept/decline [y/n]?\n", req.Origin)
 					text, err := reader.ReadString('\n')
 					if err != nil {
 						log.Error("Error reading user input: ", err)
@@ -155,14 +156,13 @@ func (g *Gossiper) ReceiveCallResponse(resp CallResponse) {
 				log.Lvl2("Node ", resp.Origin, " declined our call")
 				g.PrintCallDeclined(resp.Origin)
 			} else if resp.Status == Busy {
-				log.Lvl2("Node ", resp.Origin, " is in another call")
+				log.Lvl1("Node ", resp.Origin, " is in another call")
 				g.PrintCallBusy(resp.Origin)
 			}
 			g.CallStatus.InCall = false
 			g.CallStatus.OtherParticipant = ""
 		}
 	} else {
-
 		canSend := g.NodeCanSendAnonymousPacket(resp.Destination)
 		if canSend {
 			gp := GossipPacket{CallResponse: &resp}
@@ -195,6 +195,7 @@ func (g *Gossiper) ClientSendHangUpMessage() {
 		g.CallStatus.InCall = false
 		g.CallStatus.ExpectingResponse = false
 		g.CallStatus.OtherParticipant = ""
+		fmt.Println("SENDING HANG UP")
 		g.ReceiveHangUpMessage(hangUp)
 		g.ClientStopRecording()
 	}
@@ -204,13 +205,15 @@ func (g *Gossiper) ClientSendHangUpMessage() {
 func (g *Gossiper) ReceiveHangUpMessage(hangUp HangUp) {
 	if strings.Compare(hangUp.Destination, g.Name) == 0 {
 		// the other call participant wants to hangup on us
-		if g.CallStatus.InCall || strings.Compare(hangUp.Origin, g.CallStatus.OtherParticipant) == 0 {
+		if strings.Compare(hangUp.Origin, g.CallStatus.OtherParticipant) == 0 {
 			log.Lvl2("Node ", hangUp.Origin, " hung up on us")
 			g.PrintHangUp(hangUp.Origin)
 			g.CallStatus.InCall = false
 			g.CallStatus.ExpectingResponse = false
 			g.CallStatus.OtherParticipant = ""
-			g.ClientStopRecording()
+			if g.CallStatus.InCall {
+				g.ClientStopRecording()
+			}
 		}
 	} else if strings.Compare(hangUp.Origin, g.Name) == 0 {
 		// otherwise, it must be us sending a hangup message
