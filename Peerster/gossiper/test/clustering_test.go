@@ -29,7 +29,7 @@ func TestInitializedCluster(t *testing.T) {
 		t.Fatal("PublicKey in cluster does not equal public key of g1")
 	}
 	cluster := g1.Cluster
-	log.Lvl1("Cluster ", cluster.ClusterID, " members : ", cluster.Members, "master key :", cluster.MasterKey)
+	log.Lvl2("Cluster ", cluster.ClusterID, " members : ", cluster.Members, "master key :", cluster.MasterKey)
 
 }
 

@@ -165,7 +165,7 @@ func (g *Gossiper) ReceiveCallResponse(resp CallResponse) {
 				log.Lvl2("Node ", resp.Origin, " declined our call")
 				g.PrintCallDeclined(resp.Origin)
 			} else if resp.Status == Busy {
-				log.Lvl1("Node ", resp.Origin, " is in another call")
+				log.Lvl2("Node ", resp.Origin, " is in another call")
 				g.PrintCallBusy(resp.Origin)
 			}
 			g.CallStatus.InCall = false

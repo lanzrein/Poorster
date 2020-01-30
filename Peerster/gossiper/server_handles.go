@@ -322,7 +322,7 @@ func (g *Gossiper) InitClusterHandle(w http.ResponseWriter, r *http.Request) {
 }
 
 func (g *Gossiper) JoinClusterRequest(w http.ResponseWriter, r *http.Request) {
-	log.Lvl1(g.Name, "received join request.")
+	log.Lvl2(g.Name, "received join request.")
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	if r.Method == "POST" {
 		data := make([]byte, r.ContentLength)
@@ -346,7 +346,7 @@ func (g *Gossiper) JoinClusterRequest(w http.ResponseWriter, r *http.Request) {
 }
 
 func (g *Gossiper) LeaveClusterHandle(w http.ResponseWriter, r *http.Request) {
-	log.Lvl1(g.Name, "leaving cluster!")
+	log.Lvl2(g.Name, "leaving cluster!")
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	if r.Method == "POST" {
 		data := make([]byte, r.ContentLength)
@@ -365,7 +365,7 @@ func (g *Gossiper) LeaveClusterHandle(w http.ResponseWriter, r *http.Request) {
 }
 
 func (g *Gossiper) BroadcastMessageHandle(w http.ResponseWriter, r *http.Request) {
-	log.Lvl1("Broadcast message handle")
+	log.Lvl2("Broadcast message handle")
 	w.Header().Set("Access-Control-Allow-Origin", "*")
 	if r.Method == "POST" {
 		data := make([]byte, r.ContentLength)
@@ -384,7 +384,7 @@ func (g *Gossiper) BroadcastMessageHandle(w http.ResponseWriter, r *http.Request
 		if err != nil {
 			log.Error("Could not unmarshal message : ", err)
 		}
-		log.Lvl1("Data : ", message)
+		log.Lvl2("Data : ", message)
 		g.SendBroadcast(message.Content, false)
 
 	}
@@ -428,7 +428,7 @@ func (g *Gossiper) AnonymousMessageHandle(w http.ResponseWriter, r *http.Request
 		if err != nil {
 			log.Error("Could not unmarshal message : ", err)
 		}
-		log.Lvl1("Data : ", msg)
+		log.Lvl2("Data : ", msg)
 		//Todo here you do the anonmessage handling for peerster...
 		g.ClientSendAnonymousMessage(msg.Destination, msg.Content, msg.RelayRate, msg.FullAnon)
 
@@ -463,9 +463,9 @@ func (g *Gossiper) EvotingHandle(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			log.Error("Could not unmarshal message : ", err)
 		}
-		log.Lvl1("Data : ", message)
+		log.Lvl2("Data : ", message)
 		if message.Decision {
-			log.Lvl1("Message accept proposition.")
+			log.Lvl2("Message accept proposition.")
 			for i := 0; i < len(g.displayed_requests); i++ {
 				if strings.Contains(g.displayed_requests[i], message.Person) {
 					copy(g.displayed_requests[i:], g.displayed_requests[i+1:])
@@ -475,7 +475,7 @@ func (g *Gossiper) EvotingHandle(w http.ResponseWriter, r *http.Request) {
 			}
 			g.BroadcastAccept(message.Person)
 		} else {
-			log.Lvl1("Message deny proposition.")
+			log.Lvl2("Message deny proposition.")
 			for i := 0; i < len(g.displayed_requests); i++ {
 				if strings.Contains(g.displayed_requests[i], message.Person) {
 					copy(g.displayed_requests[i:], g.displayed_requests[i+1:])
@@ -515,7 +515,7 @@ func (g *Gossiper) ExpellMemberHandle(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			log.Error("Could not unmarshal message : ", err)
 		}
-		log.Lvl1("Data expell: ", message.Destination)
+		log.Lvl2("Data expell: ", message.Destination)
 		//Todo here you do the evoting handling for expelling...
 
 		//str := "EXPEL "+message.Destination
@@ -551,7 +551,7 @@ func (g *Gossiper) CallHandle(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			log.Error("Could not unmarshal message : ", err)
 		}
-		log.Lvl1("Data : ", message)
+		log.Lvl2("Data : ", message)
 
 		//TODO here handle the packet.
 		otherParticipant := message.Member

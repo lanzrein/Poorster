@@ -72,6 +72,6 @@ func InitCounter(c *Cluster) {
 
 func (c *Cluster) Clock() int {
 	c.Counter++
-	log.Lvl1("Clocking..", c.Counter)
+	log.Lvl2("Clocking..", c.Counter)
 	return c.source.Intn(len(c.Members))
 }

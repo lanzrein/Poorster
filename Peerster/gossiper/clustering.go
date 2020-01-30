@@ -43,7 +43,7 @@ func (g *Gossiper) InitCluster() {
 //RequestJoining Sends a packet to request joining a cluster from other
 func (g *Gossiper) RequestJoining(other string) {
 	//send a request packet to the other gossiper
-	log.Lvl1("Joining request :", other)
+	log.Lvl2("Joining request :", other)
 	addr := g.FindPath(other)
 	publickey := g.Keypair.PublicKey
 	req := RequestMessage{
@@ -72,12 +72,12 @@ func (g *Gossiper) HeartbeatLoop() {
 			go g.SendBroadcast("", false)
 
 		case <-g.LeaveChan:
-			log.Lvl1("Leaving cluster")
+			log.Lvl2("Leaving cluster")
 			return
 		case <-timer.C:
-			log.Lvl1("Time for a rolllllllllout")
+			log.Lvl2("Time for a rolllllllllout")
 			idx := g.Cluster.Clock()
-			log.Lvl1(g.Name, "My idx is :", idx)
+			log.Lvl2(g.Name, "My idx is :", idx)
 			sort.Strings(g.Cluster.Members)
 			g.KeyRollout(g.Cluster.Members[idx])
 			timer.Reset(dur)
@@ -90,7 +90,7 @@ func (g *Gossiper) LeaveCluster() {
 	//Stop the heartbeat loop
 	g.PrintLeaveCluster()
 	g.LeaveChan <- true
-	log.Lvl1("Sending leave message..")
+	log.Lvl2("Sending leave message..")
 	g.RequestLeave()
 
 	g.Cluster = new(clusters.Cluster)
@@ -166,7 +166,7 @@ func (g *Gossiper) ReceiveBroadcast(message BroadcastMessage) {
 
 		if message.Rollout {
 			//Update for a rollout.
-			log.Lvl1(g.Name, " received message for rollout")
+			log.Lvl2(g.Name, " received message for rollout")
 			cluster := clusters.Cluster{}
 			data := ies.Decrypt(g.Cluster.MasterKey, message.Data)
 			err := protobuf.Decode(data, &cluster)
@@ -177,7 +177,7 @@ func (g *Gossiper) ReceiveBroadcast(message BroadcastMessage) {
 			g.UpdateFromRollout(cluster)
 
 		} else if message.Reset {
-			log.Lvl1(g.Name, " received message for reset")
+			log.Lvl2(g.Name, " received message for reset")
 			cluster := clusters.Cluster{}
 			data := ies.Decrypt(g.Cluster.MasterKey, message.Data)
 			err := protobuf.Decode(data, &cluster)
@@ -189,7 +189,7 @@ func (g *Gossiper) ReceiveBroadcast(message BroadcastMessage) {
 			g.BroadcastAck(message.CaseRequest)
 
 		} else if message.LeaveRequest {
-			log.Lvl1("Got leave request")
+			log.Lvl2("Got leave request")
 			decrypted := ies.Decrypt(g.Cluster.MasterKey, message.Data)
 			var rumor RumorMessage
 			err := protobuf.Decode(decrypted, &rumor)
@@ -256,7 +256,7 @@ func (g *Gossiper) ReceiveBroadcast(message BroadcastMessage) {
 							if is_existing == false {
 								g.slice_results[i] = append(g.slice_results[i], "1 : "+rumor.Origin)
 
-								log.Lvl2(g.slice_results)
+								log.Lvl1(g.slice_results)
 
 								if len(g.Cluster.Members) == len(g.slice_results[i])-1 {
 									g.BroadcastCollected(g.slice_results[i][0])
@@ -319,7 +319,7 @@ func (g *Gossiper) ReceiveBroadcast(message BroadcastMessage) {
 			}
 
 		} else if message.CaseCompare {
-			log.Lvl1(g.Name, " received e-voting identifier to start comparison process")
+			log.Lvl2(g.Name, " received e-voting identifier to start comparison process")
 			decrypted := ies.Decrypt(g.Cluster.MasterKey, message.Data)
 			var rumor RumorMessage
 			err := protobuf.Decode(decrypted, &rumor)
@@ -408,7 +408,7 @@ func (g *Gossiper) ReceiveBroadcast(message BroadcastMessage) {
 			}
 
 		} else if message.ResultsValidation {
-			log.Lvl1(g.Name, " received list of e-voting results for validation")
+			log.Lvl2(g.Name, " received list of e-voting results for validation")
 			decrypted := ies.Decrypt(g.Cluster.MasterKey, message.Data)
 			var rumor RumorMessage
 			err := protobuf.Decode(decrypted, &rumor)
@@ -523,7 +523,7 @@ func (g *Gossiper) ReceiveBroadcast(message BroadcastMessage) {
 			}
 
 		} else if message.FinalDecision {
-			log.Lvl1(g.Name, " received e-voting final decision")
+			log.Lvl2(g.Name, " received e-voting final decision")
 			decrypted := ies.Decrypt(g.Cluster.MasterKey, message.Data)
 			var rumor RumorMessage
 			err := protobuf.Decode(decrypted, &rumor)
@@ -616,7 +616,7 @@ func (g *Gossiper) ReceiveBroadcast(message BroadcastMessage) {
 			}
 
 		} else if message.CancelRequest {
-			log.Lvl1(g.Name, " received e-voting cancellation")
+			log.Lvl2(g.Name, " received e-voting cancellation")
 			decrypted := ies.Decrypt(g.Cluster.MasterKey, message.Data)
 			var rumor RumorMessage
 			err := protobuf.Decode(decrypted, &rumor)
@@ -652,7 +652,7 @@ func (g *Gossiper) ReceiveBroadcast(message BroadcastMessage) {
 			}
 
 		} else if message.ResetIndication {
-			log.Lvl1(g.Name, " received e-voting reset")
+			log.Lvl2(g.Name, " received e-voting reset")
 			decrypted := ies.Decrypt(g.Cluster.MasterKey, message.Data)
 			var rumor RumorMessage
 			err := protobuf.Decode(decrypted, &rumor)
@@ -738,7 +738,7 @@ func (g *Gossiper) ReceiveBroadcast(message BroadcastMessage) {
 			}
 
 		} else if message.AckResend {
-			log.Lvl1(g.Name, " received e-voting ack for request resending")
+			log.Lvl2(g.Name, " received e-voting ack for request resending")
 			decrypted := ies.Decrypt(g.Cluster.MasterKey, message.Data)
 			var rumor RumorMessage
 			err := protobuf.Decode(decrypted, &rumor)
@@ -845,16 +845,16 @@ func (g *Gossiper) ReceiveJoinRequest(message RequestMessage) {
 		}
 		return
 	}
-	log.Lvl1("Got request from ", message.Origin)
+	log.Lvl2("Got request from ", message.Origin)
 	_, ok := g.Cluster.HeartBeats[message.Origin]
 	if ok {
 		//its an update message.
-		log.Lvl1(g.Name, " got an update message")
+		log.Lvl2(g.Name, " got an update message")
 		g.Cluster.PublicKeys[message.Origin] = message.PublicKey
 		return
 
 	} else {
-		log.Lvl1(g.Name, "got new request from : ", message.Origin)
+		log.Lvl2(g.Name, "got new request from : ", message.Origin)
 	}
 
 	if g.ackAll {
@@ -950,7 +950,7 @@ func (g *Gossiper) ReceiveRequestReply(message RequestReply) {
 
 	g.Cluster = &cluster
 	clusters.InitCounter(g.Cluster)
-	log.Lvl1(g.Name, "Cluster initialized. ")
+	log.Lvl2(g.Name, "Cluster initialized. ")
 	//Start the heartbeatloop immediately
 	go g.HeartbeatLoop()
 }
@@ -1016,14 +1016,14 @@ func (g *Gossiper) KeyRollout(leader string) {
 			<-time.After(5 * time.Second)
 			if len(g.Cluster.PublicKeys) == len(nextMembers) {
 				//we got all the maps we can generate the master key and return
-				log.Lvl1("Got all the members needed")
+				log.Lvl2("Got all the members needed")
 				err := g.AnnounceNewMasterKey()
 				if err != nil {
 					log.Error("Could not announce master key : ", err)
 				}
 				return
 			}
-			log.Lvl1("Missing some members ( have ", len(g.Cluster.PublicKeys), "need ", len(nextMembers), ")")
+			log.Lvl3("Missing some members ( have ", len(g.Cluster.PublicKeys), "need ", len(nextMembers), ")")
 			log.Lvl2(g.Cluster.PublicKeys)
 		}
 
@@ -1095,7 +1095,7 @@ func (g *Gossiper) UpdateCluster(message RequestMessage) {
 }
 
 func (g *Gossiper) UpdateFromReset(cluster clusters.Cluster) {
-	log.Lvl1("Update information form reset ")
+	log.Lvl2("Update information form reset ")
 
 	g.Cluster = &cluster
 	clusters.InitCounter(g.Cluster)
@@ -1104,7 +1104,7 @@ func (g *Gossiper) UpdateFromReset(cluster clusters.Cluster) {
 
 //UpdateFromRollout update information from a rollout.
 func (g *Gossiper) UpdateFromRollout(cluster clusters.Cluster) {
-	log.Lvl1("Update information form a new cluster :O ")
+	log.Lvl2("Update information form a new cluster :O ")
 
 	g.Cluster = &cluster
 	clusters.InitCounter(g.Cluster)

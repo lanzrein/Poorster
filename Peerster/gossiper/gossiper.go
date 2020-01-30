@@ -274,11 +274,11 @@ func (g *Gossiper) ReadFromPort(errChan chan error, conn net.UDPConn, client boo
 				continue
 			} else if msg.Destination != nil && (msg.Anonymous == nil || !(*msg.Anonymous) || msg.CallRequest == nil || !(*msg.CallRequest)) {
 				if msg.Anonymous != nil && *msg.Anonymous {
-					log.Lvl1("Message to send anon messaging...")
+					log.Lvl2("Message to send anon messaging...")
 					anonymous = true
 					g.ClientSendAnonymousMessage(*msg.Destination, msg.Text, *msg.RelayRate, *msg.FullAnonimity)
 				} else if msg.CallRequest != nil && *msg.CallRequest {
-					log.Lvl1("Message to call someone...")
+					log.Lvl2("Message to call someone...")
 					audio = true
 					g.ClientSendCallRequest(*msg.Destination)
 				} else {
@@ -304,34 +304,34 @@ func (g *Gossiper) ReadFromPort(errChan chan error, conn net.UDPConn, client boo
 				go g.StartFileSearch(*msg.Keywords, *msg.Budget, mulFactor)
 				continue
 			} else if msg.Broadcast != nil && *msg.Broadcast && msg.Text != "" {
-				log.Lvl1("Broadcast message...")
+				log.Lvl2("Broadcast message...")
 				go g.SendBroadcast(msg.Text, false)
 				continue
 			} else if msg.InitCluster != nil {
-				log.Lvl1("Message to init the cluster..")
+				log.Lvl2("Message to init the cluster..")
 				g.InitCluster()
 				continue
 			} else if msg.JoinOther != nil {
-				log.Lvl1("Message joining request.")
+				log.Lvl2("Message joining request.")
 				g.RequestJoining(*msg.JoinOther)
 				continue
 			} else if msg.LeaveCluster != nil && *msg.LeaveCluster {
 				g.LeaveCluster()
 				continue
 			} else if msg.HangUp != nil && *msg.HangUp {
-				log.Lvl1("Message to hang up...")
+				log.Lvl2("Message to hang up...")
 				audio = true
 				g.ClientSendHangUpMessage()
 			} else if msg.StartRecording != nil && *msg.StartRecording {
-				log.Lvl1("Message to record and send audio ...")
+				log.Lvl2("Message to record and send audio ...")
 				audio = true
 				g.ClientStartRecording()
 			} else if msg.StopRecording != nil && *msg.StopRecording {
-				log.Lvl1("Message to record and send audio ...")
+				log.Lvl2("Message to record and send audio ...")
 				audio = true
 				g.ClientStopRecording()
 			} else if msg.PropAccept != nil {
-				log.Lvl1("Message accept proposition.")
+				log.Lvl2("Message accept proposition.")
 				for i := 0; i < len(g.displayed_requests); i++ {
 					if strings.Contains(g.displayed_requests[i], *msg.PropAccept) {
 						copy(g.displayed_requests[i:], g.displayed_requests[i+1:])
@@ -342,7 +342,7 @@ func (g *Gossiper) ReadFromPort(errChan chan error, conn net.UDPConn, client boo
 				g.BroadcastAccept(*msg.PropAccept)
 				continue
 			} else if msg.PropDeny != nil {
-				log.Lvl1("Message deny proposition.")
+				log.Lvl2("Message deny proposition.")
 				for i := 0; i < len(g.displayed_requests); i++ {
 					if strings.Contains(g.displayed_requests[i], *msg.PropDeny) {
 						copy(g.displayed_requests[i:], g.displayed_requests[i+1:])
