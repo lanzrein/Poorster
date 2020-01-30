@@ -1,0 +1,138 @@
+<!-- //@authors Hrusanov Aleksandar, Lanzrein Johan, Rinaldi Vincent -->
+ <link id="stylesheet" rel="stylesheet" href="style.css">
+ <script src="jquery.js"></script>
+ <script src="cluster.js"></script>
+ <script src="handle.js"></script>
+
+
+
+<title>Peerster's web interface </title>
+
+<div class="chat">
+  <div class="messages" id="messages">
+
+  </div>
+
+  <div class="inputarea" >
+    <textarea style="width:100%" id="message"type="text" rows="8" cols="80"></textarea>
+    <button type="button" id="sendmsg" style="width:20%">Send message !</button>
+    <p>Node ID : <span id="nodeid"></span>    <button type="button" id="clusterbutton">Cluster pannel</button> </p>
+
+
+  </div>
+
+</div>
+
+<div id= "hw2">
+  <form enctype="multipart/form-data" id="indexFile">
+   Select a file to index to the gossiper ! <br>
+    <input type="file" id="file">
+    <input type='button' id='upload_btn' value='Index'>
+  </form>
+
+  <form enctype="multipart/form-data" id="searchFile">
+    Search for a file with keywords and a budget !<br>
+    <input type="text" id="keywords">
+    <input type="number" id="budget" min="0"> <br>
+    <input type="button" id="search_btn" value="Search">
+
+  </form>
+  <div>
+    Found files :
+    <ul id="found_files">
+      <li id="file">f1</li>
+    </ul>
+  </div>
+
+
+
+  <!-- download a file -->
+  <p>Download a file </p>
+  <p>Filename:   <input type="text" id="filename"> </p>
+  <p>Destination :  <input type="text" id="destination"> </p>
+  <p>Request : <input type="text" id="request"></p>
+
+
+  <button id="downloadButton">Download ! </button>
+
+  <p>
+  Send a private message to a peer from below by double clicking on it ! </p>
+  <ul id="origin_list">
+  <li id="private">HI</li>
+  </ul>
+</div>
+
+<div class="NodeList">
+
+<ul id="node_list">
+</ul>
+<div class="addnodearea">
+  <input type="text" id="nodevalue" value="ip:port">
+  <button id="buttonNode" >Add new node ! </button>
+
+</div>
+</div>
+
+
+<div id="privatepopup">
+  <button type="button" id="cancelprivate">Cancel</button>
+  <p> Send message to : </p>
+    <div><p id="receiver">xxx</p>  <div id="anonparams"><input type="radio" id="fullAnon" value="full">Full Anonymity <input type="number" id ="relayrate" step="0.1" min="0.0" max="1.0" > Relay rate <br></div></div>
+
+  <textarea style="width:100%;"id="privatecontent" rows="8" cols="80"></textarea>
+  <button type="button" id="sendprivate">Send message!</button>
+</div>
+
+
+<div id="clusterpopup">
+  <button type ="button" id="initcluster">Init new cluster</button>
+  <button type="button" id="leavecluster">Leave current cluster</button>
+  <button type="button" id="joincluster">Join a cluster</button>
+  <button type="button" id="closecluster" style="position: absolute;top: 10px;right: 10px;"> Close </button>
+
+  <ul id="clustermembers">
+    <li id="member">Member random <span class="anonmessage">✉️</span><span class="anoncall">📞</span><span class="expellmember">❌</span></li>
+  </ul>
+
+  <textarea style="width:100%;" id="broadcastcontent" rows="8" cols="80"></textarea>
+  <button type="button" id="sendbroadcast">Send broadcast</button>
+  <div id ="voting">
+    <b>Currently voting for : </b>
+    <ul id="votelist">
+      <li id="vote">JOIN Tom</li>
+      <li id="vote">EXPEL Rob</li>
+    </ul>
+  </div>
+
+</div>
+
+
+ <div id="votepannel">
+   <p>Would you like ...</p>
+   <p id="votetext">bla</p>
+
+   <div><button type="button" id="acceptvote">YES</button> <button type="button" id="denyvote">NO</button> </div>
+   <button type="button" id="closevote" style="position: absolute;top: 10px;right: 10px;"> Cancel </button>
+
+ </div>
+
+
+ <div id="joinpannel">
+   <p>Enter the members cluster you would like to join ! </p>
+   <input id="joinOther" value="">
+   <button type="button" id="confirmjoin">Confirm</button>
+   <button type="button" id="closejoin" style="position: absolute;top: 10px;right: 10px;"> Cancel </button>
+
+ </div>
+
+
+
+<div id="callpannel">
+  <p>Currently calling...</p>
+  <p id="callee">...</p>
+  <button id="dial_call">Dial</button>
+  <button id="accept_call">Accept</button>
+  <button id="decline_call">Decline</button>
+  <button id="hangup_call">Hang up</button>
+
+</div>
