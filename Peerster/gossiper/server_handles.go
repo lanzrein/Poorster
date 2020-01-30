@@ -464,15 +464,32 @@ func (g *Gossiper) EvotingHandle(w http.ResponseWriter, r *http.Request) {
 			log.Error("Could not unmarshal message : ", err)
 		}
 		log.Lvl1("Data : ", message)
-		//Todo here you do the evoting handling for peerster...
+		if message.Decision{
+			log.Lvl1("Message accept proposition.")
+			for i := 0; i < len(g.displayed_requests); i++ {
+				if strings.Contains(g.displayed_requests[i], message.Person) {
+					copy(g.displayed_requests[i:], g.displayed_requests[i+1:])
+					g.displayed_requests = g.displayed_requests[:len(g.displayed_requests)-1]
+					break
+				}
+			}
+			g.BroadcastAccept(message.Person)
+		}else{
+			log.Lvl1("Message deny proposition.")
+			for i := 0; i < len(g.displayed_requests); i++ {
+				if strings.Contains(g.displayed_requests[i], message.Person) {
+					copy(g.displayed_requests[i:], g.displayed_requests[i+1:])
+					g.displayed_requests = g.displayed_requests[:len(g.displayed_requests)-1]
+					break
+				}
+			}
+			g.BroadcastDeny(message.Person)
+		}
 
 	}
 
-	votes := make([]string, len(g.slice_results))
-	for i, e := range g.slice_results {
-		votes[i] = e[0]
-	}
-	//votes := g.slice_results //TODO here change it with the current votes...
+
+	votes := g.displayed_requests
 	log.Lvl3("Voting ongoing.  : ", votes)
 
 	tosend, _ := json.Marshal(votes)
@@ -499,10 +516,13 @@ func (g *Gossiper) ExpellMemberHandle(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			log.Error("Could not unmarshal message : ", err)
 		}
-		log.Lvl1("Data expell: ", message)
+		log.Lvl1("Data expell: ", message.Destination)
 		//Todo here you do the evoting handling for expelling...
 
-	}
+		//str := "EXPEL "+message.Destination
+		//g.RequestExpelling(message.Destination)
+
+		}
 }
 
 type CallData struct {

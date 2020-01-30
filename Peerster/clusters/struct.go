@@ -42,19 +42,19 @@ func (c *Cluster) AmountAuthorities() int {
 }
 
 //NewCluster returns a new cluster
-func NewCluster(id *uint64, members []string, masterkey ies.PublicKey, publickey map[string]ies.PublicKey, seed uint64) Cluster {
+func NewCluster(id *uint64, members []string, masterkey ies.PublicKey, publickey map[string]ies.PublicKey, seed uint64, authorities []string) Cluster {
 	source := rand.New(rand.NewSource(int64(seed)))
 
 	return Cluster{
-		ClusterID:   id,
-		Members:     members,
-		MasterKey:   masterkey,
-		PublicKeys:  publickey,
-		HeartBeats:  make(map[string]bool),
-		Seed:        seed,
-		source:      source,
-		Counter:     0,
-		Authorities: []string{},
+		ClusterID:  id,
+		Members:    members,
+		MasterKey:  masterkey,
+		PublicKeys: publickey,
+		HeartBeats: make(map[string]bool),
+		Seed : seed ,
+		source : source,
+		Counter: 0 ,
+		Authorities : authorities,
 	}
 }
 

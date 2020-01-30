@@ -2,12 +2,13 @@ package gossiper
 
 import (
 	"bytes"
+	"gopkg.in/hraban/opus.v2"
 
 	"github.com/JohanLanzrein/Peerster/clusters"
 	"github.com/JohanLanzrein/Peerster/ies"
 	"github.com/jfreymuth/pulse"
 	"go.dedis.ch/onet/log"
-	opus "gopkg.in/hraban/opus.v2"
+//	opus "gopkg.in/hraban/opus.v2"
 
 	//"encoding/hex"
 	"net"
@@ -168,6 +169,30 @@ type Gossiper struct {
 	acks_cases                    map[string][]string
 	correct_results_rcv           map[string][]string
 	reset_requests                map[string][]string
+//=======
+//	Keypair                   *ies.KeyPair
+//	Cluster                   *clusters.Cluster
+//	LeaveChan                 chan bool
+//	Keys                      map[string]ies.PublicKey
+//	HearbeatTimer             int
+//	RolloutTimer              int //timer in seconds ~~ usually 300
+//	CallStatus                GossiperCallStatus
+//	PulseClient               *pulse.Client
+//	RecordStream              *pulse.RecordStream
+//	RecordFrame               []int16
+//	PlaybackStream            *pulse.PlaybackStream
+//	PlayBackFrame             []int16
+//	AudioDataSlice            []byte
+////	OpusEncoder               *opus.Encoder
+////	OpusDecoder               *opus.Decoder
+//	AudioChan                 chan struct{}
+//	is_authority              bool
+//	nb_authorities            int
+//	slice_results             [][]string
+//	acks_cases                map[string][]string
+//	correct_results_rcv       map[string][]string
+//	reset_requests map[string][]string
+//>>>>>>> vincent
 	members_ready_resend_requests map[string][]string
 	pending_nodes_requests        []string
 	pending_messages_requests     []RequestMessage

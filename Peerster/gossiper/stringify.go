@@ -281,19 +281,19 @@ func (g *Gossiper) PrintEvotingJoinStep(node string) {
 	fmt.Print(s)
 }
 
-func (g *Gossiper) PrintEvotingPropositionStep(rcvProp int, node string) {
+func (g *Gossiper) PrintEvotingPropositionStep(rcvProp int, node string, origin string) {
 	var s string
 	if rcvProp == 1 {
-		s = fmt.Sprintf("RECEIVED ACCEPT FOR CASE %s\n", node)
+		s = fmt.Sprintf("RECEIVED ACCEPT FOR CASE %s FROM %s\n", node, origin)
 	} else { // receivedAnswer == 0
-		s = fmt.Sprintf("RECEIVED DENY FOR CASE %s\n", node)
+		s = fmt.Sprintf("RECEIVED DENY FOR CASE %s FROM %s\n", node, origin)
 	}
 	g.WriteToBuffer(s)
 	fmt.Print(s)
 }
 
-func (g *Gossiper) PrintEvotingCaseStep(step string, authOrigin string) {
-	s := fmt.Sprintf("RECEIVED COMPARISON REQUEST FOR CASE %s FROM %s\n", step, authOrigin)
+func (g *Gossiper) PrintEvotingCaseStep(caseStep string, authOrigin string) {
+	s := fmt.Sprintf("RECEIVED COMPARISON REQUEST FOR CASE %s FROM %s\n", caseStep, authOrigin)
 	g.WriteToBuffer(s)
 	fmt.Print(s)
 }
@@ -304,8 +304,8 @@ func (g *Gossiper) PrintEvotingValidationStep(results []string, authOrigin strin
 	fmt.Print(s)
 }
 
-func (g *Gossiper) PrintEvotingDecisionStep(decision string) {
-	s := fmt.Sprintf("RECEIVED DECISION %s\n", decision)
+func (g *Gossiper) PrintEvotingDecisionStep(decision string, memberOrigin string) {
+	s := fmt.Sprintf("RECEIVED DECISION %s FROM %s\n", decision, memberOrigin)
 	g.WriteToBuffer(s)
 	fmt.Print(s)
 }
@@ -361,8 +361,9 @@ func (g *Gossiper) PrintHangUp(callee string) {
 	g.WriteToBuffer(s)
 }
 
-func (g *Gossiper) PrintEvotingCancellationStep(cancelCase string) {
-	s := fmt.Sprintf("RECEIVED CANCELLATION FOR CASE %s\n", cancelCase)
+
+func (g *Gossiper) PrintEvotingCancellationStep(cancelCase string, authOrigin string) {
+	s := fmt.Sprintf("RECEIVED CANCELLATION FOR CASE %s FROM %s\n", cancelCase, authOrigin)
 	g.WriteToBuffer(s)
 	fmt.Print(s)
 }

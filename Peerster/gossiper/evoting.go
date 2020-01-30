@@ -222,7 +222,6 @@ func (g *Gossiper) BroadcastResults(results []string) {
 	}
 }
 
-
 //BroadcastDecision broadcast the decision of an authority.
 func (g *Gossiper) BroadcastDecision(answer string) {
 	rumor := RumorMessage{

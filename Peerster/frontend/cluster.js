@@ -38,7 +38,13 @@ function SendBroadcast(){
 
         for(let i = 0 ; i < res.length ; i ++){
 
-            $("#clustermembers").append("<li id='member'>"+res[i]+"</li>");
+            if (res[i] === currently_calling){
+                $("#clustermembers").append("<li id='member' style='color: crimson'>"+res[i]+"<span class=\"anonmessage\"> ✉️</span><span class=\"anoncall\">📞</span><span class=\"expellmember\">❌</span></li>");
+
+            }else{
+                $("#clustermembers").append("<li id='member'>"+res[i]+"<span class=\"anonmessage\"> ✉️</span><span class=\"anoncall\">📞</span><span class=\"expellmember\">❌</span></li>");
+
+            }
 
         }
         $("li[id=member]").click(showanonymous);
@@ -57,13 +63,11 @@ function SendBroadcast(){
 let anonFlag = false;
 
 function anonmessage(){
-  dst = $(this).parent().text() ;
-  console.log(dst.length);
-  if (dst.length >= 5) {
-      dst = dst.substring(0,dst.length-4);
-  }else{
-      alert("Incorrect name");
-  }
+
+    dst = $(this).parent().text();
+    if (dst.length > 5) {
+        dst = dst.substring(0,dst.length-6);
+    }
     console.log("anon message ! "+ dst ) ;
 
     $("#receiver").text(dst);
@@ -105,8 +109,10 @@ let currently_calling;
 
 
 function accept_call(){
+
     val = { "Accept" : true, "Member":$("#callee").text()};
     currently_calling = val.Member;
+
     post_call_data(val)
     console.log("Accept on :", JSON.stringify(val));
 }
@@ -133,12 +139,12 @@ function dial_call(){
 
 function post_call_data(tosend){
     $.post(host+"/callhandler",JSON.stringify(tosend)).done(function(data) {
-        console.log("OK for posting"); ;
+        console.log("OK for posting");
     });
 }
 
 function close_call(){
-    $("#callee").text("");
+    $("#callee").text('');
     $("#callpannel").hide();
 }
 
