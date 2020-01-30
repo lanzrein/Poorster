@@ -88,12 +88,12 @@ func (g *Gossiper) HeartbeatLoop() {
 //LeaveCluster stops the heartbeat loop and resets the value of cluster
 func (g *Gossiper) LeaveCluster() {
 	//Stop the heartbeat loop
-	g.PrintLeaveCluster()
+	g.PrintLeaveCluster(*g.Cluster.ClusterID)
 	g.LeaveChan <- true
 	log.Lvl2("Sending leave message..")
 	g.RequestLeave()
 
-	g.Cluster = new(clusters.Cluster)
+	g.Cluster = nil
 	//Send a message saying we want to leave.
 	return
 }

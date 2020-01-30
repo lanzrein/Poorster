@@ -244,7 +244,9 @@ func (g *Gossiper) PrintDeniedJoining(clusterID uint64) {
 }
 
 func (g *Gossiper) PrintAcceptJoiningID(cluster clusters.Cluster) {
-	s := fmt.Sprintf("REQUEST TO JOIN %d ACCEPTED. CURRENT MEMBERS : ", cluster.ClusterID)
+	str := strconv.FormatUint(*cluster.ClusterID, 10)
+
+	s := fmt.Sprintf("REQUEST TO JOIN %s ACCEPTED. CURRENT MEMBERS : ", str)
 	for i, member := range cluster.Members {
 		s += fmt.Sprintf("%s", member)
 		if i < len(cluster.Members)-1 {
@@ -263,14 +265,15 @@ func (g *Gossiper) PrintBroadcast(message RumorMessage) {
 	fmt.Print(s)
 }
 
-func (g *Gossiper) PrintLeaveCluster() {
-	s := fmt.Sprintf("LEAVING cluster %d\n", g.Cluster.ClusterID)
+func (g *Gossiper) PrintLeaveCluster(id uint64) {
+	s := fmt.Sprintf("LEAVING cluster %s\n", strconv.FormatUint(id, 10))
 	g.WriteToBuffer(s)
 	fmt.Print(s)
 }
 
 func (g *Gossiper) PrintInitCluster() {
-	s := fmt.Sprintf("INIT new cluster %d\n", g.Cluster.ClusterID)
+	str := strconv.FormatUint(*g.Cluster.ClusterID, 10)
+	s := fmt.Sprintf("INIT new cluster %s\n", str)
 	g.WriteToBuffer(s)
 	fmt.Print(s)
 }
