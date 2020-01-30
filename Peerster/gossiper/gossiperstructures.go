@@ -7,7 +7,7 @@ import (
 	"github.com/JohanLanzrein/Peerster/ies"
 	"github.com/jfreymuth/pulse"
 	"go.dedis.ch/onet/log"
-	opus "gopkg.in/hraban/opus.v2"
+//	opus "gopkg.in/hraban/opus.v2"
 
 	//"encoding/hex"
 	"net"
@@ -159,8 +159,8 @@ type Gossiper struct {
 	PlaybackStream            *pulse.PlaybackStream
 	PlayBackFrame             []int16
 	AudioDataSlice            []byte
-	OpusEncoder               *opus.Encoder
-	OpusDecoder               *opus.Decoder
+//	OpusEncoder               *opus.Encoder
+//	OpusDecoder               *opus.Decoder
 	AudioChan                 chan struct{}
 	is_authority              bool
 	nb_authorities            int

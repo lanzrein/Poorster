@@ -14,10 +14,12 @@ import (
 	"github.com/JohanLanzrein/Peerster/ies"
 	"go.dedis.ch/onet/log"
 	"go.dedis.ch/protobuf"
+	
+	"fmt" //TOREMOVE
 )
 
 //Constant values
-const DEFAULTROLLOUT = 300
+const DEFAULTROLLOUT = 180 // WAS 300
 const DEFAULTHEARTBEAT = 5
 
 //InitCounter the current gossiper creates a cluster where he is the sole member
@@ -28,7 +30,8 @@ func (g *Gossiper) InitCluster() {
 	publickey := make(map[string]ies.PublicKey)
 	publickey[g.Name] = g.Keypair.PublicKey
 	masterkey := g.MasterKeyGen()
-	cluster := clusters.NewCluster(id, members, masterkey, publickey, uint64(seed))
+	authorities := []string{g.Name}
+	cluster := clusters.NewCluster(id, members, masterkey, publickey, uint64(seed), authorities)
 
 	g.Cluster = &cluster
 	g.PrintInitCluster()
@@ -47,7 +50,7 @@ func (g *Gossiper) RequestJoining(other string) {
 		PublicKey: publickey,
 	}
 
-	gp := GossipPacket{JoinRequest: &req}
+	gp := GossipPacket{JoinRequest: &req}	
 	go g.SendTo(addr, gp)
 	//then the "voting" system starts
 
@@ -62,7 +65,7 @@ func (g *Gossiper) HeartbeatLoop() {
 
 		select {
 		case <-time.After(time.Duration(g.HearbeatTimer) * time.Second):
-			log.Lvl4(g.Name, "sending heartbeat")
+			log.Lvl2(g.Name, "sending heartbeat")
 			g.Cluster.HeartBeats[g.Name] = true
 			go g.SendBroadcast("", false)
 
@@ -70,7 +73,7 @@ func (g *Gossiper) HeartbeatLoop() {
 			log.Lvl1("Leaving cluster")
 			return
 		case <-timer.C:
-			log.Lvl4("Time for a rolllllllllout")
+			log.Lvl1("Time for a rolllllllllout")
 			idx := g.Cluster.Clock()
 			log.Lvl1(g.Name, "My idx is :", idx)
 			sort.Strings(g.Cluster.Members)
@@ -85,7 +88,7 @@ func (g *Gossiper) LeaveCluster() {
 	//Stop the heartbeat loop
 	g.PrintLeaveCluster()
 	g.LeaveChan <- true
-	log.Lvl2("Sending leave message..")
+	log.Lvl1("Sending leave message..")
 	g.RequestLeave()
 
 	g.Cluster = new(clusters.Cluster)
@@ -161,7 +164,7 @@ func (g *Gossiper) ReceiveBroadcast(message BroadcastMessage) {
 
 		if message.Rollout {
 			//Update for a rollout.
-			log.Lvl2(g.Name, " received message for rollout")
+			log.Lvl1(g.Name, " received message for rollout")
 			cluster := clusters.Cluster{}
 			data := ies.Decrypt(g.Cluster.MasterKey, message.Data)
 			err := protobuf.Decode(data, &cluster)
@@ -172,7 +175,7 @@ func (g *Gossiper) ReceiveBroadcast(message BroadcastMessage) {
 			g.UpdateFromRollout(cluster)
 		
 		} else if message.Reset {
-			log.Lvl2(g.Name, " received message for reset")
+			log.Lvl1(g.Name, " received message for reset")
 			cluster := clusters.Cluster{}
 			data := ies.Decrypt(g.Cluster.MasterKey, message.Data)
 			err := protobuf.Decode(data, &cluster)
@@ -198,7 +201,7 @@ func (g *Gossiper) ReceiveBroadcast(message BroadcastMessage) {
 			g.Cluster.Members = RemoveFromList(g.Cluster.Members, rumor.Origin)
 
 		} else if message.JoinRequest {
-			log.Lvl2(g.Name, " received message for JOIN e-voting request")
+			log.Lvl1(g.Name, " received message for JOIN e-voting request")
 			decrypted := ies.Decrypt(g.Cluster.MasterKey, message.Data)
 			var rumor RumorMessage
 			err := protobuf.Decode(decrypted, &rumor)
@@ -223,7 +226,7 @@ func (g *Gossiper) ReceiveBroadcast(message BroadcastMessage) {
 			}
 			
 		} else if message.AcceptProposition {
-			log.Lvl2(g.Name, " received ACCEPT for e-voting case")
+			log.Lvl1(g.Name, " received ACCEPT for e-voting case")
 			decrypted := ies.Decrypt(g.Cluster.MasterKey, message.Data)
 			var rumor RumorMessage
 			err := protobuf.Decode(decrypted, &rumor)
@@ -231,10 +234,10 @@ func (g *Gossiper) ReceiveBroadcast(message BroadcastMessage) {
 				log.Error(g.Name, "Error decoding packet : ", err, "This may be due to an ongoing rollout.")
 				return
 			}
-			if g.Cluster.IsAnAuthority(g.Name) {
+			if g.Cluster.IsAnAuthority(g.Name) {				
 				if rumor.Text != "" {
 					//print the message
-					g.PrintEvotingPropositionStep(1, rumor.Text)
+					g.PrintEvotingPropositionStep(1, rumor.Text, rumor.Origin)
 					correct_tag_join := "JOIN " + rumor.Text
 					for i := 0 ; i < len(g.slice_results) ; i++ {
 						if string((g.slice_results[i])[0]) == correct_tag_join {
@@ -242,11 +245,17 @@ func (g *Gossiper) ReceiveBroadcast(message BroadcastMessage) {
 							for j := 0 ; j < len(g.slice_results[i]) ; j++ {
 								if string((g.slice_results[i])[j]) == "1 : " + rumor.Origin || string((g.slice_results[i])[j]) == "0 : " + rumor.Origin {
 									is_existing = true
+									
+									fmt.Println("Already existing", g.slice_results) //TOREMOVE
+									
 									break
 								}							
 							}
 							if is_existing == false {
 								g.slice_results[i] = append(g.slice_results[i], "1 : " + rumor.Origin)
+								
+								fmt.Println(g.slice_results) //TOREMOVE
+								
 								if len(g.Cluster.Members) == len(g.slice_results[i]) - 1 {
 									g.BroadcastCollected(g.slice_results[i][0])
 								}
@@ -262,7 +271,7 @@ func (g *Gossiper) ReceiveBroadcast(message BroadcastMessage) {
 			}
 
 		} else if message.DenyProposition {	
-			log.Lvl2(g.Name, " received DENY for e-voting case")
+			log.Lvl1(g.Name, " received DENY for e-voting case")
 			decrypted := ies.Decrypt(g.Cluster.MasterKey, message.Data)
 			var rumor RumorMessage
 			err := protobuf.Decode(decrypted, &rumor)
@@ -273,7 +282,7 @@ func (g *Gossiper) ReceiveBroadcast(message BroadcastMessage) {
 			if g.Cluster.IsAnAuthority(g.Name) {
 				if rumor.Text != "" {
 					//print the message
-					g.PrintEvotingPropositionStep(0, rumor.Text)
+					g.PrintEvotingPropositionStep(0, rumor.Text, rumor.Origin)
 					correct_tag_join := "JOIN " + rumor.Text
 					for i := 0 ; i < len(g.slice_results) ; i++ {
 						if string((g.slice_results[i])[0]) == correct_tag_join {
@@ -281,11 +290,17 @@ func (g *Gossiper) ReceiveBroadcast(message BroadcastMessage) {
 							for j := 0 ; j < len(g.slice_results[i]) ; j++ {
 								if string((g.slice_results[i])[j]) == "1 : " + rumor.Origin || string((g.slice_results[i])[j]) == "0 : " + rumor.Origin {
 									is_existing = true
+									
+									fmt.Println("Already existing", g.slice_results) //TOREMOVE
+									
 									break
 								}							
 							}
 							if is_existing == false {
 								g.slice_results[i] = append(g.slice_results[i], "0 : " + rumor.Origin)
+								
+								fmt.Println(g.slice_results) //TOREMOVE
+								
 								if len(g.Cluster.Members) == len(g.slice_results[i]) - 1 {
 									g.BroadcastCollected(g.slice_results[i][0])
 								}
@@ -301,7 +316,7 @@ func (g *Gossiper) ReceiveBroadcast(message BroadcastMessage) {
 			}
 			
 		} else if message.CaseCompare {
-			log.Lvl2(g.Name, " received e-voting identifier to start comparison process")
+			log.Lvl1(g.Name, " received e-voting identifier to start comparison process")
 			decrypted := ies.Decrypt(g.Cluster.MasterKey, message.Data)
 			var rumor RumorMessage
 			err := protobuf.Decode(decrypted, &rumor)
@@ -335,10 +350,48 @@ func (g *Gossiper) ReceiveBroadcast(message BroadcastMessage) {
 					}
 					
 					if g.Cluster.AmountAuthorities() == len(g.acks_cases[rumor.Text]) {
-						correct_tag_join := "JOIN " + rumor.Text
 						for j := 0 ; j < len(g.slice_results) ; j++ {
-							if string((g.slice_results[j])[0]) == correct_tag_join {
-								g.BroadcastResults(g.slice_results[j])
+							if string((g.slice_results[j])[0]) == rumor.Text {
+								if (g.Cluster.AmountAuthorities() > 1) {
+									g.BroadcastResults(g.slice_results[j])
+								} else { // g.Cluster.AmountAuthorities() == 1
+									accept_counts := 0
+									deny_counts := 0
+									for k := 1 ; k < len(g.slice_results[j]) ; k++ {
+										str := string(((g.slice_results[j])[k])[0])
+										if str == "1" {
+											accept_counts++
+										} else if str == "0" {
+											deny_counts++
+										}
+									}
+									if deny_counts == accept_counts {
+										accept_counts = 0
+										deny_counts = 0
+										for l := 1 ; l < len(g.slice_results[j]) ; l++ {
+											str := (g.slice_results[j])[l]
+											list_authorities := g.acks_cases[rumor.Text]
+											for m := 0 ; m < len(list_authorities) ; m++ {
+												if string(str[4:]) == list_authorities[m] {
+													str = string(str[0])
+													if str == "1" {
+														accept_counts++
+													} else if str == "0" {
+														deny_counts++
+													}
+													break
+												}
+											}
+										}
+									}
+									if accept_counts > deny_counts {
+										answer := "ACCEPT " + rumor.Text
+										g.BroadcastDecision(answer)
+									} else { // accept_counts < deny_counts
+										answer := "DENY " + rumor.Text
+										g.BroadcastDecision(answer)
+									}
+								}
 								break
 							}
 						}
@@ -351,7 +404,7 @@ func (g *Gossiper) ReceiveBroadcast(message BroadcastMessage) {
 			}
 			
 		} else if message.ResultsValidation {
-			log.Lvl2(g.Name, " received list of e-voting results for validation")
+			log.Lvl1(g.Name, " received list of e-voting results for validation")
 			decrypted := ies.Decrypt(g.Cluster.MasterKey, message.Data)
 			var rumor RumorMessage
 			err := protobuf.Decode(decrypted, &rumor)
@@ -438,6 +491,7 @@ func (g *Gossiper) ReceiveBroadcast(message BroadcastMessage) {
 													} else if str == "0" {
 														deny_counts++
 													}
+													break
 												}
 											}
 										}
@@ -465,7 +519,7 @@ func (g *Gossiper) ReceiveBroadcast(message BroadcastMessage) {
 			}
 		
 		} else if message.FinalDecision {
-			log.Lvl2(g.Name, " received e-voting final decision")
+			log.Lvl1(g.Name, " received e-voting final decision")
 			decrypted := ies.Decrypt(g.Cluster.MasterKey, message.Data)
 			var rumor RumorMessage
 			err := protobuf.Decode(decrypted, &rumor)
@@ -475,7 +529,7 @@ func (g *Gossiper) ReceiveBroadcast(message BroadcastMessage) {
 			}
 			if rumor.Text != "" {
 				//print the message
-				g.PrintEvotingDecisionStep(rumor.Text)
+				g.PrintEvotingDecisionStep(rumor.Text, rumor.Origin)
 				if g.Cluster.IsAnAuthority(g.Name) {
 					for i := 0 ; i < len(g.slice_results) ; i++ {
 						if strings.Contains(rumor.Text, string((g.slice_results[i])[0])) {
@@ -525,6 +579,23 @@ func (g *Gossiper) ReceiveBroadcast(message BroadcastMessage) {
 								break
 							}
 						}
+						
+						for i := 0 ; i < len(g.pending_nodes_requests) ; i++ {
+							if string(g.pending_nodes_requests[i]) == "JOIN " + msg.Origin {
+								copy(g.pending_nodes_requests[i:], g.pending_nodes_requests[i+1:])
+								g.pending_nodes_requests = g.pending_nodes_requests[:len(g.pending_nodes_requests) - 1]
+								break
+							}
+						}
+						
+						for i := 0 ; i < len(g.pending_messages_requests) ; i++ {
+							if (g.pending_messages_requests[i]).Origin == msg.Origin && (g.pending_messages_requests[i]).Recipient == msg.Recipient && bytes.Compare(g.pending_messages_requests[i].PublicKey, msg.PublicKey ) == 0 {
+								copy(g.pending_messages_requests[i:], g.pending_messages_requests[i+1:])
+								g.pending_messages_requests = g.pending_messages_requests[:len(g.pending_messages_requests) - 1]
+								break
+							}
+						}
+						
 						var final_decision int
 						if (strings.Contains(rumor.Text, "ACCEPT ")) {
 							final_decision = 1
@@ -541,7 +612,7 @@ func (g *Gossiper) ReceiveBroadcast(message BroadcastMessage) {
 			}
 		
 		} else if message.CancelRequest {
-			log.Lvl2(g.Name, " received e-voting cancellation")
+			log.Lvl1(g.Name, " received e-voting cancellation")
 			decrypted := ies.Decrypt(g.Cluster.MasterKey, message.Data)
 			var rumor RumorMessage
 			err := protobuf.Decode(decrypted, &rumor)
@@ -551,7 +622,7 @@ func (g *Gossiper) ReceiveBroadcast(message BroadcastMessage) {
 			}
 			if rumor.Text != "" {
 				//print the message
-				g.PrintEvotingCancellationStep(rumor.Text)
+				g.PrintEvotingCancellationStep(rumor.Text, rumor.Origin)
 				if g.Cluster.IsAnAuthority(g.Name) {
 					for i := 0 ; i < len(g.slice_results) ; i++ {
 						if rumor.Text == string((g.slice_results[i])[0]) {
@@ -577,7 +648,7 @@ func (g *Gossiper) ReceiveBroadcast(message BroadcastMessage) {
 			}
 			
 		} else if message.ResetIndication {
-			log.Lvl2(g.Name, " received e-voting reset")
+			log.Lvl1(g.Name, " received e-voting reset")
 			decrypted := ies.Decrypt(g.Cluster.MasterKey, message.Data)
 			var rumor RumorMessage
 			err := protobuf.Decode(decrypted, &rumor)
@@ -663,7 +734,7 @@ func (g *Gossiper) ReceiveBroadcast(message BroadcastMessage) {
 			}
 		
 		} else if message.AckResend {
-			log.Lvl2(g.Name, " received e-voting ack for request resending")
+			log.Lvl1(g.Name, " received e-voting ack for request resending")
 			decrypted := ies.Decrypt(g.Cluster.MasterKey, message.Data)
 			var rumor RumorMessage
 			err := protobuf.Decode(decrypted, &rumor)
@@ -723,7 +794,7 @@ func (g *Gossiper) ReceiveBroadcast(message BroadcastMessage) {
 				log.Error(g.Name, "Error decoding packet : ", err, "This may be due to an ongoing rollout.")
 				return
 			}
-			log.Lvl3(g.Name, "got a broadcast..from ", rumor.Origin)
+			log.Lvl2(g.Name, "got a broadcast..from ", rumor.Origin)
 
 			if rumor.Text != "" && rumor.Origin != g.Name {
 				//print the message
@@ -774,12 +845,12 @@ func (g *Gossiper) ReceiveJoinRequest(message RequestMessage) {
 	_, ok := g.Cluster.HeartBeats[message.Origin]
 	if ok {
 		//its an update message.
-		log.Lvl2(g.Name, " got an update message")
+		log.Lvl1(g.Name, " got an update message")
 		g.Cluster.PublicKeys[message.Origin] = message.PublicKey
 		return
 
 	} else {
-		log.Lvl4(g.Name, "got new request from : ", message.Origin)
+		log.Lvl1(g.Name, "got new request from : ", message.Origin)
 	}
 
 	if g.ackAll{
@@ -839,22 +910,6 @@ func (g *Gossiper) ReceiveDecisionJoinRequest(message RequestMessage, decision i
 	if g.ackAll {
 		return
 	}
-	
-	for i := 0 ; i < len(g.pending_nodes_requests) ; i++ {
-		if string(g.pending_nodes_requests[i]) == "JOIN " + message.Origin {
-			copy(g.pending_nodes_requests[i:], g.pending_nodes_requests[i+1:])
-			g.pending_nodes_requests = g.pending_nodes_requests[:len(g.pending_nodes_requests) - 1]
-			break
-		}
-	}
-	
-	for i := 0 ; i < len(g.pending_messages_requests) ; i++ {
-		if (g.pending_messages_requests[i]).Origin == message.Origin && (g.pending_messages_requests[i]).Recipient == message.Recipient && bytes.Compare(g.pending_messages_requests[i].PublicKey, message.PublicKey ) == 0 {
-			copy(g.pending_messages_requests[i:], g.pending_messages_requests[i+1:])
-			g.pending_messages_requests = g.pending_messages_requests[:len(g.pending_messages_requests) - 1]
-			break
-		}
-	}
 }
 
 //ReceiveRequestReply receive a reply for a request if the member is accepted then initiliaze the cluster.
@@ -913,7 +968,7 @@ func (g *Gossiper) KeyRollout(leader string) {
 
 		if leader != g.Name {
 			//Request to join
-			<-time.After(time.Second)
+			<-time.After(time.Second*30) // WAS *1
 			go g.RequestJoining(leader)
 		}
 
@@ -940,22 +995,22 @@ func (g *Gossiper) KeyRollout(leader string) {
 		}
 		g.Cluster.Members = nextMembers
 
-		log.Lvl2("New members for this key rollout : ", nextMembers)
+		log.Lvl1("New members for this key rollout : ", nextMembers)
 
 		//Check if received all the keys from them
 		for {
 			<-time.After(time.Second)
 			if len(g.Cluster.PublicKeys) == len(nextMembers) {
 				//we got all the maps we can generate the master key and return
-				log.Lvl2("Got all the members needed")
+				log.Lvl1("Got all the members needed")
 				err := g.AnnounceNewMasterKey()
 				if err != nil {
 					log.Error("Could not announce master key : ", err)
 				}
 				return
 			}
-			log.Lvl3("Missing some members ( have ", len(g.Cluster.PublicKeys), "need ", len(nextMembers), ")")
-			log.Lvl3(g.Cluster.PublicKeys)
+			log.Lvl1("Missing some members ( have ", len(g.Cluster.PublicKeys), "need ", len(nextMembers), ")")
+			log.Lvl2(g.Cluster.PublicKeys)
 		}
 
 	}
@@ -972,7 +1027,7 @@ func (g *Gossiper) MasterKeyGen() ies.PublicKey {
 	return kp.PublicKey
 }
 
-//AnnounceNewMasterKey anniounce the new master key and new information for this key rollout.
+//AnnounceNewMasterKey announce the new master key and new information for this key rollout.
 func (g *Gossiper) AnnounceNewMasterKey() error {
 	old := g.Cluster.MasterKey
 	g.Cluster.MasterKey = g.MasterKeyGen()
@@ -986,6 +1041,8 @@ func (g *Gossiper) AnnounceNewMasterKey() error {
 		auth[i] = g.Cluster.Members[e]
 	}
 	g.Cluster.Authorities = auth
+	
+	fmt.Println("Authorities are now", auth) //TOREMOVE
 
 	cluster := g.Cluster
 	data, err := protobuf.Encode(cluster)
@@ -1024,7 +1081,7 @@ func (g *Gossiper) UpdateCluster(message RequestMessage) {
 }
 
 func (g *Gossiper) UpdateFromReset(cluster clusters.Cluster) {
-	log.Lvl3("Update information form reset ")
+	log.Lvl1("Update information form reset ")
 
 	g.Cluster = &cluster
 	clusters.InitCounter(g.Cluster)
@@ -1033,7 +1090,7 @@ func (g *Gossiper) UpdateFromReset(cluster clusters.Cluster) {
 
 //UpdateFromRollout update information from a rollout.
 func (g *Gossiper) UpdateFromRollout(cluster clusters.Cluster) {
-	log.Lvl3("Update information form a new cluster :O ")
+	log.Lvl1("Update information form a new cluster :O ")
 
 	g.Cluster = &cluster
 	clusters.InitCounter(g.Cluster)

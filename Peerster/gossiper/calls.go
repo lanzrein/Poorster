@@ -12,7 +12,7 @@ import (
 
 	"github.com/jfreymuth/pulse"
 	"go.dedis.ch/onet/log"
-	opus "gopkg.in/hraban/opus.v2"
+//	opus "gopkg.in/hraban/opus.v2"
 )
 
 //      CALL REQUEST      //
@@ -119,7 +119,7 @@ func (g *Gossiper) SendCallResponse(resp CallResponse) {
 		g.CallStatus.InCall = true
 		g.CallStatus.ExpectingResponse = false
 		g.CallStatus.OtherParticipant = resp.Destination
-		g.initializeAudioFields()
+//		g.initializeAudioFields()
 		log.Lvl2("Accepting call from ", resp.Destination)
 	} else if resp.Status == Decline {
 		// if we decline a call request, update call status as follows ( we are NOT in another call)
@@ -146,7 +146,7 @@ func (g *Gossiper) ReceiveCallResponse(resp CallResponse) {
 			g.PrintCallAccepted(resp.Origin)
 			g.CallStatus.InCall = true
 			g.CallStatus.OtherParticipant = resp.Origin
-			g.initializeAudioFields()
+//			g.initializeAudioFields()
 		} else {
 			if resp.Status == Decline {
 				log.Lvl2("Node ", resp.Origin, " declined our call")
@@ -292,34 +292,35 @@ func (g *Gossiper) ReceiveAudio(audio AudioMessage) {
 
 //      HELPERS      //
 // ====================
-func (g *Gossiper) initializeAudioFields() {
-	// Opus Encoder initialization
-	var err error
-	g.OpusEncoder, err = opus.NewEncoder(sampleRate, numChanels, opus.AppVoIP)
-	if err != nil {
-		log.Panic(err)
-	}
-	if err := g.OpusEncoder.SetMaxBandwidth(opus.SuperWideband); err != nil {
-		log.Panic(err)
-	}
-	if err := g.OpusEncoder.SetBitrate(bitRate); err != nil {
-		log.Panic(err)
-	}
 
-	// Opus Decoder initialization
-	g.OpusDecoder, err = opus.NewDecoder(sampleRate, 1)
-	if err != nil {
-		log.Panic(err)
-	}
-
-	g.PlayBackFrame = make([]int16, bufferFragmentSize)
-	g.RecordFrame = make([]int16, bufferFragmentSize)
-	g.AudioChan = make(chan struct{})
-	g.PulseClient, err = pulse.NewClient()
-	if err != nil {
-		log.Panic(err)
-	}
-}
+//func (g *Gossiper) initializeAudioFields() {
+//	// Opus Encoder initialization
+//	var err error
+//	g.OpusEncoder, err = opus.NewEncoder(sampleRate, numChanels, opus.AppVoIP)
+//	if err != nil {
+//		log.Panic(err)
+//	}
+//	if err := g.OpusEncoder.SetMaxBandwidth(opus.SuperWideband); err != nil {
+//		log.Panic(err)
+//	}
+//	if err := g.OpusEncoder.SetBitrate(bitRate); err != nil {
+//		log.Panic(err)
+//	}
+//
+//	// Opus Decoder initialization
+//	g.OpusDecoder, err = opus.NewDecoder(sampleRate, 1)
+//	if err != nil {
+//		log.Panic(err)
+//	}
+//
+//	g.PlayBackFrame = make([]int16, bufferFragmentSize)
+//	g.RecordFrame = make([]int16, bufferFragmentSize)
+//	g.AudioChan = make(chan struct{})
+//	g.PulseClient, err = pulse.NewClient()
+//	if err != nil {
+//		log.Panic(err)
+//	}
+//}
 
 func (g *Gossiper) record() {
 
@@ -328,7 +329,7 @@ func (g *Gossiper) record() {
 		log.Panic(err)
 	}
 
-	data := make([]byte, bufferFragmentSize)
+//	data := make([]byte, bufferFragmentSize)
 	bufRec := &buffer{}
 
 	g.RecordStream, err = pa.NewRecord(
@@ -339,14 +340,14 @@ func (g *Gossiper) record() {
 			}
 
 			bufRec.Read(g.RecordFrame)
-			nEnc, err := g.OpusEncoder.Encode(g.RecordFrame, data)
+//			nEnc, err := g.OpusEncoder.Encode(g.RecordFrame, data)
 			if err != nil {
 				log.Panic(err)
 			}
 
-			audioData := AudioData{Data: data, EncryptedN: nEnc}
-			audio := AudioMessage{Origin: g.Name, Destination: g.CallStatus.OtherParticipant, Content: audioData}
-			g.ReceiveAudio(audio)
+//			audioData := AudioData{Data: data, EncryptedN: nEnc}
+//			audio := AudioMessage{Origin: g.Name, Destination: g.CallStatus.OtherParticipant, Content: audioData}
+//			g.ReceiveAudio(audio)
 			select {
 			case <-g.AudioChan:
 				fmt.Println("\n Finish recording.")
@@ -370,11 +371,11 @@ func (g *Gossiper) play(data []byte, nEnc int, pa *pulse.Client) {
 	var err error
 	g.PlaybackStream, err = pa.NewPlayback(
 		func(p []int16) {
-			nDec, err := g.OpusDecoder.Decode(data[:nEnc], g.PlayBackFrame)
+//			nDec, err := g.OpusDecoder.Decode(data[:nEnc], g.PlayBackFrame)
 			if err != nil {
 				log.Panic(err)
 			}
-			bufPlay.Write(g.PlayBackFrame[:nDec])
+//			bufPlay.Write(g.PlayBackFrame[:nDec])
 			bufPlay.Read(p)
 		},
 		pulse.PlaybackMono,
