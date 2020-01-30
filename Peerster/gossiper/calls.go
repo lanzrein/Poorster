@@ -20,7 +20,9 @@ import (
 
 //ClientSendCallRequest handles the call request form the client
 func (g *Gossiper) ClientSendCallRequest(destination string) {
-	if !g.CallStatus.ExpectingResponse && !g.CallStatus.InCall {
+	if strings.Compare(destination, g.Name) == 0 {
+		log.Lvl2("Cannot call yourself")
+	} else if !g.CallStatus.ExpectingResponse && !g.CallStatus.InCall {
 		canSend := g.NodeCanSendAnonymousPacket(destination)
 		if canSend {
 			callRequest := CallRequest{Origin: g.Name, Destination: destination}
@@ -36,9 +38,10 @@ func (g *Gossiper) ClientSendCallRequest(destination string) {
 
 //ReceiveCallRequest handles a call request packet
 func (g *Gossiper) ReceiveCallRequest(req CallRequest) {
-	if req.Destination == g.Name {
+	if strings.Compare(req.Destination, g.Name) == 0 && strings.Compare(req.Origin, g.Name) != 0 {
 		// call request is for us
 		log.Lvl2("Received a call request from: ", req.Origin)
+		g.CallStatus.IncomingCall = true
 		g.PrintCallRequest(req)
 		addr := g.FindPath(req.Origin)
 		if addr == "" {
@@ -60,6 +63,7 @@ func (g *Gossiper) ReceiveCallRequest(req CallRequest) {
 			// 	log.Error(err)
 			// }
 			g.SendCallResponse(callResp)
+			g.CallStatus.IncomingCall = false
 		} else {
 			g.CallStatus.OtherParticipant = req.Origin
 			// terminal prompt
@@ -80,6 +84,7 @@ func (g *Gossiper) ReceiveCallRequest(req CallRequest) {
 				}
 				// send ACCEPT or DECLINE response
 				g.SendCallResponse(callResp)
+				g.CallStatus.IncomingCall = false
 			}()
 		}
 	} else {
@@ -116,31 +121,33 @@ func (g *Gossiper) ReceiveCallRequest(req CallRequest) {
 
 //SendCallResponse sends a call response to the origin of the call
 func (g *Gossiper) SendCallResponse(resp CallResponse) {
-	if resp.Status == Accept {
-		// if we accept a call request, update call status as follows
-		g.CallStatus.InCall = true
-		g.CallStatus.ExpectingResponse = false
-		g.CallStatus.OtherParticipant = resp.Destination
-		g.initializeAudioFields()
-		g.ClientStartRecording()
-		log.Lvl2("Accepting call from ", resp.Destination)
-	} else if resp.Status == Decline {
-		// if we decline a call request, update call status as follows ( we are NOT in another call)
-		g.CallStatus.InCall = false
-		g.CallStatus.ExpectingResponse = false
-		g.CallStatus.OtherParticipant = ""
-		log.Lvl2("Declining call from ", resp.Destination)
-	}
-	// the last possibility is if respond with BUSY - meaning we are in another call,
-	//    so call status has been updated either when ACCEPTING someone's request, or
-	//    having our request ACCEPTED by someone else - e.g. UPDATE NOTHING
+	if g.CallStatus.IncomingCall {
+		if resp.Status == Accept {
+			// if we accept a call request, update call status as follows
+			g.CallStatus.InCall = true
+			g.CallStatus.ExpectingResponse = false
+			g.CallStatus.OtherParticipant = resp.Destination
+			g.initializeAudioFields()
+			g.ClientStartRecording()
+			log.Lvl2("Accepting call from ", resp.Destination)
+		} else if resp.Status == Decline {
+			// if we decline a call request, update call status as follows ( we are NOT in another call)
+			g.CallStatus.InCall = false
+			g.CallStatus.ExpectingResponse = false
+			g.CallStatus.OtherParticipant = ""
+			log.Lvl2("Declining call from ", resp.Destination)
+		}
+		// the last possibility is if respond with BUSY - meaning we are in another call,
+		//    so call status has been updated either when ACCEPTING someone's request, or
+		//    having our request ACCEPTED by someone else - e.g. UPDATE NOTHING
 
-	g.ReceiveCallResponse(resp)
+		g.ReceiveCallResponse(resp)
+	}
 }
 
 //ReceiveCallResponse handles a packet of a call response and initializes the call
 func (g *Gossiper) ReceiveCallResponse(resp CallResponse) {
-	if strings.Compare(resp.Destination, g.Name) == 0 {
+	if strings.Compare(resp.Destination, g.Name) == 0 && strings.Compare(resp.Origin, g.Name) != 0 {
 		// we received a call response
 		// check if we had sent a call request to the sender
 		g.CallStatus.ExpectingResponse = false
@@ -203,7 +210,7 @@ func (g *Gossiper) ClientSendHangUpMessage() {
 
 //ReceiveHangUpMessage handles the packet and hangs up the call if there is one.
 func (g *Gossiper) ReceiveHangUpMessage(hangUp HangUp) {
-	if strings.Compare(hangUp.Destination, g.Name) == 0 {
+	if strings.Compare(hangUp.Destination, g.Name) == 0 && strings.Compare(hangUp.Origin, g.Name) != 0 {
 		// the other call participant wants to hangup on us
 		if strings.Compare(hangUp.Origin, g.CallStatus.OtherParticipant) == 0 {
 			log.Lvl2("Node ", hangUp.Origin, " hung up on us")
@@ -267,6 +274,7 @@ func (g *Gossiper) ClientStopRecording() {
 func (g *Gossiper) ReceiveAudio(audio AudioMessage) {
 	if g.CallStatus.InCall {
 		if strings.Compare(audio.Destination, g.Name) == 0 &&
+			strings.Compare(audio.Origin, g.Name) != 0 &&
 			strings.Compare(audio.Origin, g.CallStatus.OtherParticipant) == 0 {
 			// if we are in a call with the sender of this audio and it was intended for us
 			//		listen to it

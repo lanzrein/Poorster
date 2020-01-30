@@ -146,38 +146,39 @@ type Gossiper struct {
 
 	//Stuff for project
 
-	Keypair                   *ies.KeyPair
-	Cluster                   *clusters.Cluster
-	LeaveChan                 chan bool
-	Keys                      map[string]ies.PublicKey
-	HearbeatTimer             int
-	RolloutTimer              int //timer in seconds ~~ usually 300
-	CallStatus                GossiperCallStatus
-	PulseClient               *pulse.Client
-	RecordStream              *pulse.RecordStream
-	RecordFrame               []int16
-	PlaybackStream            *pulse.PlaybackStream
-	PlayBackFrame             []int16
-	AudioDataSlice            []byte
-	OpusEncoder               *opus.Encoder
-	OpusDecoder               *opus.Decoder
-	AudioChan                 chan struct{}
-	is_authority              bool
-	nb_authorities            int
-	slice_results             [][]string
-	acks_cases                map[string][]string
-	correct_results_rcv       map[string][]string
-	reset_requests map[string][]string
+	Keypair                       *ies.KeyPair
+	Cluster                       *clusters.Cluster
+	LeaveChan                     chan bool
+	Keys                          map[string]ies.PublicKey
+	HearbeatTimer                 int
+	RolloutTimer                  int //timer in seconds ~~ usually 300
+	CallStatus                    GossiperCallStatus
+	PulseClient                   *pulse.Client
+	RecordStream                  *pulse.RecordStream
+	RecordFrame                   []int16
+	PlaybackStream                *pulse.PlaybackStream
+	PlayBackFrame                 []int16
+	AudioDataSlice                []byte
+	OpusEncoder                   *opus.Encoder
+	OpusDecoder                   *opus.Decoder
+	AudioChan                     chan struct{}
+	is_authority                  bool
+	nb_authorities                int
+	slice_results                 [][]string
+	acks_cases                    map[string][]string
+	correct_results_rcv           map[string][]string
+	reset_requests                map[string][]string
 	members_ready_resend_requests map[string][]string
-	pending_nodes_requests    []string
-	pending_messages_requests []RequestMessage
-	displayed_requests        []string
+	pending_nodes_requests        []string
+	pending_messages_requests     []RequestMessage
+	displayed_requests            []string
 }
 
 type GossiperCallStatus struct {
 	InCall            bool
 	OtherParticipant  string
 	ExpectingResponse bool
+	IncomingCall      bool
 }
 
 //TimeMapping the mapping of the time <-> id for each known gossiper.

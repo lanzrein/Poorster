@@ -312,7 +312,12 @@ func (g *Gossiper) PrintEvotingDecisionStep(decision string) {
 
 //PrintPrivateMessage prints a received private messages
 func (g *Gossiper) PrintAnonymousPrivateMessage(message PrivateMessage) {
-	s := fmt.Sprint("ANONYMOUS contents ", message.Text, "\n")
+	var s string
+	if message.Origin == "" {
+		s = fmt.Sprint("FULLY ANONYMOUS contents ", message.Text, "\n")
+	} else {
+		s = fmt.Sprint("ANONYMOUS from ", message.Origin, " with contents ", message.Text, "\n")
+	}
 	fmt.Print(s)
 	g.WriteToBuffer(s)
 }

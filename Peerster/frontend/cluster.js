@@ -105,9 +105,8 @@ let currently_calling;
 
 
 function accept_call(){
-    let callee = $("#callee").text()
-    currently_calling = callee;
-    val = { "Accept" : true, "Member":callee};
+    val = { "Accept" : true, "Member":$("#callee").text()};
+    currently_calling = val.Member;
     post_call_data(val)
     console.log("Accept on :", JSON.stringify(val));
 }
