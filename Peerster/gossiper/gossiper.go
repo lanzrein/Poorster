@@ -316,6 +316,12 @@ func (g *Gossiper) ReadFromPort(errChan chan error, conn net.UDPConn, client boo
 				log.Lvl1("Message joining request.")
 				g.RequestJoining(*msg.JoinOther)
 				continue
+			} else if msg.ExpelOther != nil {
+				log.Lvl1("Message expel request.")
+				if g.Cluster.AmountAuthorities() > 1 && len(g.Cluster.Members) > 2 {
+					g.RequestExpelling(*msg.ExpelOther)
+				}
+				continue
 			} else if msg.LeaveCluster != nil && *msg.LeaveCluster {
 				g.LeaveCluster()
 				continue

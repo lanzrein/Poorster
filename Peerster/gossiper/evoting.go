@@ -52,6 +52,48 @@ func (g *Gossiper) BroadcastJoin(nodeToJoin string) {
 	g.ReceiveBroadcast(bm)
 }
 
+func (g *Gossiper) BroadcastExpel(nodeToExpel string) {
+	rumor := RumorMessage{
+		Origin: g.Name,
+		ID:     0,
+		Text:   nodeToExpel,
+	}
+	data, err := protobuf.Encode(&rumor)
+	if err != nil {
+		log.Error("Could not encode the packet.. ", err)
+		return
+	}
+
+	enc := ies.Encrypt(g.Cluster.MasterKey, data)
+	bm := BroadcastMessage{
+		ClusterID:   *g.Cluster.ClusterID,
+		HopLimit:    g.HopLimit,
+		Destination: "",
+		Data:        enc,
+		ExpelRequest: true,
+	}
+	gp := GossipPacket{Broadcast: &bm}
+
+	//Send to all member of the cluster.
+	//This does not need to be anonymized as an attacker can in any case know who is in a cluster by joining it..
+	for _, m := range g.Cluster.Members {
+		if m == g.Name {
+			continue
+		}
+		bm.Destination = m
+		addr := g.FindPath(m)
+		if addr == "" {
+			continue
+		}
+		err := g.SendTo(addr, gp)
+		if err != nil {
+			log.Error("Error while sending to ", m, " : ", err)
+		}
+	}
+	bm.Destination = g.Name
+	g.ReceiveBroadcast(bm)
+}
+
 
 //BroadcastAccept broadcast to all parties that the gossiper accepts this node
 func (g *Gossiper) BroadcastAccept(nodeToAccept string) {

@@ -281,8 +281,15 @@ func (g *Gossiper) PrintDeniedJoining(clusterID uint64) {
 	g.WriteToBuffer(s)
 }
 
+func (g *Gossiper) PrintDeniedExpelling(clusterID uint64) {
+	str := strconv.FormatUint(clusterID, 10)
+	s := fmt.Sprintf("A REQUEST TO EXPEL YOU FROM CLUSTER %s HAS BEEN DENIED\n", str)
+	fmt.Print(s)
+	g.WriteToBuffer(s)
+}
+
 func (g *Gossiper) PrintAcceptJoiningID(cluster clusters.Cluster) {
-	s := fmt.Sprintf("REQUEST TO JOIN %d ACCEPTED. CURRENT MEMBERS : ", cluster.ClusterID)
+	s := fmt.Sprintf("REQUEST TO JOIN CLUSTER %d ACCEPTED. CURRENT MEMBERS : ", cluster.ClusterID)
 	for i, member := range cluster.Members {
 		s += fmt.Sprintf("%s", member)
 		if i < len(cluster.Members)-1 {
@@ -291,6 +298,13 @@ func (g *Gossiper) PrintAcceptJoiningID(cluster clusters.Cluster) {
 	}
 
 	s += fmt.Sprint(".\n")
+	fmt.Print(s)
+	g.WriteToBuffer(s)
+}
+
+func (g *Gossiper) PrintGotExpelled(clusterID uint64) {
+	str := strconv.FormatUint(clusterID, 10)
+	s := fmt.Sprintf("A REQUEST TO EXPEL YOU FROM CLUSTER %s HAS BEEN ACCEPTED.", str)
 	fmt.Print(s)
 	g.WriteToBuffer(s)
 }
@@ -319,27 +333,51 @@ func (g *Gossiper) PrintEvotingJoinStep(node string) {
 	fmt.Print(s)
 }
 
+func (g *Gossiper) PrintEvotingExpelStep(node string) {
+	if node != g.Name {
+		s := fmt.Sprintf("WAITING FOR CLIENT TO ACCEPT/DENY EXPEL REQUEST FOR %s\n", node)
+		g.WriteToBuffer(s)
+		fmt.Print(s)
+	}
+}
+
 func (g *Gossiper) PrintEvotingPropositionStep(rcvProp int, node string, origin string) {
 	var s string
 	if rcvProp == 1 {
-		s = fmt.Sprintf("RECEIVED ACCEPT FOR CASE %s FROM %s\n", node, origin)
+		if node != g.Name {
+			s = fmt.Sprintf("RECEIVED ACCEPT FOR CASE CONCERNING NODE %s FROM %s\n", node, origin)
+			g.WriteToBuffer(s)
+			fmt.Print(s)
+		}
 	} else { // receivedAnswer == 0
-		s = fmt.Sprintf("RECEIVED DENY FOR CASE %s FROM %s\n", node, origin)
+		if node != g.Name {
+			s = fmt.Sprintf("RECEIVED DENY FOR CASE CONCERNING NODE %s FROM %s\n", node, origin)
+			g.WriteToBuffer(s)
+			fmt.Print(s)
+		}
 	}
-	g.WriteToBuffer(s)
-	fmt.Print(s)
 }
 
 func (g *Gossiper) PrintEvotingCaseStep(caseStep string, authOrigin string) {
-	s := fmt.Sprintf("RECEIVED COMPARISON REQUEST FOR CASE %s FROM %s\n", caseStep, authOrigin)
-	g.WriteToBuffer(s)
-	fmt.Print(s)
+	if strings.Contains(caseStep, g.Name) == false {
+		s := fmt.Sprintf("RECEIVED COMPARISON REQUEST FOR CASE %s FROM %s\n", caseStep, authOrigin)
+		g.WriteToBuffer(s)
+		fmt.Print(s)
+	}
 }
 
 func (g *Gossiper) PrintEvotingValidationStep(results []string, authOrigin string) {
-	s := fmt.Sprintf("RECEIVED RESULTS LIST %x FOR VALIDATION FROM %s\n", results, authOrigin)
-	g.WriteToBuffer(s)
-	fmt.Print(s)
+	if strings.Contains(results[0], "EXPEL") {
+		if (results[0])[6:] != g.Name {
+			s := fmt.Sprintf("RECEIVED RESULTS LIST %x FOR VALIDATION FROM %s\n", results, authOrigin)
+			g.WriteToBuffer(s)
+			fmt.Print(s)
+		}
+	} else { // strings.Contains(results[0], "EXPEL") == false
+		s := fmt.Sprintf("RECEIVED RESULTS LIST %x FOR VALIDATION FROM %s\n", results, authOrigin)
+		g.WriteToBuffer(s)
+		fmt.Print(s)
+	}
 }
 
 func (g *Gossiper) PrintEvotingDecisionStep(decision string, memberOrigin string) {
@@ -355,9 +393,11 @@ func (g *Gossiper) PrintEvotingCancellationStep(cancelCase string, authOrigin st
 }
 
 func (g *Gossiper) PrintEvotingResetStep(memberReset string, caseReset string) {
-	s := fmt.Sprintf("RECEIVED RESET FROM MEMBER %s FOR CASE %s\n", memberReset, caseReset)
-	g.WriteToBuffer(s)
-	fmt.Print(s)
+	if strings.Contains(caseReset, g.Name) == false {
+		s := fmt.Sprintf("RECEIVED RESET FROM MEMBER %s FOR CASE %s\n", memberReset, caseReset)
+		g.WriteToBuffer(s)
+		fmt.Print(s)
+	}
 }
 
 func (g *Gossiper) PrintEvotingResendStep(memberAck string, request string) {

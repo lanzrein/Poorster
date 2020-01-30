@@ -27,6 +27,7 @@ func main() {
 	broadcast := flag.Bool("broadcast", false, "Broadcast flag")
 	initcluster := flag.Bool("initcluster", false, "Initialize a new cluster at this node")
 	joinOther := flag.String("joinOther", "", "Name of the peer that is the entry point to the cluster")
+	expelOther := flag.String("expelOther", "", "Name of the peer to ban from the cluster")
 	leavecluster := flag.Bool("leavecluster", false, "Leave the current cluster")
 
 	// anonymous messaging
@@ -89,6 +90,8 @@ func main() {
 		client.InitCluster()
 	} else if *joinOther != "" {
 		client.JoinCluster(joinOther)
+	} else if *expelOther != "" {
+		client.ExpelFromCluster(expelOther)
 	} else if *leavecluster {
 		client.LeaveCluster()
 	} else if *hangUp {
