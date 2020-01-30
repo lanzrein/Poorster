@@ -281,7 +281,7 @@ func (g *Gossiper) RemoveFromWaitingList(addr string) RumorMessage {
 	orig := g.wl.list[addr]
 	//make safe copy
 	rm := RumorMessage{
-		orig.Origin, orig.ID, orig.Text,[]string{},
+		orig.Origin, orig.ID, orig.Text, []string{},
 	}
 	delete(g.wl.list, addr)
 	g.wl.mu.Unlock()

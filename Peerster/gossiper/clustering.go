@@ -21,7 +21,8 @@ import (
 //Constant values
 const DEFAULTROLLOUT = 180 // WAS 300
 const DEFAULTHEARTBEAT = 5
-var ClusterUpdated = make(chan(bool),1)
+
+var ClusterUpdated = make(chan (bool), 1)
 
 //InitCounter the current gossiper creates a cluster where he is the sole member
 func (g *Gossiper) InitCluster() {
@@ -51,7 +52,7 @@ func (g *Gossiper) RequestJoining(other string) {
 		PublicKey: publickey,
 	}
 
-	gp := GossipPacket{JoinRequest: &req}	
+	gp := GossipPacket{JoinRequest: &req}
 	go g.SendTo(addr, gp)
 	//then the "voting" system starts
 
@@ -253,11 +254,11 @@ func (g *Gossiper) ReceiveBroadcast(message BroadcastMessage) {
 								}
 							}
 							if is_existing == false {
-			g.slice_results[i] = append(g.slice_results[i], "1 : " + rumor.Origin)
+								g.slice_results[i] = append(g.slice_results[i], "1 : "+rumor.Origin)
 
 								log.Lvl2(g.slice_results)
 
-								if len(g.Cluster.Members) == len(g.slice_results[i]) - 1 {
+								if len(g.Cluster.Members) == len(g.slice_results[i])-1 {
 									g.BroadcastCollected(g.slice_results[i][0])
 								}
 							}
@@ -299,11 +300,11 @@ func (g *Gossiper) ReceiveBroadcast(message BroadcastMessage) {
 								}
 							}
 							if is_existing == false {
-						g.slice_results[i] = append(g.slice_results[i], "0 : " + rumor.Origin)
+								g.slice_results[i] = append(g.slice_results[i], "0 : "+rumor.Origin)
 
 								fmt.Println(g.slice_results) //TOREMOVE
 
-								if len(g.Cluster.Members) == len(g.slice_results[i]) - 1 {
+								if len(g.Cluster.Members) == len(g.slice_results[i])-1 {
 									g.BroadcastCollected(g.slice_results[i][0])
 								}
 							}
@@ -353,14 +354,14 @@ func (g *Gossiper) ReceiveBroadcast(message BroadcastMessage) {
 
 					if g.Cluster.AmountAuthorities() == len(g.acks_cases[rumor.Text]) {
 
-						for j := 0 ; j < len(g.slice_results) ; j++ {
+						for j := 0; j < len(g.slice_results); j++ {
 							if string((g.slice_results[j])[0]) == rumor.Text {
-								if (g.Cluster.AmountAuthorities() > 1) {
+								if g.Cluster.AmountAuthorities() > 1 {
 									g.BroadcastResults(g.slice_results[j])
 								} else { // g.Cluster.AmountAuthorities() == 1
 									accept_counts := 0
 									deny_counts := 0
-									for k := 1 ; k < len(g.slice_results[j]) ; k++ {
+									for k := 1; k < len(g.slice_results[j]); k++ {
 										str := string(((g.slice_results[j])[k])[0])
 										if str == "1" {
 											accept_counts++
@@ -371,10 +372,10 @@ func (g *Gossiper) ReceiveBroadcast(message BroadcastMessage) {
 									if deny_counts == accept_counts {
 										accept_counts = 0
 										deny_counts = 0
-										for l := 1 ; l < len(g.slice_results[j]) ; l++ {
+										for l := 1; l < len(g.slice_results[j]); l++ {
 											str := (g.slice_results[j])[l]
 											list_authorities := g.acks_cases[rumor.Text]
-											for m := 0 ; m < len(list_authorities) ; m++ {
+											for m := 0; m < len(list_authorities); m++ {
 												if string(str[4:]) == list_authorities[m] {
 													str = string(str[0])
 													if str == "1" {
@@ -461,8 +462,7 @@ func (g *Gossiper) ReceiveBroadcast(message BroadcastMessage) {
 							}
 						}
 
-
-						if g.Cluster.AmountAuthorities() - 1 == len(g.correct_results_rcv[rumor.Results[0]]) {
+						if g.Cluster.AmountAuthorities()-1 == len(g.correct_results_rcv[rumor.Results[0]]) {
 							accept_counts := 0
 							deny_counts := 0
 							for i := 0; i < len(g.slice_results); i++ {
@@ -584,18 +584,18 @@ func (g *Gossiper) ReceiveBroadcast(message BroadcastMessage) {
 							}
 						}
 
-						for i := 0 ; i < len(g.pending_nodes_requests) ; i++ {
-							if string(g.pending_nodes_requests[i]) == "JOIN " + msg.Origin {
+						for i := 0; i < len(g.pending_nodes_requests); i++ {
+							if string(g.pending_nodes_requests[i]) == "JOIN "+msg.Origin {
 								copy(g.pending_nodes_requests[i:], g.pending_nodes_requests[i+1:])
-								g.pending_nodes_requests = g.pending_nodes_requests[:len(g.pending_nodes_requests) - 1]
+								g.pending_nodes_requests = g.pending_nodes_requests[:len(g.pending_nodes_requests)-1]
 								break
 							}
 						}
 
-						for i := 0 ; i < len(g.pending_messages_requests) ; i++ {
-							if (g.pending_messages_requests[i]).Origin == msg.Origin && (g.pending_messages_requests[i]).Recipient == msg.Recipient && bytes.Compare(g.pending_messages_requests[i].PublicKey, msg.PublicKey ) == 0 {
+						for i := 0; i < len(g.pending_messages_requests); i++ {
+							if (g.pending_messages_requests[i]).Origin == msg.Origin && (g.pending_messages_requests[i]).Recipient == msg.Recipient && bytes.Compare(g.pending_messages_requests[i].PublicKey, msg.PublicKey) == 0 {
 								copy(g.pending_messages_requests[i:], g.pending_messages_requests[i+1:])
-								g.pending_messages_requests = g.pending_messages_requests[:len(g.pending_messages_requests) - 1]
+								g.pending_messages_requests = g.pending_messages_requests[:len(g.pending_messages_requests)-1]
 								break
 							}
 						}
@@ -692,10 +692,9 @@ func (g *Gossiper) ReceiveBroadcast(message BroadcastMessage) {
 					if len(g.reset_requests[rumor.Text]) == len(g.Cluster.Members) {
 						delete(g.reset_requests, rumor.Text)
 
-
-						numbers := (len(g.Cluster.Members) + 1 ) / 2
-						if numbers % 2 == 0 {
-							numbers ++
+						numbers := (len(g.Cluster.Members) + 1) / 2
+						if numbers%2 == 0 {
+							numbers++
 						}
 						idx := rand.Perm(len(g.Cluster.Members))[:numbers]
 						auth := make([]string, numbers)
@@ -776,8 +775,7 @@ func (g *Gossiper) ReceiveBroadcast(message BroadcastMessage) {
 						g.members_ready_resend_requests[rumor.Text] = []string{rumor.Origin}
 					}
 
-
-					if len(g.members_ready_resend_requests[rumor.Text]) == len(g.Cluster.Members) - 1 {
+					if len(g.members_ready_resend_requests[rumor.Text]) == len(g.Cluster.Members)-1 {
 						delete(g.members_ready_resend_requests, rumor.Text)
 
 						if strings.Contains(rumor.Text, "JOIN ") {
@@ -970,26 +968,25 @@ func (g *Gossiper) KeyRollout(leader string) {
 	}
 
 	//go func() {
-		log.Lvl1(g.Name, "sending a rollout update to ", leader)
-		g.Cluster.PublicKeys[g.Name] = g.Keypair.PublicKey
+	log.Lvl1(g.Name, "sending a rollout update to ", leader)
+	g.Cluster.PublicKeys[g.Name] = g.Keypair.PublicKey
 
-		if leader != g.Name {
-			//Request to join
-			done := false
-			for !done {
-				select{
-				case <-time.After(time.Second * 5):
-					go g.RequestJoining(leader)
+	if leader != g.Name {
+		//Request to join
+		done := false
+		for !done {
+			select {
+			case <-time.After(time.Second * 5):
+				go g.RequestJoining(leader)
 
-					break
-				case <- ClusterUpdated:
-					done = true
-					break
-				}
+				break
+			case <-ClusterUpdated:
+				done = true
+				break
 			}
-
 		}
 
+	}
 
 	//}()
 
@@ -1016,7 +1013,7 @@ func (g *Gossiper) KeyRollout(leader string) {
 
 		//Check if received all the keys from them
 		for {
-			<-time.After(5*time.Second)
+			<-time.After(5 * time.Second)
 			if len(g.Cluster.PublicKeys) == len(nextMembers) {
 				//we got all the maps we can generate the master key and return
 				log.Lvl1("Got all the members needed")
@@ -1058,7 +1055,7 @@ func (g *Gossiper) AnnounceNewMasterKey() error {
 		auth[i] = g.Cluster.Members[e]
 	}
 	g.Cluster.Authorities = auth
-	
+
 	fmt.Println("Authorities are now", auth) //TOREMOVE
 
 	cluster := g.Cluster

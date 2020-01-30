@@ -361,7 +361,6 @@ func (g *Gossiper) PrintHangUp(callee string) {
 	g.WriteToBuffer(s)
 }
 
-
 func (g *Gossiper) PrintEvotingCancellationStep(cancelCase string, authOrigin string) {
 	s := fmt.Sprintf("RECEIVED CANCELLATION FOR CASE %s FROM %s\n", cancelCase, authOrigin)
 	g.WriteToBuffer(s)

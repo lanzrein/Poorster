@@ -46,15 +46,15 @@ func NewCluster(id *uint64, members []string, masterkey ies.PublicKey, publickey
 	source := rand.New(rand.NewSource(int64(seed)))
 
 	return Cluster{
-		ClusterID:  id,
-		Members:    members,
-		MasterKey:  masterkey,
-		PublicKeys: publickey,
-		HeartBeats: make(map[string]bool),
-		Seed : seed ,
-		source : source,
-		Counter: 0 ,
-		Authorities : authorities,
+		ClusterID:   id,
+		Members:     members,
+		MasterKey:   masterkey,
+		PublicKeys:  publickey,
+		HeartBeats:  make(map[string]bool),
+		Seed:        seed,
+		source:      source,
+		Counter:     0,
+		Authorities: authorities,
 	}
 }
 

@@ -46,14 +46,15 @@ func Encrypt(key []byte, msg []byte) []byte {
 	return buf.Bytes()
 
 }
+
 //Computes trailing zeros of a message. max 255
-func TrailingZeros(msg []byte) byte{
+func TrailingZeros(msg []byte) byte {
 	cnt := byte(0)
-	for i := len(msg) - 1 ; i >= 0; i -- {
+	for i := len(msg) - 1; i >= 0; i-- {
 		if msg[i] != 0 {
 			return cnt
 		}
-		cnt ++
+		cnt++
 	}
 	return 255
 }

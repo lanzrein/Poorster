@@ -52,7 +52,6 @@ func (g *Gossiper) BroadcastJoin(nodeToJoin string) {
 	g.ReceiveBroadcast(bm)
 }
 
-
 //BroadcastAccept broadcast to all parties that the gossiper accepts this node
 func (g *Gossiper) BroadcastAccept(nodeToAccept string) {
 	rumor := RumorMessage{
@@ -68,10 +67,10 @@ func (g *Gossiper) BroadcastAccept(nodeToAccept string) {
 
 	enc := ies.Encrypt(g.Cluster.MasterKey, data)
 	bm := BroadcastMessage{
-		ClusterID:   	   *g.Cluster.ClusterID,
-		HopLimit:    	   g.HopLimit,
-		Destination: 	   "",
-		Data:        	   enc,
+		ClusterID:         *g.Cluster.ClusterID,
+		HopLimit:          g.HopLimit,
+		Destination:       "",
+		Data:              enc,
 		AcceptProposition: true,
 	}
 	gp := GossipPacket{Broadcast: &bm}
@@ -111,10 +110,10 @@ func (g *Gossiper) BroadcastDeny(nodeToDeny string) {
 
 	enc := ies.Encrypt(g.Cluster.MasterKey, data)
 	bm := BroadcastMessage{
-		ClusterID:   	 *g.Cluster.ClusterID,
-		HopLimit:    	 g.HopLimit,
-		Destination: 	 "",
-		Data:        	 enc,
+		ClusterID:       *g.Cluster.ClusterID,
+		HopLimit:        g.HopLimit,
+		Destination:     "",
+		Data:            enc,
 		DenyProposition: true,
 	}
 	gp := GossipPacket{Broadcast: &bm}
@@ -196,10 +195,10 @@ func (g *Gossiper) BroadcastResults(results []string) {
 
 	enc := ies.Encrypt(g.Cluster.MasterKey, data)
 	bm := BroadcastMessage{
-		ClusterID:   	   *g.Cluster.ClusterID,
-		HopLimit:    	   g.HopLimit,
-		Destination: 	   "",
-		Data:        	   enc,
+		ClusterID:         *g.Cluster.ClusterID,
+		HopLimit:          g.HopLimit,
+		Destination:       "",
+		Data:              enc,
 		ResultsValidation: true,
 	}
 	gp := GossipPacket{Broadcast: &bm}
@@ -237,11 +236,11 @@ func (g *Gossiper) BroadcastDecision(answer string) {
 
 	enc := ies.Encrypt(g.Cluster.MasterKey, data)
 	bm := BroadcastMessage{
-		ClusterID:   	*g.Cluster.ClusterID,
-		HopLimit:    	g.HopLimit,
-		Destination: 	"",
-		Data:        	enc,
-		FinalDecision:  true,
+		ClusterID:     *g.Cluster.ClusterID,
+		HopLimit:      g.HopLimit,
+		Destination:   "",
+		Data:          enc,
+		FinalDecision: true,
 	}
 	gp := GossipPacket{Broadcast: &bm}
 
@@ -279,11 +278,11 @@ func (g *Gossiper) BroadcastCancel(caseToCancel string) {
 
 	enc := ies.Encrypt(g.Cluster.MasterKey, data)
 	bm := BroadcastMessage{
-		ClusterID:   	*g.Cluster.ClusterID,
-		HopLimit:    	g.HopLimit,
-		Destination: 	"",
-		Data:        	enc,
-		CancelRequest:  true,
+		ClusterID:     *g.Cluster.ClusterID,
+		HopLimit:      g.HopLimit,
+		Destination:   "",
+		Data:          enc,
+		CancelRequest: true,
 	}
 	gp := GossipPacket{Broadcast: &bm}
 
@@ -311,7 +310,7 @@ func (g *Gossiper) BroadcastReset(caseReset string) {
 	rumor := RumorMessage{
 		Origin: g.Name,
 		ID:     0,
-		Text: 	caseReset,
+		Text:   caseReset,
 	}
 	data, err := protobuf.Encode(&rumor)
 	if err != nil {
@@ -321,11 +320,11 @@ func (g *Gossiper) BroadcastReset(caseReset string) {
 
 	enc := ies.Encrypt(g.Cluster.MasterKey, data)
 	bm := BroadcastMessage{
-		ClusterID:   	  *g.Cluster.ClusterID,
-		HopLimit:    	  g.HopLimit,
-		Destination: 	  "",
-		Data:        	  enc,
-		ResetIndication:  true,
+		ClusterID:       *g.Cluster.ClusterID,
+		HopLimit:        g.HopLimit,
+		Destination:     "",
+		Data:            enc,
+		ResetIndication: true,
 	}
 	gp := GossipPacket{Broadcast: &bm}
 
@@ -353,7 +352,7 @@ func (g *Gossiper) BroadcastAck(requestToResend string) {
 	rumor := RumorMessage{
 		Origin: g.Name,
 		ID:     0,
-		Text: 	requestToResend,
+		Text:   requestToResend,
 	}
 	data, err := protobuf.Encode(&rumor)
 	if err != nil {
@@ -363,11 +362,11 @@ func (g *Gossiper) BroadcastAck(requestToResend string) {
 
 	enc := ies.Encrypt(g.Cluster.MasterKey, data)
 	bm := BroadcastMessage{
-		ClusterID:   	  *g.Cluster.ClusterID,
-		HopLimit:    	  g.HopLimit,
-		Destination: 	  "",
-		Data:        	  enc,
-		AckResend:  	  true,
+		ClusterID:   *g.Cluster.ClusterID,
+		HopLimit:    g.HopLimit,
+		Destination: "",
+		Data:        enc,
+		AckResend:   true,
 	}
 	gp := GossipPacket{Broadcast: &bm}
 

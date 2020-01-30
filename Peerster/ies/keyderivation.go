@@ -43,7 +43,6 @@ func (kp *KeyPair) KeyDerivation(public *PublicKey) []byte {
 	return masterKey
 }
 
-
 func combineKeys(sk *PrivateKey, pk *PublicKey) []byte {
 	//we need to do sk*pk
 	var shared []byte

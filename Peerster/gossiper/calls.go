@@ -5,15 +5,15 @@ package gossiper
 import (
 	"bufio"
 	"fmt"
-	"os"
 	"gopkg.in/hraban/opus.v2"
+	"os"
 	"strings"
 	"sync"
 	"time"
 
 	"github.com/jfreymuth/pulse"
 	"go.dedis.ch/onet/log"
-//	opus "gopkg.in/hraban/opus.v2"
+	//	opus "gopkg.in/hraban/opus.v2"
 )
 
 //      CALL REQUEST      //
@@ -141,7 +141,6 @@ func (g *Gossiper) SendCallResponse(resp CallResponse) {
 		// the last possibility is if respond with BUSY - meaning we are in another call,
 		//    so call status has been updated either when ACCEPTING someone's request, or
 		//    having our request ACCEPTED by someone else - e.g. UPDATE NOTHING
-
 
 		g.ReceiveCallResponse(resp)
 	}
@@ -347,7 +346,7 @@ func (g *Gossiper) record() {
 		log.Panic(err)
 	}
 
-//	data := make([]byte, bufferFragmentSize)
+	//	data := make([]byte, bufferFragmentSize)
 	bufRec := &buffer{}
 
 	g.RecordStream, err = pa.NewRecord(
@@ -358,14 +357,14 @@ func (g *Gossiper) record() {
 			}
 
 			bufRec.Read(g.RecordFrame)
-//			nEnc, err := g.OpusEncoder.Encode(g.RecordFrame, data)
+			//			nEnc, err := g.OpusEncoder.Encode(g.RecordFrame, data)
 			if err != nil {
 				log.Panic(err)
 			}
 
-//			audioData := AudioData{Data: data, EncryptedN: nEnc}
-//			audio := AudioMessage{Origin: g.Name, Destination: g.CallStatus.OtherParticipant, Content: audioData}
-//			g.ReceiveAudio(audio)
+			//			audioData := AudioData{Data: data, EncryptedN: nEnc}
+			//			audio := AudioMessage{Origin: g.Name, Destination: g.CallStatus.OtherParticipant, Content: audioData}
+			//			g.ReceiveAudio(audio)
 			select {
 			case <-g.AudioChan:
 				log.Lvl2("Finish recording.")
@@ -389,11 +388,11 @@ func (g *Gossiper) play(data []byte, nEnc int, pa *pulse.Client) {
 	var err error
 	g.PlaybackStream, err = pa.NewPlayback(
 		func(p []int16) {
-//			nDec, err := g.OpusDecoder.Decode(data[:nEnc], g.PlayBackFrame)
+			//			nDec, err := g.OpusDecoder.Decode(data[:nEnc], g.PlayBackFrame)
 			if err != nil {
 				log.Panic(err)
 			}
-//			bufPlay.Write(g.PlayBackFrame[:nDec])
+			//			bufPlay.Write(g.PlayBackFrame[:nDec])
 			bufPlay.Read(p)
 		},
 		pulse.PlaybackMono,

@@ -464,7 +464,7 @@ func (g *Gossiper) EvotingHandle(w http.ResponseWriter, r *http.Request) {
 			log.Error("Could not unmarshal message : ", err)
 		}
 		log.Lvl1("Data : ", message)
-		if message.Decision{
+		if message.Decision {
 			log.Lvl1("Message accept proposition.")
 			for i := 0; i < len(g.displayed_requests); i++ {
 				if strings.Contains(g.displayed_requests[i], message.Person) {
@@ -474,7 +474,7 @@ func (g *Gossiper) EvotingHandle(w http.ResponseWriter, r *http.Request) {
 				}
 			}
 			g.BroadcastAccept(message.Person)
-		}else{
+		} else {
 			log.Lvl1("Message deny proposition.")
 			for i := 0; i < len(g.displayed_requests); i++ {
 				if strings.Contains(g.displayed_requests[i], message.Person) {
@@ -487,7 +487,6 @@ func (g *Gossiper) EvotingHandle(w http.ResponseWriter, r *http.Request) {
 		}
 
 	}
-
 
 	votes := g.displayed_requests
 	log.Lvl3("Voting ongoing.  : ", votes)
@@ -522,7 +521,7 @@ func (g *Gossiper) ExpellMemberHandle(w http.ResponseWriter, r *http.Request) {
 		//str := "EXPEL "+message.Destination
 		//g.RequestExpelling(message.Destination)
 
-		}
+	}
 }
 
 type CallData struct {

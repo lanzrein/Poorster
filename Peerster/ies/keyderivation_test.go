@@ -66,7 +66,7 @@ func TestEncryptDecrypt(t *testing.T) {
 
 	elapsed = time.Since(now)
 	log.Lvl1("Shared keys are equal. \nCompared keys in :", elapsed.Nanoseconds())
-	for i := 0 ; i < 10 ; i ++{
+	for i := 0; i < 10; i++ {
 		data := make([]byte, aes.BlockSize*(i+1)*100000)
 		rand.Read(data)
 		now = time.Now()
@@ -76,13 +76,12 @@ func TestEncryptDecrypt(t *testing.T) {
 		log.Lvlf3("Cipher text : %x", cipher)
 		pt := Decrypt(shared2, cipher)
 		decTime := time.Since(now)
-		log.Lvl1("For data len : ", len(data), "Enc time : ", encTime.String(),  ";Dec time : ", decTime.String())
+		log.Lvl1("For data len : ", len(data), "Enc time : ", encTime.String(), ";Dec time : ", decTime.String())
 		log.Lvl3("Resulting cleartext : ", pt)
 		log.Lvlf3("original : %x, pt : %x ", data, pt)
 		if subtle.ConstantTimeCompare(pt, data) != 1 {
 			t.Fatal("Error resulting plaintext does not match ! ")
 		}
 	}
-
 
 }

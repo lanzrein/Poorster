@@ -28,13 +28,12 @@ func LoadServer(g *Gossiper) {
 	http.HandleFunc("/leavecluster", g.LeaveClusterHandle)
 	http.HandleFunc("/joinrequest", g.JoinClusterRequest)
 	http.HandleFunc("/broadcastmsg", g.BroadcastMessageHandle)
-	http.HandleFunc("/anonmessage",g.AnonymousMessageHandle)
+	http.HandleFunc("/anonmessage", g.AnonymousMessageHandle)
 
 	http.HandleFunc("/evoting", g.EvotingHandle)
-	http.HandleFunc("/callhandler",g.CallHandle)
+	http.HandleFunc("/callhandler", g.CallHandle)
 	http.HandleFunc("/expellmember", g.ExpellMemberHandle)
-	http.HandleFunc("/incomingcall",g.IncomingCallHandle)
-
+	http.HandleFunc("/incomingcall", g.IncomingCallHandle)
 
 	http.Handle("/", http.FileServer(http.Dir("./frontend")))
 	for {
