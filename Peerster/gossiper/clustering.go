@@ -14,13 +14,7 @@ import (
 	"github.com/JohanLanzrein/Peerster/ies"
 	"go.dedis.ch/onet/log"
 	"go.dedis.ch/protobuf"
-<<<<<<< HEAD
-	
-	//"fmt"
-=======
 
-	"fmt" //TOREMOVE
->>>>>>> 0a7c909133c98fc41b07b8119814305b28c7bac9
 )
 
 //Constant values
@@ -247,8 +241,7 @@ func (g *Gossiper) ReceiveBroadcast(message BroadcastMessage) {
 			if g.Name != rumor.Origin {
 				g.Cluster.HeartBeats[rumor.Origin] = true
 			}
-<<<<<<< HEAD
-		
+
 		} else if message.ExpelRequest {
 			log.Lvl1(g.Name, " received message for EXPEL e-voting request")
 			decrypted := ies.Decrypt(g.Cluster.MasterKey, message.Data)
@@ -273,10 +266,7 @@ func (g *Gossiper) ReceiveBroadcast(message BroadcastMessage) {
 			if g.Name != rumor.Origin {
 				g.Cluster.HeartBeats[rumor.Origin] = true
 			}
-			
-=======
 
->>>>>>> 0a7c909133c98fc41b07b8119814305b28c7bac9
 		} else if message.AcceptProposition {
 			log.Lvl1(g.Name, " received ACCEPT for e-voting case")
 			decrypted := ies.Decrypt(g.Cluster.MasterKey, message.Data)
@@ -298,29 +288,13 @@ func (g *Gossiper) ReceiveBroadcast(message BroadcastMessage) {
 							for j := 1 ; j < len(g.slice_results[i]) ; j++ {
 								if string((g.slice_results[i])[j]) == "1 : " + rumor.Origin || string((g.slice_results[i])[j]) == "0 : " + rumor.Origin {
 									is_existing = true
-<<<<<<< HEAD
-									
-									//fmt.Println("Already existing", g.slice_results)
-									
-=======
 
-									fmt.Println("Already existing", g.slice_results) //TOREMOVE
-
->>>>>>> 0a7c909133c98fc41b07b8119814305b28c7bac9
 									break
 								}
 							}
 							if is_existing == false {
 								g.slice_results[i] = append(g.slice_results[i], "1 : " + rumor.Origin)
-<<<<<<< HEAD
-								
-								//fmt.Println(g.slice_results)
-								
-=======
 
-								fmt.Println(g.slice_results) //TOREMOVE
-
->>>>>>> 0a7c909133c98fc41b07b8119814305b28c7bac9
 								if len(g.Cluster.Members) == len(g.slice_results[i]) - 1 {
 									g.BroadcastCollected(g.slice_results[i][0])
 								}
@@ -377,29 +351,13 @@ func (g *Gossiper) ReceiveBroadcast(message BroadcastMessage) {
 							for j := 0 ; j < len(g.slice_results[i]) ; j++ {
 								if string((g.slice_results[i])[j]) == "1 : " + rumor.Origin || string((g.slice_results[i])[j]) == "0 : " + rumor.Origin {
 									is_existing = true
-<<<<<<< HEAD
-									
-									//fmt.Println("Already existing", g.slice_results)
-									
-=======
 
-									fmt.Println("Already existing", g.slice_results) //TOREMOVE
-
->>>>>>> 0a7c909133c98fc41b07b8119814305b28c7bac9
 									break
 								}
 							}
 							if is_existing == false {
 								g.slice_results[i] = append(g.slice_results[i], "0 : " + rumor.Origin)
-<<<<<<< HEAD
-								
-								//fmt.Println(g.slice_results)
-								
-=======
 
-								fmt.Println(g.slice_results) //TOREMOVE
-
->>>>>>> 0a7c909133c98fc41b07b8119814305b28c7bac9
 								if len(g.Cluster.Members) == len(g.slice_results[i]) - 1 {
 									g.BroadcastCollected(g.slice_results[i][0])
 								}
@@ -448,8 +406,7 @@ func (g *Gossiper) ReceiveBroadcast(message BroadcastMessage) {
 				if rumor.Text != "" {
 					//print the message
 					g.PrintEvotingCaseStep(rumor.Text, rumor.Origin)
-<<<<<<< HEAD
-					
+
 					if string(rumor.Text[0:4]) == "JOIN" {
 						_, ok := g.acks_cases[rumor.Text]
 						if ok == true {
@@ -459,16 +416,7 @@ func (g *Gossiper) ReceiveBroadcast(message BroadcastMessage) {
 									is_existing = true
 									break
 								}
-=======
 
-					_, ok := g.acks_cases[rumor.Text]
-					if ok == true {
-						is_existing := false
-						for i := 0 ; i < len(g.acks_cases[rumor.Text]) ; i++ {
-							if g.acks_cases[rumor.Text][i] == rumor.Origin {
-								is_existing = true
-								break
->>>>>>> 0a7c909133c98fc41b07b8119814305b28c7bac9
 							}
 							if is_existing == false {
 								if g.Cluster.IsAnAuthority(rumor.Origin) {
@@ -480,8 +428,7 @@ func (g *Gossiper) ReceiveBroadcast(message BroadcastMessage) {
 								g.acks_cases[rumor.Text] = []string{rumor.Origin}
 							}
 						}
-<<<<<<< HEAD
-						
+
 						if g.Cluster.AmountAuthorities() == len(g.acks_cases[rumor.Text]) {
 							for j := 0 ; j < len(g.slice_results) ; j++ {
 								if string((g.slice_results[j])[0]) == rumor.Text {
@@ -497,28 +444,7 @@ func (g *Gossiper) ReceiveBroadcast(message BroadcastMessage) {
 											} else if str == "0" {
 												deny_counts++
 											}
-=======
-					} else { // ok == false
-						if g.Cluster.IsAnAuthority(rumor.Origin) {
-							g.acks_cases[rumor.Text] = []string{rumor.Origin}
-						}
-					}
 
-					if g.Cluster.AmountAuthorities() == len(g.acks_cases[rumor.Text]) {
-						for j := 0 ; j < len(g.slice_results) ; j++ {
-							if string((g.slice_results[j])[0]) == rumor.Text {
-								if (g.Cluster.AmountAuthorities() > 1) {
-									g.BroadcastResults(g.slice_results[j])
-								} else { // g.Cluster.AmountAuthorities() == 1
-									accept_counts := 0
-									deny_counts := 0
-									for k := 1 ; k < len(g.slice_results[j]) ; k++ {
-										str := string(((g.slice_results[j])[k])[0])
-										if str == "1" {
-											accept_counts++
-										} else if str == "0" {
-											deny_counts++
->>>>>>> 0a7c909133c98fc41b07b8119814305b28c7bac9
 										}
 										if deny_counts == accept_counts {
 											accept_counts = 0
@@ -608,8 +534,7 @@ func (g *Gossiper) ReceiveBroadcast(message BroadcastMessage) {
 				if rumor.Results != nil {
 					//print the message
 					g.PrintEvotingValidationStep(rumor.Results, rumor.Origin)
-<<<<<<< HEAD
-					
+
 					if string((rumor.Results[0])[0:4]) == "JOIN" {
 						is_matched := true
 						for i := 0 ; i < len(g.slice_results) ; i++ {
@@ -624,24 +549,13 @@ func (g *Gossiper) ReceiveBroadcast(message BroadcastMessage) {
 									}
 									if found == false {
 										is_matched = false
-=======
 
-					is_matched := true
-					for i := 0 ; i < len(g.slice_results) ; i++ {
-						if string((g.slice_results[i])[0]) == string(rumor.Results[0]) {
-							for j := 1 ; j < len(g.slice_results[i]) ; j++ {
-								found := false
-								for k := 1 ; k < len(rumor.Results) ; k++ {
-									if string((g.slice_results[i])[j]) == string(rumor.Results[k]) {
-										found = true
->>>>>>> 0a7c909133c98fc41b07b8119814305b28c7bac9
 										break
 									}
 								}
 								break
 							}
-<<<<<<< HEAD
-						}					
+						}
 						
 						if is_matched == true {
 							_, ok := g.correct_results_rcv[rumor.Results[0]]
@@ -652,20 +566,7 @@ func (g *Gossiper) ReceiveBroadcast(message BroadcastMessage) {
 										is_existing = true
 										break
 									}
-=======
-							break
-						}
-					}
 
-					if is_matched == true {
-						_, ok := g.correct_results_rcv[rumor.Results[0]]
-						if ok == true {
-							is_existing := false
-							for i := 0 ; i < len(g.correct_results_rcv[rumor.Results[0]]) ; i++ {
-								if g.correct_results_rcv[rumor.Results[0]][i] == rumor.Origin {
-									is_existing = true
-									break
->>>>>>> 0a7c909133c98fc41b07b8119814305b28c7bac9
 								}
 								if is_existing == false {
 									if g.Cluster.IsAnAuthority(rumor.Origin) {
@@ -731,7 +632,6 @@ func (g *Gossiper) ReceiveBroadcast(message BroadcastMessage) {
 						} else { // is_matched == false
 							g.BroadcastCancel(rumor.Results[0])
 						}
-<<<<<<< HEAD
 					} else if string((rumor.Results[0])[0:5]) == "EXPEL" && string((rumor.Results[0])[6:]) != g.Name {
 						is_matched := true
 						for i := 0 ; i < len(g.slice_results) ; i++ {
@@ -742,20 +642,7 @@ func (g *Gossiper) ReceiveBroadcast(message BroadcastMessage) {
 										if string((g.slice_results[i])[j]) == string(rumor.Results[k]) {
 											found = true
 											break
-=======
 
-						if g.Cluster.AmountAuthorities() - 1 == len(g.correct_results_rcv[rumor.Results[0]]) {
-							accept_counts := 0
-							deny_counts := 0
-							for i := 0 ; i < len(g.slice_results) ; i++ {
-								if string(g.slice_results[i][0]) == string(rumor.Results[0]) {
-									for j := 1 ; j < len(g.slice_results[i]) ; j++ {
-										str := string(((g.slice_results[i])[j])[0])
-										if str == "1" {
-											accept_counts++
-										} else if str == "0" {
-											deny_counts++
->>>>>>> 0a7c909133c98fc41b07b8119814305b28c7bac9
 										}
 									}
 									if found == false {
@@ -787,8 +674,7 @@ func (g *Gossiper) ReceiveBroadcast(message BroadcastMessage) {
 									g.correct_results_rcv[rumor.Results[0]] = []string{rumor.Origin}
 								}
 							}
-<<<<<<< HEAD
-							
+
 							var maxToCollect int
 							if g.Cluster.IsAnAuthority(string((rumor.Results[0])[6:])) {
 								maxToCollect = g.Cluster.AmountAuthorities() - 2
@@ -799,12 +685,7 @@ func (g *Gossiper) ReceiveBroadcast(message BroadcastMessage) {
 							if maxToCollect == len(g.correct_results_rcv[rumor.Results[0]]) {
 								accept_counts := 0
 								deny_counts := 0
-=======
 
-							if deny_counts == accept_counts {
-								accept_counts = 0
-								deny_counts = 0
->>>>>>> 0a7c909133c98fc41b07b8119814305b28c7bac9
 								for i := 0 ; i < len(g.slice_results) ; i++ {
 									if string(g.slice_results[i][0]) == string(rumor.Results[0]) {
 										for j := 1 ; j < len(g.slice_results[i]) ; j++ {
@@ -854,23 +735,10 @@ func (g *Gossiper) ReceiveBroadcast(message BroadcastMessage) {
 									g.BroadcastDecision(answer)
 								}
 							}
-<<<<<<< HEAD
 						} else { // is_matched == false
 							g.BroadcastCancel(rumor.Results[0])
 						}					
-=======
 
-							if accept_counts > deny_counts {
-								answer := "ACCEPT " + rumor.Results[0]
-								g.BroadcastDecision(answer)
-							} else { // accept_counts < deny_counts
-								answer := "DENY " + rumor.Results[0]
-								g.BroadcastDecision(answer)
-							}
-						}
-					} else { // is_matched == false
-						g.BroadcastCancel(rumor.Results[0])
->>>>>>> 0a7c909133c98fc41b07b8119814305b28c7bac9
 					}
 				}
 			}
@@ -881,65 +749,13 @@ func (g *Gossiper) ReceiveBroadcast(message BroadcastMessage) {
 
 		} else if message.FinalDecision {
 			log.Lvl1(g.Name, " received e-voting final decision")
-<<<<<<< HEAD
 			if g.Cluster != nil {
 				decrypted := ies.Decrypt(g.Cluster.MasterKey, message.Data)
 				var rumor RumorMessage
 				err := protobuf.Decode(decrypted, &rumor)
 				if err != nil {
 					log.Error(g.Name, "Error decoding packet : ", err, "This may be due to an ongoing rollout.")
-					return
-=======
-			decrypted := ies.Decrypt(g.Cluster.MasterKey, message.Data)
-			var rumor RumorMessage
-			err := protobuf.Decode(decrypted, &rumor)
-			if err != nil {
-				log.Error(g.Name, "Error decoding packet : ", err, "This may be due to an ongoing rollout.")
-				return
-			}
-			if rumor.Text != "" {
-				//print the message
-				g.PrintEvotingDecisionStep(rumor.Text, rumor.Origin)
-				if g.Cluster.IsAnAuthority(g.Name) {
-					for i := 0 ; i < len(g.slice_results) ; i++ {
-						if strings.Contains(rumor.Text, string((g.slice_results[i])[0])) {
-							copy(g.slice_results[i:], g.slice_results[i+1:])
-							g.slice_results = g.slice_results[:len(g.slice_results) - 1]
-							break
-						}
-					}
-					if strings.Contains(rumor.Text, "ACCEPT") {
-						str := string(rumor.Text[7:])
-						_, ok1 := g.acks_cases[str]
-						if ok1 {
-							delete(g.acks_cases, str)
-						}
-						_, ok2 := g.correct_results_rcv[str]
-						if ok2 {
-							delete(g.correct_results_rcv, str)
-						}
-					} else { // strings.Contains(rumor.Text, "DENY") == true
-						str := string(rumor.Text[5:])
-						_, ok1 := g.acks_cases[str]
-						if ok1 {
-							delete(g.acks_cases, str)
-						}
-						_, ok2 := g.correct_results_rcv[str]
-						if ok2 {
-							delete(g.correct_results_rcv, str)
-						}
-					}
-				}
 
-				found_request := false
-				idx_request := -1
-				for i := 0 ; i < len(g.pending_nodes_requests) ; i++ {
-					if strings.Contains(rumor.Text, g.pending_nodes_requests[i]) {
-						found_request = true
-						idx_request = i
-						break
-					}
->>>>>>> 0a7c909133c98fc41b07b8119814305b28c7bac9
 				}
 				if rumor.Text != "" && strings.Contains(rumor.Text, g.Name) == false {
 					//print the message
@@ -952,7 +768,6 @@ func (g *Gossiper) ReceiveBroadcast(message BroadcastMessage) {
 								break
 							}
 						}
-<<<<<<< HEAD
 						if strings.Contains(rumor.Text, "ACCEPT") {
 							str := string(rumor.Text[7:])
 							_, ok1 := g.acks_cases[str]
@@ -1055,30 +870,7 @@ func (g *Gossiper) ReceiveBroadcast(message BroadcastMessage) {
 								final_decision = 0
 							}
 							g.ReceiveDecisionExpelRequest(msg, final_decision)
-=======
 
-						for i := 0 ; i < len(g.pending_nodes_requests) ; i++ {
-							if string(g.pending_nodes_requests[i]) == "JOIN " + msg.Origin {
-								copy(g.pending_nodes_requests[i:], g.pending_nodes_requests[i+1:])
-								g.pending_nodes_requests = g.pending_nodes_requests[:len(g.pending_nodes_requests) - 1]
-								break
-							}
-						}
-
-						for i := 0 ; i < len(g.pending_messages_requests) ; i++ {
-							if (g.pending_messages_requests[i]).Origin == msg.Origin && (g.pending_messages_requests[i]).Recipient == msg.Recipient && bytes.Compare(g.pending_messages_requests[i].PublicKey, msg.PublicKey ) == 0 {
-								copy(g.pending_messages_requests[i:], g.pending_messages_requests[i+1:])
-								g.pending_messages_requests = g.pending_messages_requests[:len(g.pending_messages_requests) - 1]
-								break
-							}
-						}
-
-						var final_decision int
-						if (strings.Contains(rumor.Text, "ACCEPT ")) {
-							final_decision = 1
-						} else { // strings.Contains(rumor.Text, "DENY ") == true
-							final_decision = 0
->>>>>>> 0a7c909133c98fc41b07b8119814305b28c7bac9
 						}
 					}
 				}
@@ -1161,8 +953,7 @@ func (g *Gossiper) ReceiveBroadcast(message BroadcastMessage) {
 					} else { // ok == false
 						g.reset_requests[rumor.Text] = []string{rumor.Origin}
 					}
-<<<<<<< HEAD
-					
+
 					var maxToCollect int
 					if strings.Contains(rumor.Text, "EXPEL") {
 						maxToCollect = len(g.Cluster.Members) - 1
@@ -1171,10 +962,7 @@ func (g *Gossiper) ReceiveBroadcast(message BroadcastMessage) {
 					}
 					
 					if len(g.reset_requests[rumor.Text]) == maxToCollect {
-=======
 
-					if len(g.reset_requests[rumor.Text]) == len(g.Cluster.Members) {
->>>>>>> 0a7c909133c98fc41b07b8119814305b28c7bac9
 						delete(g.reset_requests, rumor.Text)
 
 						numbers := (len(g.Cluster.Members) + 1 ) / 2
