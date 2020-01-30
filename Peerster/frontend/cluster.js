@@ -38,7 +38,13 @@ function SendBroadcast(){
 
         for(let i = 0 ; i < res.length ; i ++){
 
-            $("#clustermembers").append("<li id='member'>"+res[i]+"</li>");
+            if (res[i] === currently_calling){
+                $("#clustermembers").append("<li id='member' style='color: crimson'>"+res[i]+"<span class=\"anonmessage\"> ✉️</span><span class=\"anoncall\">📞</span><span class=\"expellmember\">❌</span></li>");
+
+            }else{
+                $("#clustermembers").append("<li id='member'>"+res[i]+"<span class=\"anonmessage\"> ✉️</span><span class=\"anoncall\">📞</span><span class=\"expellmember\">❌</span></li>");
+
+            }
 
         }
         $("li[id=member]").click(showanonymous);
@@ -59,7 +65,7 @@ let anonFlag = false;
 function anonmessage(){
     dst = $(this).parent().text();
     if (dst.length > 5) {
-        dst = dst.substring(0,dst.length-5);
+        dst = dst.substring(0,dst.length-6);
     }
     console.log("anon message ! "+ dst ) ;
 
@@ -98,7 +104,7 @@ function anoncall(){
     $("#callpannel").show();
 
 }
-let currently_calling;
+let currently_calling ="A";
 
 
 function accept_call(){
@@ -131,7 +137,7 @@ function dial_call(){
 
 function post_call_data(tosend){
     $.post(host+"/callhandler",JSON.stringify(tosend)).done(function(data) {
-        console.log("OK for posting"); ;
+        console.log("OK for posting");
     });
 }
 

@@ -21,6 +21,7 @@ import (
 //Constant values
 const DEFAULTROLLOUT = 180 // WAS 300
 const DEFAULTHEARTBEAT = 5
+var ClusterUpdated = make(chan(bool),1)
 
 //InitCounter the current gossiper creates a cluster where he is the sole member
 func (g *Gossiper) InitCluster() {
@@ -171,7 +172,7 @@ func (g *Gossiper) ReceiveBroadcast(message BroadcastMessage) {
 			if err != nil {
 				log.Error("Could not decode rollout info ", err)
 			}
-
+			ClusterUpdated <- true 
 			g.UpdateFromRollout(cluster)
 		
 		} else if message.Reset {
@@ -965,14 +966,25 @@ func (g *Gossiper) KeyRollout(leader string) {
 
 	go func() {
 		log.Lvl1(g.Name, "sending a rollout update to ", leader)
+		g.Cluster.PublicKeys[g.Name] = g.Keypair.PublicKey
 
 		if leader != g.Name {
 			//Request to join
-			<-time.After(time.Second*30) // WAS *1
-			go g.RequestJoining(leader)
+			done := false
+			for !done {
+				select{
+				case <-time.After(time.Second * 5):
+					go g.RequestJoining(leader)
+
+					break
+				case <- ClusterUpdated:
+					done = true
+					break
+				}
+			}
+
 		}
 
-		g.Cluster.PublicKeys[g.Name] = g.Keypair.PublicKey
 
 	}()
 

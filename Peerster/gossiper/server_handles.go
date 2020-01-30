@@ -501,7 +501,7 @@ func (g *Gossiper)ExpellMemberHandle(w http.ResponseWriter, r *http.Request){
 		if err != nil {
 			log.Error("Could not unmarshal message : ", err)
 		}
-		log.Lvl1("Data expell: ", message)
+		log.Lvl1("Data expell: ", message.Destination)
 		//Todo here you do the evoting handling for expelling...
 
 
