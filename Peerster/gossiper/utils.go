@@ -21,7 +21,9 @@ func Contains(xs []string, e string) bool {
 			return true
 		}
 	}
+
 	return false
+
 }
 
 /**************UTILITY TO process PACKET ****************/

@@ -11,18 +11,10 @@
 # Output of the go coverage tool, specifically when used with LiteIDE
 *.out
 
-*.out
 _SharedFiles
 _Downloads
-*.exe
 Peerster
 client/client
 
 .ipynb_checkpoints/
 .idea/
-*.out
-_SharedFiles
-_Downloads
-*.exe
-Peerster
-client/client

@@ -237,7 +237,7 @@ function sendprivatemsg(){
           $("#clustermembers").append("<li id='member' style='color: crimson'>"+res[i]+"<span class=\"anonmessage\"> ✉️</span><span class=\"anoncall\">📞</span><span class=\"expellmember\">❌</span></li>");
 
         }else{
-          $("#clustermembers").append("<li id='member'>"+res[i]+"<span class=\"anonmessage\"> ✉️</span><span class=\"anoncall\">📞</span><span class=\"expellmember\">❌EXPELL</span></li>");
+          $("#clustermembers").append("<li id='member'>"+res[i]+"<span class=\"anonmessage\"> ✉️</span><span class=\"anoncall\">📞</span><span class=\"expellmember\">❌</span></li>");
 
         }
 
