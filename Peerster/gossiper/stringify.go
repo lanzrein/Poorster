@@ -1,3 +1,5 @@
+//@authors Hrusanov Aleksandar, Lanzrein Johan, Rinaldi Vincent
+
 //Stringify the messages according to the spec.
 //This part is very self explanatory so no further comments are needed...
 package gossiper

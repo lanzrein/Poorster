@@ -1,3 +1,5 @@
+//@authors Hrusanov Aleksandar, Lanzrein Johan, Rinaldi Vincent
+
 package gossiper
 
 //All the function for the confirmation protocol

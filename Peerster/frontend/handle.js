@@ -1,6 +1,7 @@
 //Handle for the server.
 //@authors Hrusanov Aleksandar, Lanzrein Johan, Rinaldi Vincent
 
+////@authors Hrusanov Aleksandar, Lanzrein Johan, Rinaldi Vincent
 
 //Some regexes to verify if ip or ports are ok
 const regexIP = /^(?!0)(?!.*\.$)((1?\d?\d|25[0-5]|2[0-4]\d)(\.|$)){4}$/;

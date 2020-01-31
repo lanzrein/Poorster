@@ -1,3 +1,5 @@
+//@authors Hrusanov Aleksandar, Lanzrein Johan, Rinaldi Vincent
+
 //filesharing methods for the filesharing protocol
 package gossiper
 

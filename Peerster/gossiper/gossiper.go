@@ -1,3 +1,5 @@
+//@authors Hrusanov Aleksandar, Lanzrein Johan, Rinaldi Vincent
+
 //Main file for the gossiper most handles for receiving/sending messages are here.
 package gossiper
 

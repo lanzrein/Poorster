@@ -1,3 +1,5 @@
+//@authors Hrusanov Aleksandar, Lanzrein Johan, Rinaldi Vincent
+
 //reveice handles all the part where the gossiper receives a packet.
 package gossiper
 

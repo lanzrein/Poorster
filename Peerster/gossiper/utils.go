@@ -1,3 +1,5 @@
+//@authors Hrusanov Aleksandar, Lanzrein Johan, Rinaldi Vincent
+
 //Utilitiy methods that are not related to networking.
 //These can include parsing, adding, modifiying parts of the gossiper or packets.
 package gossiper

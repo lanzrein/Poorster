@@ -1,3 +1,5 @@
+//@authors Hrusanov Aleksandar, Lanzrein Johan, Rinaldi Vincent
+
 //sending handles all the sending of packets from the gossiper
 package gossiper
 

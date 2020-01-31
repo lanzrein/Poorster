@@ -17,7 +17,7 @@ import (
 )
 
 //Constant values
-const DEFAULTROLLOUT = 15 // WAS 300
+const DEFAULTROLLOUT = 300 // WAS 300
 const DEFAULTHEARTBEAT = 5
 
 var ClusterUpdated = make(chan (bool), 1)
